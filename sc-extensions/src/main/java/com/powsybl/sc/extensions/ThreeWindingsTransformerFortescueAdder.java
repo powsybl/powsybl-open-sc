@@ -8,6 +8,7 @@ package com.powsybl.sc.extensions;
 
 import com.powsybl.commons.extensions.AbstractExtensionAdder;
 import com.powsybl.iidm.network.ThreeWindingsTransformer;
+import com.powsybl.iidm.network.extensions.WindingConnectionType;
 
 import java.util.Objects;
 
@@ -28,9 +29,9 @@ public class ThreeWindingsTransformerFortescueAdder extends AbstractExtensionAdd
     private boolean leg1FreeFluxes = DEFAULT_FREE_FLUXES;
     private boolean leg2FreeFluxes = DEFAULT_FREE_FLUXES;
     private boolean leg3FreeFluxes = DEFAULT_FREE_FLUXES;
-    private LegConnectionType leg1ConnectionType = DEFAULT_LEG1_CONNECTION_TYPE;
-    private LegConnectionType leg2ConnectionType = DEFAULT_LEG2_CONNECTION_TYPE;
-    private LegConnectionType leg3ConnectionType = DEFAULT_LEG3_CONNECTION_TYPE;
+    private WindingConnectionType leg1ConnectionType = DEFAULT_LEG1_CONNECTION_TYPE;
+    private WindingConnectionType leg2ConnectionType = DEFAULT_LEG2_CONNECTION_TYPE;
+    private WindingConnectionType leg3ConnectionType = DEFAULT_LEG3_CONNECTION_TYPE;
 
     public ThreeWindingsTransformerFortescueAdder(ThreeWindingsTransformer twt) {
         super(twt);
@@ -95,17 +96,17 @@ public class ThreeWindingsTransformerFortescueAdder extends AbstractExtensionAdd
         return this;
     }
 
-    public ThreeWindingsTransformerFortescueAdder withLeg1ConnectionType(LegConnectionType leg1ConnectionType) {
+    public ThreeWindingsTransformerFortescueAdder withLeg1ConnectionType(WindingConnectionType leg1ConnectionType) {
         this.leg1ConnectionType = Objects.requireNonNull(leg1ConnectionType);
         return this;
     }
 
-    public ThreeWindingsTransformerFortescueAdder withLeg2ConnectionType(LegConnectionType leg2ConnectionType) {
+    public ThreeWindingsTransformerFortescueAdder withLeg2ConnectionType(WindingConnectionType leg2ConnectionType) {
         this.leg2ConnectionType = Objects.requireNonNull(leg2ConnectionType);
         return this;
     }
 
-    public ThreeWindingsTransformerFortescueAdder withLeg3ConnectionType(LegConnectionType leg3ConnectionType) {
+    public ThreeWindingsTransformerFortescueAdder withLeg3ConnectionType(WindingConnectionType leg3ConnectionType) {
         this.leg3ConnectionType = Objects.requireNonNull(leg3ConnectionType);
         return this;
     }

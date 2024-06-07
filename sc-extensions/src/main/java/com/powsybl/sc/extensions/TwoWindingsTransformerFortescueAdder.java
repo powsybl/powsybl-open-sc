@@ -8,6 +8,7 @@ package com.powsybl.sc.extensions;
 
 import com.powsybl.commons.extensions.AbstractExtensionAdder;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
+import com.powsybl.iidm.network.extensions.WindingConnectionType;
 
 import java.util.Objects;
 
@@ -25,8 +26,8 @@ public class TwoWindingsTransformerFortescueAdder extends AbstractExtensionAdder
     private double ro = 0.;
     private double xo = 0.;
     private boolean freeFluxes = DEFAULT_FREE_FLUXES;
-    private LegConnectionType leg1ConnectionType = DEFAULT_LEG1_CONNECTION_TYPE;
-    private LegConnectionType leg2ConnectionType = DEFAULT_LEG2_CONNECTION_TYPE;
+    private WindingConnectionType leg1ConnectionType = DEFAULT_LEG1_CONNECTION_TYPE;
+    private WindingConnectionType leg2ConnectionType = DEFAULT_LEG2_CONNECTION_TYPE;
     private double r1Ground = 0.;
     private double x1Ground = 0.;
     private double r2Ground = 0.;
@@ -76,12 +77,12 @@ public class TwoWindingsTransformerFortescueAdder extends AbstractExtensionAdder
         return this;
     }
 
-    public TwoWindingsTransformerFortescueAdder withLeg1ConnectionType(LegConnectionType leg1ConnectionType) {
+    public TwoWindingsTransformerFortescueAdder withLeg1ConnectionType(WindingConnectionType leg1ConnectionType) {
         this.leg1ConnectionType = Objects.requireNonNull(leg1ConnectionType);
         return this;
     }
 
-    public TwoWindingsTransformerFortescueAdder withLeg2ConnectionType(LegConnectionType leg2ConnectionType) {
+    public TwoWindingsTransformerFortescueAdder withLeg2ConnectionType(WindingConnectionType leg2ConnectionType) {
         this.leg2ConnectionType = Objects.requireNonNull(leg2ConnectionType);
         return this;
     }

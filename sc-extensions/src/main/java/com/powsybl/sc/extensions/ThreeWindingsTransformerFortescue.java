@@ -8,6 +8,7 @@ package com.powsybl.sc.extensions;
 
 import com.powsybl.commons.extensions.AbstractExtension;
 import com.powsybl.iidm.network.ThreeWindingsTransformer;
+import com.powsybl.iidm.network.extensions.WindingConnectionType;
 
 import java.util.Objects;
 
@@ -22,16 +23,16 @@ public class ThreeWindingsTransformerFortescue extends AbstractExtension<ThreeWi
         private double legRo;
         private double legXo;
         private boolean legFreeFluxes;
-        private LegConnectionType legConnectionType;
+        private WindingConnectionType legConnectionType;
 
-        public T3wLeg(double ro, double xo, boolean legFreeFluxes, LegConnectionType legConnectionType) {
+        public T3wLeg(double ro, double xo, boolean legFreeFluxes, WindingConnectionType legConnectionType) {
             this.legRo = ro;
             this.legXo = xo;
             this.legFreeFluxes = legFreeFluxes;
             this.legConnectionType = Objects.requireNonNull(legConnectionType);
         }
 
-        public LegConnectionType getLegConnectionType() {
+        public WindingConnectionType getLegConnectionType() {
             return legConnectionType;
         }
 
@@ -55,7 +56,7 @@ public class ThreeWindingsTransformerFortescue extends AbstractExtension<ThreeWi
             this.legXo = legXo;
         }
 
-        public void setLegConnectionType(LegConnectionType legConnectionType) {
+        public void setLegConnectionType(WindingConnectionType legConnectionType) {
             this.legConnectionType = legConnectionType;
         }
     }
@@ -75,7 +76,7 @@ public class ThreeWindingsTransformerFortescue extends AbstractExtension<ThreeWi
                                              double leg1Ro, double leg2Ro, double leg3Ro,
                                              double leg1Xo, double leg2Xo, double leg3Xo,
                                              boolean leg1FreeFluxes, boolean leg2FreeFluxes, boolean leg3FreeFluxes,
-                                             LegConnectionType leg1ConnectionType, LegConnectionType leg2ConnectionType, LegConnectionType leg3ConnectionType) {
+                                             WindingConnectionType leg1ConnectionType, WindingConnectionType leg2ConnectionType, WindingConnectionType leg3ConnectionType) {
         super(extendable);
 
         this.leg1 = new T3wLeg(leg1Ro, leg1Xo, leg1FreeFluxes, leg1ConnectionType);

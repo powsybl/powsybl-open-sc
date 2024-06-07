@@ -11,6 +11,7 @@ import com.powsybl.cgmes.conversion.CgmesImportPostProcessor;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
+import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.sc.extensions.*;
 import com.powsybl.triplestore.api.PropertyBag;
 import com.powsybl.triplestore.api.QueryCatalog;
@@ -258,13 +259,13 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
             String connectionYn = windingConnection + "Yn";
             String connectionD = windingConnection + "D";
 
-            LegConnectionType legConnectionType;
+            WindingConnectionType legConnectionType;
             if (connectionKind.equals(connectionY)) {
-                legConnectionType = LegConnectionType.Y;
+                legConnectionType = WindingConnectionType.Y;
             } else if (connectionKind.equals(connectionD)) {
-                legConnectionType = LegConnectionType.DELTA;
+                legConnectionType = WindingConnectionType.DELTA;
             } else if (connectionKind.equals(connectionYn)) {
-                legConnectionType = LegConnectionType.Y_GROUNDED;
+                legConnectionType = WindingConnectionType.Y_GROUNDED;
             } else {
                 throw new PowsyblException("Leg connection type '" + connectionKind + "' not handled in transformer : " + id);
             }

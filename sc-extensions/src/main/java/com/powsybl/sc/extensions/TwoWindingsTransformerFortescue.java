@@ -8,6 +8,7 @@ package com.powsybl.sc.extensions;
 
 import com.powsybl.commons.extensions.AbstractExtension;
 import com.powsybl.iidm.network.TwoWindingsTransformer;
+import com.powsybl.iidm.network.extensions.WindingConnectionType;
 
 import java.util.Objects;
 
@@ -21,8 +22,8 @@ public class TwoWindingsTransformerFortescue extends AbstractExtension<TwoWindin
     private double ro; // Ro = Rd * CoeffRo
     private double xo;
     private final boolean freeFluxes; // free fluxes mean that magnetizing impedance Zm is infinite, by default, fluxes are forced and Zm exists
-    private LegConnectionType leg1ConnectionType;
-    private LegConnectionType leg2ConnectionType;
+    private WindingConnectionType leg1ConnectionType;
+    private WindingConnectionType leg2ConnectionType;
     private boolean isPartOfGeneratingUnit;
     private double r1Ground;
     private double x1Ground;
@@ -35,7 +36,7 @@ public class TwoWindingsTransformerFortescue extends AbstractExtension<TwoWindin
     }
 
     public TwoWindingsTransformerFortescue(TwoWindingsTransformer twt, boolean isPartOfGeneratingUnit, double ro, double xo, boolean freeFluxes,
-                                           LegConnectionType leg1ConnectionType, LegConnectionType leg2ConnectionType, double r1Ground, double x1Ground, double r2Ground, double x2Ground) {
+                                           WindingConnectionType leg1ConnectionType, WindingConnectionType leg2ConnectionType, double r1Ground, double x1Ground, double r2Ground, double x2Ground) {
         super(twt);
         this.isPartOfGeneratingUnit = isPartOfGeneratingUnit;
         this.ro = ro;
@@ -61,11 +62,11 @@ public class TwoWindingsTransformerFortescue extends AbstractExtension<TwoWindin
         return freeFluxes;
     }
 
-    public LegConnectionType getLeg1ConnectionType() {
+    public WindingConnectionType getLeg1ConnectionType() {
         return leg1ConnectionType;
     }
 
-    public LegConnectionType getLeg2ConnectionType() {
+    public WindingConnectionType getLeg2ConnectionType() {
         return leg2ConnectionType;
     }
 
@@ -85,11 +86,11 @@ public class TwoWindingsTransformerFortescue extends AbstractExtension<TwoWindin
         this.ro = ro;
     }
 
-    public void setLeg2ConnectionType(LegConnectionType leg2ConnectionType) {
+    public void setLeg2ConnectionType(WindingConnectionType leg2ConnectionType) {
         this.leg2ConnectionType = leg2ConnectionType;
     }
 
-    public void setLeg1ConnectionType(LegConnectionType leg1ConnectionType) {
+    public void setLeg1ConnectionType(WindingConnectionType leg1ConnectionType) {
         this.leg1ConnectionType = leg1ConnectionType;
     }
 
