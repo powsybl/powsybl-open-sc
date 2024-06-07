@@ -50,7 +50,7 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-open-sc-extensions</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

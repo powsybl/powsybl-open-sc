@@ -34,6 +34,7 @@
         <java.version>17</java.version>
         <powsybl-core.version>6.3.1</powsybl-core.version>
         <slf4j.version>2.0.9</slf4j.version>
+        <juint.version>5.10.2</juint.version>
     </properties>
 
     <profiles>
@@ -69,7 +70,7 @@
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
-                <version>5.10.2</version>
+                <version>${juint.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>
