@@ -28,6 +28,7 @@
     <modules>
         <module>sc-cgmes</module>
         <module>sc-extensions</module>
+        <module>sc-implementation</module>
     </modules>
 
     <properties>
@@ -35,6 +36,7 @@
         <powsybl-core.version>6.3.1</powsybl-core.version>
         <slf4j.version>2.0.9</slf4j.version>
         <juint.version>5.10.2</juint.version>
+        <powsybl-open-loadflow.version>1.10.0</powsybl-open-loadflow.version>
     </properties>
 
     <profiles>
