@@ -128,10 +128,11 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
             List<FeederResult> feederResults = new ArrayList<>();
             List<LimitViolation> limitViolations = new ArrayList<>();
-            FortescueValue current = new FortescueValue(iccMagnitude, iccAngle);
+            //FortescueValue current = new FortescueValue(iccMagnitude, iccAngle);
+            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults, limitViolations, iccMagnitude, FaultResult.Status.SUCCESS);
 
-            FaultResult fr = new FortescueFaultResult(fault, 0., feederResults, limitViolations, current, FaultResult.Status.SUCCESS);
-            faultResults.add(fr);
+            //FaultResult fr = new FaultResult(fault, 0., feederResults, limitViolations, current, FaultResult.Status.SUCCESS);
+            faultResults.add(magnitudeFaultResult);
         }
     }
 
@@ -157,8 +158,10 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             List<LimitViolation> limitViolations = new ArrayList<>();
             FortescueValue current = new FortescueValue(iccMagnitude, iccAngle);
 
-            FaultResult fr = new FortescueFaultResult(fault, pcc, feederResultsProvider, limitViolations, current, FaultResult.Status.SUCCESS);
-            faultResults.add(fr);
+            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider, limitViolations, iccMagnitude, FaultResult.Status.SUCCESS);
+
+            //FaultResult fr = new FaultResult(fault, pcc, feederResultsProvider, limitViolations, current, FaultResult.Status.SUCCESS);
+            faultResults.add(magnitudeFaultResult);
         }
     }
 
@@ -176,8 +179,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
                 String feederId = lfBus.getId() + "_" + feederResult.getFeeder().getId();
 
-                FeederResult feederResultProvider = new FortescueFeederResult(feederId, current);
-                feederResultsProvider.add(feederResultProvider);
+                MagnitudeFeederResult magnitudeFeederResult = new MagnitudeFeederResult(feederId, magnitude);
+                feederResultsProvider.add(magnitudeFeederResult);
             }
         }
 
