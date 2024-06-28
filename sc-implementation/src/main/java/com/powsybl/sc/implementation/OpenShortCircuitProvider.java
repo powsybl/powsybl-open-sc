@@ -59,7 +59,6 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
     @Override
     public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters, ComputationManager computationManager, List<FaultParameters> faultParameters) {
-        //public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters, ComputationManager computationManager, List<FaultParameters> faultParameters, Reporter reporter) {
 
         Objects.requireNonNull(network);
         Objects.requireNonNull(parameters);
@@ -80,11 +79,9 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         //Parameters that could be added in the short circuit provider API later:
         // Voltage Profile
-        //ShortCircuitBalancedParameters.VoltageProfileType vp = ShortCircuitBalancedParameters.VoltageProfileType.CALCULATED;
         ShortCircuitEngineParameters.VoltageProfileType voltageProfile = ShortCircuitEngineParameters.VoltageProfileType.NOMINAL;
 
         // Selective or Systematic short circuit analysis
-        //ShortCircuitBalancedParameters.AnalysisType at = ShortCircuitBalancedParameters.AnalysisType.SYSTEMATIC;
         ShortCircuitEngineParameters.AnalysisType at = ShortCircuitEngineParameters.AnalysisType.SELECTIVE;
 
         // selection of the period of analysis
@@ -97,7 +94,6 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         // lists to store the results
         List<FaultResult> faultResults = new ArrayList<>();
-        //List<LimitViolation> lvs = new ArrayList<>();
 
         if (existBalancedFaults) {
             runBalancedAnalysis(network, scbParameters, scFaultToFault, faultResults);
@@ -122,16 +118,12 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             ShortCircuitFault scFault = scResult.getKey();
 
             double iccMagnitude = scResult.getValue().getIcc().getKey();
-            double iccAngle = scResult.getValue().getIcc().getValue();
 
             Fault fault = scFaultToFault.get(scFault);
 
             List<FeederResult> feederResults = new ArrayList<>();
             List<LimitViolation> limitViolations = new ArrayList<>();
-            //FortescueValue current = new FortescueValue(iccMagnitude, iccAngle);
             MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults, limitViolations, iccMagnitude, FaultResult.Status.SUCCESS);
-
-            //FaultResult fr = new FaultResult(fault, 0., feederResults, limitViolations, current, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }
@@ -148,7 +140,6 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
             double iccMagnitude = scResult.getIk().getKey();
             double iccAngle = scResult.getIk().getValue();
-            double pcc = scResult.getPcc();
 
             Fault fault = scFaultToFault.get(scFault);
 
@@ -156,11 +147,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             fillFeederResults(feederResultsProvider, scResult);
 
             List<LimitViolation> limitViolations = new ArrayList<>();
-            FortescueValue current = new FortescueValue(iccMagnitude, iccAngle);
 
             MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider, limitViolations, iccMagnitude, FaultResult.Status.SUCCESS);
-
-            //FaultResult fr = new FaultResult(fault, pcc, feederResultsProvider, limitViolations, current, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }
@@ -174,8 +162,6 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 double iy = feederResult.getIyContribution();
 
                 double magnitude = Math.sqrt(3. * (ix * ix + iy * iy)) * 100. / lfBus.getNominalV(); // same dimension as Ik3
-                double angle = Math.atan2(iy, ix);
-                FortescueValue current = new FortescueValue(magnitude, angle);
 
                 String feederId = lfBus.getId() + "_" + feederResult.getFeeder().getId();
 
