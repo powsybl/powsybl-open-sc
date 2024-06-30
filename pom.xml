@@ -15,15 +15,38 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-parent</artifactId>
-        <version>16</version>
+        <version>18</version>
         <relativePath/>
     </parent>
 
     <artifactId>powsybl-open-sc</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>powsybl open sc</name>
+    <description>An open source short-circuit calculation based on PowSyBl</description>
+    <url>https://www.powsybl.org</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/powsybl/powsybl-open-sc.git</connection>
+        <developerConnection>scm:git:https://github.com/powsybl/powsybl-open-sc.git</developerConnection>
+        <url>https://github.com/powsybl/powsybl-open-sc</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Jean-Baptiste HEYBERGER</name>
+            <email>jean-baptiste.heyberger@rte-france.com</email>
+            <organization>RTE</organization>
+            <organizationUrl>https://www.rte-france.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Geoffroy JAMGOTCHIAN</name>
+            <email>geoffroy.jamgotchian@rte-france.com</email>
+            <organization>RTE</organization>
+            <organizationUrl>https://www.rte-france.com</organizationUrl>
+        </developer>
+    </developers>
 
     <modules>
         <module>sc-cgmes</module>
@@ -33,10 +56,9 @@
 
     <properties>
         <java.version>17</java.version>
-        <powsybl-core.version>6.3.1</powsybl-core.version>
-        <slf4j.version>2.0.13</slf4j.version>
-        <juint.version>5.10.2</juint.version>
-        <powsybl-open-loadflow.version>1.10.0</powsybl-open-loadflow.version>
+
+        <powsybl-core.version>6.3.2</powsybl-core.version>
+        <powsybl-open-loadflow.version>1.11.0</powsybl-open-loadflow.version>
     </properties>
 
     <profiles>
@@ -50,7 +72,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>${maven.javadoc.version}</version>
                         <executions>
                             <execution>
                                 <id>javadoc-aggregate-jar</id>
@@ -70,11 +91,34 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter</artifactId>
-                <version>${juint.version}</version>
-                <scope>test</scope>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-core</artifactId>
+                <version>${powsybl-core.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-open-loadflow</artifactId>
+                <version>${powsybl-open-loadflow.version}</version>
+            </dependency>
+            <!-- project artifacts -->
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>powsybl-open-sc-cgmes</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>powsybl-open-sc-extensions</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>powsybl-open-sc-implementation</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
+
 </project>
