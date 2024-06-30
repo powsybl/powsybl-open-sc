@@ -5,7 +5,7 @@ import com.powsybl.commons.extensions.ExtensionAdderProvider;
 import com.powsybl.iidm.network.Generator;
 
 @AutoService(ExtensionAdderProvider.class)
-public class GeneratorFortescueAdderImplProvider implements ExtensionAdderProvider<Generator, GeneratorFortescue, GeneratorFortescueAdder> {
+public class GeneratorFortescueAdderImplProvider2 implements ExtensionAdderProvider<Generator, GeneratorFortescue2, GeneratorFortescueAdder2> {
 
     @Override
     public String getImplementationName() {
@@ -14,16 +14,16 @@ public class GeneratorFortescueAdderImplProvider implements ExtensionAdderProvid
 
     @Override
     public String getExtensionName() {
-        return GeneratorFortescue.NAME;
+        return GeneratorFortescue2.NAME;
     }
 
     @Override
-    public Class<GeneratorFortescueAdder> getAdderClass() {
-        return GeneratorFortescueAdder.class;
+    public Class<GeneratorFortescueAdder2> getAdderClass() {
+        return GeneratorFortescueAdder2.class;
     }
 
     @Override
-    public GeneratorFortescueAdder newAdder(Generator generator) {
-        return new GeneratorFortescueAdder(generator);
+    public GeneratorFortescueAdder2 newAdder(Generator generator) {
+        return new GeneratorFortescueAdder2(generator);
     }
 }

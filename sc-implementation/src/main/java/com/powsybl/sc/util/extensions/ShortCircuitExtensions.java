@@ -7,6 +7,7 @@
 package com.powsybl.sc.util.extensions;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.GeneratorFortescue;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuit;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.openloadflow.network.*;
@@ -258,9 +259,9 @@ public final class ShortCircuitExtensions {
 
         GeneratorFortescue extensionFortescue = generator.getExtension(GeneratorFortescue.class);
         if (extensionFortescue != null) {
-            toGround = extensionFortescue.isToGround();
-            ro = extensionFortescue.getRo();
-            xo = extensionFortescue.getXo();
+            toGround = extensionFortescue.isGrounded();
+            ro = extensionFortescue.getRz();
+            xo = extensionFortescue.getXz();
         }
 
         GeneratorNorm extensionGenNorm = shortCircuitNormExtensions.getNormExtension(generator);
