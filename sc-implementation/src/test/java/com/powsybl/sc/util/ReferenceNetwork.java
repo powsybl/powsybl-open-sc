@@ -1261,7 +1261,7 @@ public final class ReferenceNetwork {
                 .withRz(rG1 * coeffRoG1)
                 .add();
         // extension used to get the default generator type
-        g1.newExtension(GeneratorFortescueAdder2.class)
+        g1.newExtension(GeneratorFortescueTypeAdder.class)
                 .add();
 
         q2.newExtension(GeneratorFortescueAdder.class)
@@ -1270,7 +1270,7 @@ public final class ReferenceNetwork {
                 .withXz(xFeeder2 * coeffF2Xo)
                 .add();
         // extension used to get the default generator type
-        q2.newExtension(GeneratorFortescueAdder2.class)
+        q2.newExtension(GeneratorFortescueTypeAdder.class)
                 .add();
 
         // transformers :

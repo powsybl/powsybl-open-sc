@@ -9,7 +9,7 @@ package com.powsybl.sc.implementation;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuit;
-import com.powsybl.sc.extensions.GeneratorFortescue2;
+import com.powsybl.sc.extensions.GeneratorFortescueType;
 import com.powsybl.sc.extensions.GeneratorShortCircuit2;
 import com.powsybl.sc.extensions.ThreeWindingsTransformerFortescue;
 import com.powsybl.sc.extensions.TwoWindingsTransformerFortescue;
@@ -412,10 +412,10 @@ public class ShortCircuitNormIec extends ShortCircuitNormNone {
 
         // Check if not feeder
         boolean isFeeder = false;
-        GeneratorFortescue2 extensions2 = gen.getExtension(GeneratorFortescue2.class);
+        GeneratorFortescueType extensions2 = gen.getExtension(GeneratorFortescueType.class);
         if (extensions2 != null) {
-            GeneratorFortescue2.GeneratorType genType = extensions2.getGeneratorType();
-            if (genType == GeneratorFortescue2.GeneratorType.FEEDER) {
+            GeneratorFortescueType.GeneratorType genType = extensions2.getGeneratorType();
+            if (genType == GeneratorFortescueType.GeneratorType.FEEDER) {
                 isFeeder = true;
             }
         }

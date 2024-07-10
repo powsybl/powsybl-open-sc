@@ -96,8 +96,8 @@ public class ShortCircuitNormTest {
                 .withGrounded(true)
                 .add();
 
-        g1.newExtension(GeneratorFortescueAdder2.class)
-                .withGeneratorType(GeneratorFortescue2.GeneratorType.FEEDER)
+        g1.newExtension(GeneratorFortescueTypeAdder.class)
+                .withGeneratorType(GeneratorFortescueType.GeneratorType.FEEDER)
                 .add();
 
         shortCircuitNormNone.applyNormToNetwork(network);
@@ -283,7 +283,7 @@ public class ShortCircuitNormTest {
                 .withGrounded(true)
                 .add();
 
-        g1.newExtension(GeneratorFortescueAdder2.class)
+        g1.newExtension(GeneratorFortescueTypeAdder.class)
                 .add();
 
         var t12 = substation1.newTwoWindingsTransformer()

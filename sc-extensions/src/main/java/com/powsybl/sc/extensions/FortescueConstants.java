@@ -29,5 +29,5 @@ public final class FortescueConstants {
     public static final WindingConnectionType DEFAULT_LEG2_CONNECTION_TYPE = WindingConnectionType.Y_GROUNDED; // TODO : check if default connection acceptable
     public static final WindingConnectionType DEFAULT_LEG3_CONNECTION_TYPE = WindingConnectionType.DELTA; // TODO : check if default connection acceptable
 
-    public static final GeneratorFortescue2.GeneratorType DEFAULT_GENERATOR_FORTESCUE_TYPE = GeneratorFortescue2.GeneratorType.ROTATING_MACHINE;
+    public static final GeneratorFortescueType.GeneratorType DEFAULT_GENERATOR_FORTESCUE_TYPE = GeneratorFortescueType.GeneratorType.ROTATING_MACHINE;
 }

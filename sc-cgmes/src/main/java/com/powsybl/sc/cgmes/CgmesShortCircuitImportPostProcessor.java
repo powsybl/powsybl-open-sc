@@ -106,8 +106,8 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
                     .withGrounded(grounded)
                     .add();
 
-            generator.newExtension(GeneratorFortescueAdder2.class)
-                    .withGeneratorType(GeneratorFortescue2.GeneratorType.FEEDER)
+            generator.newExtension(GeneratorFortescueTypeAdder.class)
+                    .withGeneratorType(GeneratorFortescueType.GeneratorType.FEEDER)
                     .add();
         }
     }
@@ -165,8 +165,8 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
                     .withGroundingR(0.)  // TODO : check if info available
                     .add();
 
-            generator.newExtension(GeneratorFortescueAdder2.class)
-                    .withGeneratorType(GeneratorFortescue2.GeneratorType.ROTATING_MACHINE)
+            generator.newExtension(GeneratorFortescueTypeAdder.class)
+                    .withGeneratorType(GeneratorFortescueType.GeneratorType.ROTATING_MACHINE)
                     .add();
         }
     }

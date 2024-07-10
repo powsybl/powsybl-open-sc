@@ -17,7 +17,7 @@ import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
-import com.powsybl.sc.extensions.GeneratorFortescueAdder2;
+import com.powsybl.sc.extensions.GeneratorFortescueTypeAdder;
 import com.powsybl.sc.extensions.LineFortescueAdder;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.shortcircuit.*;
@@ -167,7 +167,7 @@ public class ShortCircuitMonophasedTest {
                 .withXn(0)
                 .add();
 
-        network.getGenerator("GB").newExtension(GeneratorFortescueAdder2.class)
+        network.getGenerator("GB").newExtension(GeneratorFortescueTypeAdder.class)
                 .add();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();

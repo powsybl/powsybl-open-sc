@@ -1,9 +1,18 @@
+/**
+ * Copyright (c) 2022, Jean-Baptiste Heyberger & Geoffroy Jamgotchian
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 package com.powsybl.sc.extensions;
 
 import com.powsybl.commons.extensions.AbstractExtension;
 import com.powsybl.iidm.network.Generator;
 
-public class GeneratorFortescue2 extends AbstractExtension<Generator> {
+/**
+ * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at gmail.com>
+ */
+public class GeneratorFortescueType extends AbstractExtension<Generator> {
 
     public static final String NAME = "generatorFortescue";
 
@@ -20,7 +29,7 @@ public class GeneratorFortescue2 extends AbstractExtension<Generator> {
         return NAME;
     }
 
-    public GeneratorFortescue2(Generator generator, GeneratorType generatorType) {
+    public GeneratorFortescueType(Generator generator, GeneratorType generatorType) {
         super(generator);
         this.generatorType = generatorType;
 
