@@ -1,4 +1,4 @@
-# PowSyBl Open Short-Circuit Calculation
+# PowSyBl Open Short-Circuit
 
 [![Actions Status](https://github.com/powsybl/powsybl-open-sc/workflows/CI/badge.svg)](https://github.com/powsybl/powsybl-open-sc/actions)
 [![Coverage Status](https://sonarcloud.io/api/project_badges/measure?project=com.powsybl%3Apowsybl-open-sc&metric=coverage)](https://sonarcloud.io/component_measures?id=com.powsybl%3Apowsybl-open-sc&metric=coverage)
