@@ -22,14 +22,13 @@ Read more at https://www.powsybl.org !
 This project and everyone participating in it is under the [Linux Foundation Energy governance principles](https://www.powsybl.org/pages/overview/governance) and must respect the [PowSyBl Code of Conduct](https://github.com/powsybl/.github/blob/main/CODE_OF_CONDUCT.md).
 By participating, you are expected to uphold this code. Please report unacceptable behavior to [powsybl-tsc@lists.lfenergy.org](mailto:powsybl-tsc@lists.lfenergy.org).
 
-## PowSyBl vs PowSyBl Open Short-Circuit Calculation
+## PowSyBl vs PowSyBl Open Short-Circuit
 
-PowSyBl Open Short-Circuit Calculation provides an open-source implementation
-of the [Shot-Circuit API from PowSyBl Core](https://www.powsybl.org/pages/documentation/simulation/shortcircuitanalysis/).
+PowSyBl Open Short-Circuit provides an open-source implementation of the [Shot-Circuit API from PowSyBl Core](https://www.powsybl.org/pages/documentation/simulation/shortcircuitanalysis/).
 
-## Contributing to PowSyBl Open Short-Circuit Calculation
+## Contributing to PowSyBl Open Short-Circuit
 
-PowSyBl Open Short-Circuit could support more features.
+PowSyBl Open Short-Circuit could support more features, so we invite the community to contribute.
 
 To report bugs or if you need more features, visit our [GitHub](https://github.com/powsybl/powsybl-open-sc/issues) and
 do not hesitate to write new issues or open pull requests.
