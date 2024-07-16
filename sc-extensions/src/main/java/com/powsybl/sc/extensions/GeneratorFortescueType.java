@@ -14,7 +14,7 @@ import com.powsybl.iidm.network.Generator;
  */
 public class GeneratorFortescueType extends AbstractExtension<Generator> {
 
-    public static final String NAME = "generatorFortescue";
+    public static final String NAME = "generatorFortescueType";
 
     public enum GeneratorType {
         UNKNOWN,

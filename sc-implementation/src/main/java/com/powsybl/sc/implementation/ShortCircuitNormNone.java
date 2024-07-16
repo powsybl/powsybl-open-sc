@@ -141,9 +141,9 @@ public class ShortCircuitNormNone implements ShortCircuitNorm {
     public void applyNormToGenerators(Network network) {
         // Work on generators
         for (Generator gen : network.getGenerators()) {
-            GeneratorFortescueType extensions2 = gen.getExtension(GeneratorFortescueType.class);
-            if (extensions2 != null) {
-                GeneratorFortescueType.GeneratorType genType = extensions2.getGeneratorType();
+            GeneratorFortescueType extensionGenType = gen.getExtension(GeneratorFortescueType.class);
+            if (extensionGenType != null) {
+                GeneratorFortescueType.GeneratorType genType = extensionGenType.getGeneratorType();
                 if (genType == GeneratorFortescueType.GeneratorType.FEEDER) {
                     //adjustGenValuesWithFeederInputs(gen);
                 } else {
