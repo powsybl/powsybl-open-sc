@@ -10,6 +10,7 @@ package com.powsybl.sc.implementation;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
@@ -17,7 +18,7 @@ import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
-import com.powsybl.sc.extensions.GeneratorFortescueAdder;
+import com.powsybl.sc.extensions.GeneratorFortescueTypeAdder;
 import com.powsybl.sc.extensions.LineFortescueAdder;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.shortcircuit.*;
@@ -160,8 +161,14 @@ public class ShortCircuitMonophasedTest {
         LoadFlowResult resultntg = loadFlowRunner.run(network, parameters);
 
         network.getGenerator("GB").newExtension(GeneratorFortescueAdder.class)
-                .withToGround(true)
-                .withXo(130) // initialized with subtransXd by default
+                .withGrounded(true)
+                .withXz(130) // initialized with subtransXd by default
+                .withRz(0)
+                .withRn(0)
+                .withXn(0)
+                .add();
+
+        network.getGenerator("GB").newExtension(GeneratorFortescueTypeAdder.class)
                 .add();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();

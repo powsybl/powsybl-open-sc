@@ -8,6 +8,7 @@
 package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuit;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
@@ -93,8 +94,11 @@ public class ShortCircuitNormTest {
                 .add();
 
         g1.newExtension(GeneratorFortescueAdder.class)
-                .withToGround(true)
-                .withGeneratorType(GeneratorFortescue.GeneratorType.FEEDER)
+                .withGrounded(true)
+                .add();
+
+        g1.newExtension(GeneratorFortescueTypeAdder.class)
+                .withGeneratorType(GeneratorFortescueType.GeneratorType.FEEDER)
                 .add();
 
         shortCircuitNormNone.applyNormToNetwork(network);
@@ -277,7 +281,10 @@ public class ShortCircuitNormTest {
                 .add();
 
         g1.newExtension(GeneratorFortescueAdder.class)
-                .withToGround(true)
+                .withGrounded(true)
+                .add();
+
+        g1.newExtension(GeneratorFortescueTypeAdder.class)
                 .add();
 
         var t12 = substation1.newTwoWindingsTransformer()

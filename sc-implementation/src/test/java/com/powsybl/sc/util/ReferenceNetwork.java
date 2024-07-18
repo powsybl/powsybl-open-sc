@@ -8,6 +8,7 @@
 package com.powsybl.sc.util;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.sc.extensions.*;
@@ -1256,14 +1257,21 @@ public final class ReferenceNetwork {
                 .add();
 
         g1.newExtension(GeneratorFortescueAdder.class)
-                .withToGround(true)
-                .withXo(xG1 * coeffXoG1)
-                .withRo(rG1 * coeffRoG1)
+                .withGrounded(true)
+                .withXz(xG1 * coeffXoG1)
+                .withRz(rG1 * coeffRoG1)
                 .add();
+        // extension used to get the default generator type
+        g1.newExtension(GeneratorFortescueTypeAdder.class)
+                .add();
+
         q2.newExtension(GeneratorFortescueAdder.class)
-                .withToGround(true)
-                .withRo(rFeeder2 * coeffF2Ro)
-                .withXo(xFeeder2 * coeffF2Xo)
+                .withGrounded(true)
+                .withRz(rFeeder2 * coeffF2Ro)
+                .withXz(xFeeder2 * coeffF2Xo)
+                .add();
+        // extension used to get the default generator type
+        q2.newExtension(GeneratorFortescueTypeAdder.class)
                 .add();
 
         // transformers :

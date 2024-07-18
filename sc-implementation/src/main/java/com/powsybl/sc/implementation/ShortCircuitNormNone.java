@@ -8,7 +8,7 @@
 package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.*;
-import com.powsybl.sc.extensions.GeneratorFortescue;
+import com.powsybl.sc.extensions.GeneratorFortescueType;
 import com.powsybl.sc.util.extensions.GeneratorNorm;
 import com.powsybl.sc.util.extensions.ShortCircuitNormExtensions;
 import com.powsybl.sc.util.extensions.ThreeWindingsTransformerNorm;
@@ -141,11 +141,10 @@ public class ShortCircuitNormNone implements ShortCircuitNorm {
     public void applyNormToGenerators(Network network) {
         // Work on generators
         for (Generator gen : network.getGenerators()) {
-
-            GeneratorFortescue extensions2 = gen.getExtension(GeneratorFortescue.class);
-            if (extensions2 != null) {
-                GeneratorFortescue.GeneratorType genType = extensions2.getGeneratorType();
-                if (genType == GeneratorFortescue.GeneratorType.FEEDER) {
+            GeneratorFortescueType extensionGenType = gen.getExtension(GeneratorFortescueType.class);
+            if (extensionGenType != null) {
+                GeneratorFortescueType.GeneratorType genType = extensionGenType.getGeneratorType();
+                if (genType == GeneratorFortescueType.GeneratorType.FEEDER) {
                     //adjustGenValuesWithFeederInputs(gen);
                 } else {
                     // this includes standard rotating machines

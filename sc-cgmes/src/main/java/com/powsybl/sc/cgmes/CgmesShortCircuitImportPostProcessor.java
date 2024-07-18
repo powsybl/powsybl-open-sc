@@ -11,6 +11,7 @@ import com.google.auto.service.AutoService;
 import com.powsybl.cgmes.conversion.CgmesImportPostProcessor;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.sc.extensions.*;
@@ -99,12 +100,15 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
                     .add();
 
             generator.newExtension(GeneratorFortescueAdder.class)
-                    .withRo(roOverR * rq)
-                    .withXo(xoOverX * xq)
-                    .withRi(0.)
-                    .withXi(0.)
-                    .withToGround(grounded)
-                    .withGeneratorType(GeneratorFortescue.GeneratorType.FEEDER)
+                    .withRz(roOverR * rq)
+                    .withXz(xoOverX * xq)
+                    .withRn(0.)
+                    .withXn(0.)
+                    .withGrounded(grounded)
+                    .add();
+
+            generator.newExtension(GeneratorFortescueTypeAdder.class)
+                    .withGeneratorType(GeneratorFortescueType.GeneratorType.FEEDER)
                     .add();
         }
     }
@@ -154,13 +158,16 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
                     .add();
 
             generator.newExtension(GeneratorFortescueAdder.class)
-                    .withRo(r0)
-                    .withXo(x0)
-                    .withRi(0.)
-                    .withXi(0.)
-                    .withGeneratorType(GeneratorFortescue.GeneratorType.ROTATING_MACHINE)
-                    .withToGround(earthing)
+                    .withRz(r0)
+                    .withXz(x0)
+                    .withRn(0.)
+                    .withXn(0.)
+                    .withGrounded(earthing)
                     .withGroundingR(0.)  // TODO : check if info available
+                    .add();
+
+            generator.newExtension(GeneratorFortescueTypeAdder.class)
+                    .withGeneratorType(GeneratorFortescueType.GeneratorType.ROTATING_MACHINE)
                     .add();
         }
     }
