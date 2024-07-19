@@ -13,6 +13,7 @@ import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
+import com.powsybl.iidm.network.extensions.LineFortescueAdder;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.sc.extensions.*;
 import com.powsybl.triplestore.api.PropertyBag;
@@ -206,8 +207,8 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
             Line line = network.getLine(id);
             if (line != null) {
                 line.newExtension(LineFortescueAdder.class)
-                        .withRo(r0)
-                        .withXo(x0)
+                        .withRz(r0)
+                        .withXz(x0)
                         .add();
             } else {
                 DanglingLine danglingLine = network.getDanglingLine(id);

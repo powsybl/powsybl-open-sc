@@ -10,6 +10,7 @@ package com.powsybl.sc.util;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
+import com.powsybl.iidm.network.extensions.LineFortescueAdder;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.sc.extensions.*;
 
@@ -671,20 +672,20 @@ public final class ReferenceNetwork {
         //additional data
 
         l1.newExtension(LineFortescueAdder.class)
-                .withRo(coeffRoL1 * rL1)
-                .withXo(coeffXoL1 * xL1)
+                .withRz(coeffRoL1 * rL1)
+                .withXz(coeffXoL1 * xL1)
                 .add();
         l2.newExtension(LineFortescueAdder.class)
-                .withRo(coeffRoL2 * rL2)
-                .withXo(coeffXoL2 * xL2)
+                .withRz(coeffRoL2 * rL2)
+                .withXz(coeffXoL2 * xL2)
                 .add();
         l3.newExtension(LineFortescueAdder.class)
-                .withRo(coeffRoL3 * rL3)
-                .withXo(coeffXoL3 * xL3)
+                .withRz(coeffRoL3 * rL3)
+                .withXz(coeffXoL3 * xL3)
                 .add();
         l4.newExtension(LineFortescueAdder.class)
-                .withRo(coeffRoL4 * rL4)
-                .withXo(coeffXoL4 * xL4)
+                .withRz(coeffRoL4 * rL4)
+                .withXz(coeffXoL4 * xL4)
                 .add();
 
         t1.newExtension(TwoWindingsTransformerFortescueAdder.class)
@@ -1317,28 +1318,28 @@ public final class ReferenceNetwork {
 
         // Lines :
         l1.newExtension(LineFortescueAdder.class)
-                .withRo(coeffRoL1 * rL1)
-                .withXo(coeffXoL1 * xL1)
+                .withRz(coeffRoL1 * rL1)
+                .withXz(coeffXoL1 * xL1)
                 .add();
         l2.newExtension(LineFortescueAdder.class)
-                .withRo(coeffRoL2 * rL2)
-                .withXo(coeffXoL2 * xL2)
+                .withRz(coeffRoL2 * rL2)
+                .withXz(coeffXoL2 * xL2)
                 .add();
         l3.newExtension(LineFortescueAdder.class)
-                .withRo(coeffRoL3 * rL3)
-                .withXo(coeffXoL3 * xL3)
+                .withRz(coeffRoL3 * rL3)
+                .withXz(coeffXoL3 * xL3)
                 .add();
         l4.newExtension(LineFortescueAdder.class)
-                .withRo(coeffRoL4 * rL4)
-                .withXo(coeffXoL4 * xL4)
+                .withRz(coeffRoL4 * rL4)
+                .withXz(coeffXoL4 * xL4)
                 .add();
         l5.newExtension(LineFortescueAdder.class)
-                .withRo(coeffRoL5 * rL5)
-                .withXo(coeffXoL5 * xL5)
+                .withRz(coeffRoL5 * rL5)
+                .withXz(coeffXoL5 * xL5)
                 .add();
         l6.newExtension(LineFortescueAdder.class)
-                .withRo(coeffRoL6 * rL6)
-                .withXo(coeffXoL6 * xL6)
+                .withRz(coeffRoL6 * rL6)
+                .withXz(coeffXoL6 * xL6)
                 .add();
 
         return network;

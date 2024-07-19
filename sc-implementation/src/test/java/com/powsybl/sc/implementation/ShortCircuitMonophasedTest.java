@@ -12,6 +12,7 @@ import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
+import com.powsybl.iidm.network.extensions.LineFortescueAdder;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
@@ -19,7 +20,6 @@ import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.extensions.GeneratorFortescueTypeAdder;
-import com.powsybl.sc.extensions.LineFortescueAdder;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.shortcircuit.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -343,10 +343,12 @@ public class ShortCircuitMonophasedTest {
                 .add();
 
         babp.newExtension(LineFortescueAdder.class)
-                .withXo(coeffXo1 * xd1)
+                .withRz(0.0)
+                .withXz(coeffXo1 * xd1)
                 .add();
         bpbb.newExtension(LineFortescueAdder.class)
-                .withXo(coeffXo2 * xd2)
+                .withRz(0.0)
+                .withXz(coeffXo2 * xd2)
                 .add();
 
         return network;

@@ -10,6 +10,7 @@ package com.powsybl.sc.util.extensions;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorFortescue;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuit;
+import com.powsybl.iidm.network.extensions.LineFortescue;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.extensions.*;
@@ -181,8 +182,8 @@ public final class ShortCircuitExtensions {
         double xo = line.getX() / zBase;
         LineFortescue extensions = line.getExtension(LineFortescue.class);
         if (extensions != null) {
-            ro = extensions.getRo() / zBase;
-            xo = extensions.getXo() / zBase;
+            ro = extensions.getRz() / zBase;
+            xo = extensions.getXz() / zBase;
         }
 
         lfBranch.setProperty(PROPERTY_SHORT_CIRCUIT, new ScLine(ro, xo));
@@ -321,5 +322,4 @@ public final class ShortCircuitExtensions {
 
         lfBus.setProperty(PROPERTY_SHORT_CIRCUIT, new ScLoad(gLoads, bLoads)); // for now load extension is attached to the bus
     }
-
 }
