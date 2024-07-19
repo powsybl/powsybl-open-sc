@@ -42,6 +42,7 @@
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-open-sc-extensions</artifactId>
         </dependency>
+        <!-- test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
