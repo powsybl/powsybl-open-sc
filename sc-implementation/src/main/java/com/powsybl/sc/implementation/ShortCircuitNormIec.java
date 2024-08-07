@@ -13,7 +13,7 @@ import com.powsybl.iidm.network.extensions.GeneratorShortCircuit;
 import com.powsybl.iidm.network.extensions.ThreeWindingsTransformerFortescue;
 import com.powsybl.sc.extensions.GeneratorFortescueType;
 import com.powsybl.sc.extensions.GeneratorShortCircuit2;
-import com.powsybl.sc.extensions.TwoWindingsTransformerFortescue;
+import com.powsybl.sc.extensions.TwoWindingsTransformerFortescuePartOfGu;
 import com.powsybl.sc.util.extensions.TwoWindingsTransformerNorm;
 
 import java.util.ArrayList;
@@ -269,7 +269,7 @@ public class ShortCircuitNormIec extends ShortCircuitNormNone {
 
     public Generator getAssociatedGenerator(Network network, TwoWindingsTransformer t2w) {
 
-        TwoWindingsTransformerFortescue extension = t2w.getExtension(TwoWindingsTransformerFortescue.class);
+        TwoWindingsTransformerFortescuePartOfGu extension = t2w.getExtension(TwoWindingsTransformerFortescuePartOfGu.class);
         Generator tfoGenerator = null;
         boolean isGen = false;
 

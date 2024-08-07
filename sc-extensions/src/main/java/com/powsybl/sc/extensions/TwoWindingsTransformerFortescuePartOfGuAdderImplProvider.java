@@ -15,8 +15,8 @@ import com.powsybl.iidm.network.TwoWindingsTransformer;
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at gmail.com>
  */
 @AutoService(ExtensionAdderProvider.class)
-public class TwoWindingsTransformerFortescueAdderImplProvider
-        implements ExtensionAdderProvider<TwoWindingsTransformer, TwoWindingsTransformerFortescue, TwoWindingsTransformerFortescueAdder> {
+public class TwoWindingsTransformerFortescuePartOfGuAdderImplProvider
+        implements ExtensionAdderProvider<TwoWindingsTransformer, TwoWindingsTransformerFortescuePartOfGu, TwoWindingsTransformerFortescuePartOfGuAdder> {
 
     @Override
     public String getImplementationName() {
@@ -25,16 +25,16 @@ public class TwoWindingsTransformerFortescueAdderImplProvider
 
     @Override
     public String getExtensionName() {
-        return TwoWindingsTransformerFortescue.NAME;
+        return TwoWindingsTransformerFortescuePartOfGu.NAME;
     }
 
     @Override
-    public Class<TwoWindingsTransformerFortescueAdder> getAdderClass() {
-        return TwoWindingsTransformerFortescueAdder.class;
+    public Class<TwoWindingsTransformerFortescuePartOfGuAdder> getAdderClass() {
+        return TwoWindingsTransformerFortescuePartOfGuAdder.class;
     }
 
     @Override
-    public TwoWindingsTransformerFortescueAdder newAdder(TwoWindingsTransformer twt) {
-        return new TwoWindingsTransformerFortescueAdder(twt);
+    public TwoWindingsTransformerFortescuePartOfGuAdder newAdder(TwoWindingsTransformer twt) {
+        return new TwoWindingsTransformerFortescuePartOfGuAdder(twt);
     }
 }

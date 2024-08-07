@@ -8,12 +8,10 @@
 package com.powsybl.sc.util.extensions;
 
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.GeneratorFortescue;
-import com.powsybl.iidm.network.extensions.GeneratorShortCircuit;
-import com.powsybl.iidm.network.extensions.ThreeWindingsTransformerFortescue;
-import com.powsybl.iidm.network.extensions.WindingConnectionType;
+import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.extensions.*;
+import com.powsybl.sc.extensions.LineFortescue;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
@@ -211,16 +209,16 @@ public final class ShortCircuitExtensions {
         double x2Ground = 0.;
         var extensions = twt.getExtension(TwoWindingsTransformerFortescue.class);
         if (extensions != null) {
-            ro = extensions.getRo() / zBase;
-            xo = extensions.getXo() / zBase;
+            ro = extensions.getRz() / zBase;
+            xo = extensions.getXz() / zBase;
             freeFluxes = extensions.isFreeFluxes();
-            leg1ConnectionType = extensions.getLeg1ConnectionType();
-            leg2ConnectionType = extensions.getLeg2ConnectionType();
+            leg1ConnectionType = extensions.getConnectionType1();
+            leg2ConnectionType = extensions.getConnectionType2();
 
-            r1Ground = extensions.getR1Ground() / zBase;
-            x1Ground = extensions.getX1Ground() / zBase;
-            r2Ground = extensions.getR2Ground() / zBase;
-            x2Ground = extensions.getX2Ground() / zBase;
+            r1Ground = extensions.getGroundingR1() / zBase;
+            x1Ground = extensions.getGroundingX1() / zBase;
+            r2Ground = extensions.getGroundingR2() / zBase;
+            x2Ground = extensions.getGroundingX2() / zBase;
         }
 
         TwoWindingsTransformerNorm t2wNormExtension = shortCircuitNormExtensions.getNormExtension(twt);

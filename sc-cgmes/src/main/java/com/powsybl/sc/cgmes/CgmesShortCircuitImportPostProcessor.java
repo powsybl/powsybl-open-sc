@@ -14,8 +14,7 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.sc.extensions.*;
 import com.powsybl.sc.extensions.LineFortescueAdder;
-import com.powsybl.sc.extensions.TwoWindingsTransformerFortescue;
-import com.powsybl.sc.extensions.TwoWindingsTransformerFortescueAdder;
+import com.powsybl.sc.extensions.TwoWindingsTransformerFortescuePartOfGuAdder;
 import com.powsybl.triplestore.api.PropertyBag;
 import com.powsybl.triplestore.api.QueryCatalog;
 import com.powsybl.triplestore.api.TripleStore;
@@ -230,19 +229,20 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
             TwoWindingsTransformer t2wt = network.getTwoWindingsTransformer(id);
             if (t2wt != null) {
                 TwoWindingsTransformerFortescue extension = t2wt.getExtension(TwoWindingsTransformerFortescue.class);
+                t2wt.newExtension(TwoWindingsTransformerFortescuePartOfGuAdder.class)
+                        .withIsPartOfGeneratingUnit(isPartOfGeneratingUnit)
+                        .add();
                 if (extension == null) {
                     t2wt.newExtension(TwoWindingsTransformerFortescueAdder.class)
-                            .withIsPartOfGeneratingUnit(isPartOfGeneratingUnit)
-                            .withRo(t2wt.getR())
-                            .withXo(t2wt.getX())
+                            .withRz(t2wt.getR())
+                            .withXz(t2wt.getX())
                             .add();
                 } else {
-                    extension.setPartOfGeneratingUnit(isPartOfGeneratingUnit);
                     Pair<Double, Double> roxo = tmpExtensionToRoXo.get(extension);
                     double ro = roxo.getFirst();
                     double xo = roxo.getSecond();
-                    extension.setRo(ro);
-                    extension.setXo(xo);
+                    extension.setRz(ro);
+                    extension.setXz(xo);
 
                 }
             }
@@ -307,11 +307,11 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
                     tmpR0 = tmpR0 + roRatedU2;
                     tmpX0 = tmpX0 + xoRatedU2;
 
-                    extension.setLeg1ConnectionType(legConnectionType);
+                    extension.setConnectionType1(legConnectionType);
 
                     if (grounded) {
-                        extension.setR1Ground(3. * rground * rho2); //ZoT_ground = 3 * Zo_Ground , we put in input the rated value at side 2 ready to be added to R and X of transformer
-                        extension.setX1Ground(3. * xground * rho2);
+                        extension.setGroundingR1(3. * rground * rho2); //ZoT_ground = 3 * Zo_Ground , we put in input the rated value at side 2 ready to be added to R and X of transformer
+                        extension.setGroundingX1(3. * xground * rho2);
                     }
 
                 } else if (endNumber == 2) {
@@ -320,11 +320,11 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
                     tmpR0 = tmpR0 + r0;
                     tmpX0 = tmpX0 + x0;
 
-                    extension.setLeg2ConnectionType(legConnectionType);
+                    extension.setConnectionType2(legConnectionType);
 
                     if (grounded) {
-                        extension.setR2Ground(3. * rground); //ZoT_ground = 3 * Zo_Ground , we put in input the rated value at side 2 ready to be added to R and X of transformer
-                        extension.setX2Ground(3. * xground);
+                        extension.setGroundingR2(3. * rground); //ZoT_ground = 3 * Zo_Ground , we put in input the rated value at side 2 ready to be added to R and X of transformer
+                        extension.setGroundingX2(3. * xground);
                     }
 
                 } else {

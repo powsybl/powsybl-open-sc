@@ -8,11 +8,9 @@
 package com.powsybl.sc.util;
 
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
-import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
-import com.powsybl.iidm.network.extensions.ThreeWindingsTransformerFortescueAdder;
-import com.powsybl.iidm.network.extensions.WindingConnectionType;
+import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.sc.extensions.*;
+import com.powsybl.sc.extensions.LineFortescueAdder;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -689,16 +687,16 @@ public final class ReferenceNetwork {
                 .add();
 
         t1.newExtension(TwoWindingsTransformerFortescueAdder.class)
-                .withRo(coeffRoT1 * rT1)
-                .withXo(coeffXoT1 * xT1)
-                .withLeg1ConnectionType(WindingConnectionType.DELTA)
-                .withLeg2ConnectionType(WindingConnectionType.Y_GROUNDED)
+                .withRz(coeffRoT1 * rT1)
+                .withXz(coeffXoT1 * xT1)
+                .withConnectionType1(WindingConnectionType.DELTA)
+                .withConnectionType2(WindingConnectionType.Y_GROUNDED)
                 .add();
         t2.newExtension(TwoWindingsTransformerFortescueAdder.class)
-                .withRo(coeffRoT2 * rT2)
-                .withXo(coeffXoT2 * xT2)
-                .withLeg1ConnectionType(WindingConnectionType.DELTA)
-                .withLeg2ConnectionType(WindingConnectionType.Y_GROUNDED)
+                .withRz(coeffRoT2 * rT2)
+                .withXz(coeffXoT2 * xT2)
+                .withConnectionType1(WindingConnectionType.DELTA)
+                .withConnectionType2(WindingConnectionType.Y_GROUNDED)
                 .add();
 
         return network;
@@ -1304,16 +1302,16 @@ public final class ReferenceNetwork {
                 .add();
 
         t5.newExtension(TwoWindingsTransformerFortescueAdder.class)
-                .withXo(xT5)
-                .withRo(rT5)
-                .withLeg1ConnectionType(WindingConnectionType.Y)
-                .withLeg2ConnectionType(WindingConnectionType.Y)
+                .withXz(xT5)
+                .withRz(rT5)
+                .withConnectionType1(WindingConnectionType.Y)
+                .withConnectionType2(WindingConnectionType.Y)
                 .add();
         t6.newExtension(TwoWindingsTransformerFortescueAdder.class)
-                .withXo(xT6)
-                .withRo(rT6)
-                .withLeg1ConnectionType(WindingConnectionType.Y)
-                .withLeg2ConnectionType(WindingConnectionType.Y_GROUNDED)
+                .withXz(xT6)
+                .withRz(rT6)
+                .withConnectionType1(WindingConnectionType.Y)
+                .withConnectionType2(WindingConnectionType.Y_GROUNDED)
                 .add();
 
         // Lines :
