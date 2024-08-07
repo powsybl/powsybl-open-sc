@@ -10,6 +10,7 @@ package com.powsybl.sc.util;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
+import com.powsybl.iidm.network.extensions.ThreeWindingsTransformerFortescueAdder;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.sc.extensions.*;
 
@@ -1276,30 +1277,30 @@ public final class ReferenceNetwork {
 
         // transformers :
         twt3.newExtension(ThreeWindingsTransformerFortescueAdder.class)
-                .withLeg1ConnectionType(WindingConnectionType.Y_GROUNDED)
-                .withLeg2ConnectionType(WindingConnectionType.Y)
-                .withLeg3ConnectionType(WindingConnectionType.DELTA)
-                .withLeg1Ro(twt3.getLeg1().getR())
-                .withLeg1Xo(twt3.getLeg1().getX())
-                .withLeg2Ro(twt3.getLeg2().getR())
-                .withLeg2Xo(twt3.getLeg2().getX())
-                .withLeg3Ro(twt3.getLeg3().getR())
-                .withLeg3Xo(twt3.getLeg3().getX())
+                .leg1().withConnectionType(WindingConnectionType.Y_GROUNDED)
+                .leg1().withXz(twt3.getLeg1().getX())
+                .leg1().withRz(twt3.getLeg1().getR())
+                .leg2().withConnectionType(WindingConnectionType.Y)
+                .leg2().withXz(twt3.getLeg2().getX())
+                .leg2().withRz(twt3.getLeg2().getR())
+                .leg3().withConnectionType(WindingConnectionType.DELTA)
+                .leg3().withXz(twt3.getLeg3().getX())
+                .leg3().withRz(twt3.getLeg3().getR())
                 .add();
 
         twt4.newExtension(ThreeWindingsTransformerFortescueAdder.class)
-                .withLeg1FreeFluxes(true)
-                .withLeg1ConnectionType(WindingConnectionType.Y)
-                .withLeg1Ro(twt4.getLeg1().getR())
-                .withLeg1Xo(twt4.getLeg1().getX())
-                .withLeg2FreeFluxes(true)
-                .withLeg2Ro(twt4.getLeg2().getR() * coeffRoT4)
-                .withLeg2Xo(twt4.getLeg2().getX() * coeffXoT4)
-                .withLeg2ConnectionType(WindingConnectionType.Y_GROUNDED)
-                .withLeg3FreeFluxes(true)
-                .withLeg3Ro(twt4.getLeg3().getR() * coeffRoT4)
-                .withLeg3Xo(twt4.getLeg3().getX() * coeffXoT4)
-                .withLeg3ConnectionType(WindingConnectionType.DELTA)
+                .leg1().withConnectionType(WindingConnectionType.Y)
+                .leg1().withXz(twt4.getLeg1().getX())
+                .leg1().withRz(twt4.getLeg1().getR())
+                .leg1().withFreeFluxes(true)
+                .leg2().withConnectionType(WindingConnectionType.Y_GROUNDED)
+                .leg2().withXz(twt4.getLeg2().getX() * coeffXoT4)
+                .leg2().withRz(twt4.getLeg2().getR() * coeffRoT4)
+                .leg2().withFreeFluxes(true)
+                .leg3().withConnectionType(WindingConnectionType.DELTA)
+                .leg3().withXz(twt4.getLeg3().getX() * coeffXoT4)
+                .leg3().withRz(twt4.getLeg3().getR() * coeffRoT4)
+                .leg3().withFreeFluxes(true)
                 .add();
 
         t5.newExtension(TwoWindingsTransformerFortescueAdder.class)

@@ -10,9 +10,9 @@ package com.powsybl.sc.implementation;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuit;
+import com.powsybl.iidm.network.extensions.ThreeWindingsTransformerFortescue;
 import com.powsybl.sc.extensions.GeneratorFortescueType;
 import com.powsybl.sc.extensions.GeneratorShortCircuit2;
-import com.powsybl.sc.extensions.ThreeWindingsTransformerFortescue;
 import com.powsybl.sc.extensions.TwoWindingsTransformerFortescue;
 import com.powsybl.sc.util.extensions.TwoWindingsTransformerNorm;
 
@@ -185,12 +185,12 @@ public class ShortCircuitNormIec extends ShortCircuitNormNone {
         }
 
         // dealing homopolar part
-        double ra0 = extension.getLeg1().getLegRo();
-        double xa0 = extension.getLeg1().getLegXo();
-        double rb0 = extension.getLeg2().getLegRo();
-        double xb0 = extension.getLeg2().getLegXo();
-        double rc0 = extension.getLeg3().getLegRo();
-        double xc0 = extension.getLeg3().getLegXo();
+        double ra0 = extension.getLeg1().getRz();
+        double xa0 = extension.getLeg1().getXz();
+        double rb0 = extension.getLeg2().getRz();
+        double xb0 = extension.getLeg2().getXz();
+        double rc0 = extension.getLeg3().getRz();
+        double xc0 = extension.getLeg3().getXz();
 
         double ra0T3k = 0.5 * (ktabIec * (ra0 + rb0) + ktacIec * (ra0 + rc0) - ktbcIec * (rb0 + rc0));
         double xa0T3k = 0.5 * (ktabIec * (xa0 + xb0) + ktacIec * (xa0 + xc0) - ktbcIec * (xb0 + xc0));

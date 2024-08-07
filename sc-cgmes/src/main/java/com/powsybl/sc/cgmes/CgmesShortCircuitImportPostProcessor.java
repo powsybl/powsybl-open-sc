@@ -11,10 +11,11 @@ import com.google.auto.service.AutoService;
 import com.powsybl.cgmes.conversion.CgmesImportPostProcessor;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
-import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
-import com.powsybl.iidm.network.extensions.WindingConnectionType;
+import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.sc.extensions.*;
+import com.powsybl.sc.extensions.LineFortescueAdder;
+import com.powsybl.sc.extensions.TwoWindingsTransformerFortescue;
+import com.powsybl.sc.extensions.TwoWindingsTransformerFortescueAdder;
 import com.powsybl.triplestore.api.PropertyBag;
 import com.powsybl.triplestore.api.QueryCatalog;
 import com.powsybl.triplestore.api.TripleStore;
@@ -349,15 +350,15 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
                     if (endNumber == 1) {
                         t3wt.getLeg1().setRatedS(ratedS);
                         setLegRoXoCoefs(t3wt.getLeg1(), extension.getLeg1(), r0, x0, ratedU02);
-                        extension.getLeg1().setLegConnectionType(legConnectionType);
+                        extension.getLeg1().setConnectionType(legConnectionType);
                     } else if (endNumber == 2) {
                         t3wt.getLeg2().setRatedS(ratedS);
                         setLegRoXoCoefs(t3wt.getLeg2(), extension.getLeg2(), r0, x0, ratedU02);
-                        extension.getLeg2().setLegConnectionType(legConnectionType);
+                        extension.getLeg2().setConnectionType(legConnectionType);
                     } else if (endNumber == 3) {
                         t3wt.getLeg3().setRatedS(ratedS);
                         setLegRoXoCoefs(t3wt.getLeg3(), extension.getLeg3(), r0, x0, ratedU02);
-                        extension.getLeg3().setLegConnectionType(legConnectionType);
+                        extension.getLeg3().setConnectionType(legConnectionType);
                     } else {
                         throw new PowsyblException("incorrect end number for 3 windings transformer end '" + id + "'");
                     }
@@ -369,12 +370,12 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
         }
     }
 
-    public void setLegRoXoCoefs(ThreeWindingsTransformer.Leg leg, ThreeWindingsTransformerFortescue.T3wLeg extLeg, double r0, double x0, double ratedU02) {
+    public void setLegRoXoCoefs(ThreeWindingsTransformer.Leg leg, ThreeWindingsTransformerFortescue.LegFortescue extLeg, double r0, double x0, double ratedU02) {
 
         double ratedRo = r0 * ratedU02 / leg.getRatedU() / leg.getRatedU();
         double ratedXo = x0 * ratedU02 / leg.getRatedU() / leg.getRatedU();
-        extLeg.setLegRo(ratedRo);
-        extLeg.setLegXo(ratedXo);
+        extLeg.setRz(ratedRo);
+        extLeg.setXz(ratedXo);
     }
 
     @Override
