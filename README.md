@@ -24,7 +24,7 @@ By participating, you are expected to uphold this code. Please report unacceptab
 
 ## PowSyBl vs PowSyBl Open Short-Circuit
 
-PowSyBl Open Short-Circuit provides an open-source implementation of the [Shot-Circuit API from PowSyBl Core](https://www.powsybl.org/pages/documentation/simulation/shortcircuitanalysis/).
+PowSyBl Open Short-Circuit provides an open-source implementation of the [Shot-Circuit API from PowSyBl Core](https://powsybl.readthedocs.io/projects/powsybl-core/en/stable/simulation/shortcircuit/index.html).
 
 ## Contributing to PowSyBl Open Short-Circuit
 
