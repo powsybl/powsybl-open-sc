@@ -48,8 +48,6 @@ public class ShortCircuitNormTest {
         assertEquals(0.1950430724873738, ks, 0.000001);
 
         shortCircuitNormIec.applyNormToNetwork(network);
-        //TwoWindingsTransformerFortescue extensionT2w = t2w.getExtension(TwoWindingsTransformerFortescue.class);
-        TwoWindingsTransformerFortescuePartOfGu extension2T2w = t2w.getExtension(TwoWindingsTransformerFortescuePartOfGu.class);
         TwoWindingsTransformerNorm extensionT2wNorm = shortCircuitNormIec.getNormExtensions().getNormExtension(t2w);
         double knormT2w = extensionT2wNorm.getkNorm();
         assertEquals(0.1950430724873738, knormT2w, 0.000001);
@@ -58,7 +56,7 @@ public class ShortCircuitNormTest {
         double kg = extensionGenNorm.getkG();
         assertEquals(0.1950430724873738, kg, 0.000001);
 
-        extension2T2w.setPartOfGeneratingUnit(false);
+        t2w.setProperty("isPartOfGeneratorUnit", String.valueOf(false));
         shortCircuitNormIec.applyNormToT2W(network);
         shortCircuitNormIec.applyNormToGenerators(network);
         kg = extensionGenNorm.getkG();
@@ -306,13 +304,10 @@ public class ShortCircuitNormTest {
                 .withConnectionType1(WindingConnectionType.Y)
                 .withConnectionType2(WindingConnectionType.Y)
                 .add();
-        t12.newExtension(TwoWindingsTransformerFortescuePartOfGuAdder.class)
-                .withIsPartOfGeneratingUnit(true)
-                .add();
+        t12.setProperty("isPartOfGeneratorUnit", String.valueOf(true));
 
         return network;
     }
-
 }
 
 

@@ -17,7 +17,6 @@ import com.powsybl.iidm.network.extensions.LineFortescueAdder;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.sc.extensions.*;
-import com.powsybl.sc.extensions.TwoWindingsTransformerFortescuePartOfGuAdder;
 import com.powsybl.triplestore.api.PropertyBag;
 import com.powsybl.triplestore.api.QueryCatalog;
 import com.powsybl.triplestore.api.TripleStore;
@@ -232,9 +231,7 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
             TwoWindingsTransformer t2wt = network.getTwoWindingsTransformer(id);
             if (t2wt != null) {
                 TwoWindingsTransformerFortescue extension = t2wt.getExtension(TwoWindingsTransformerFortescue.class);
-                t2wt.newExtension(TwoWindingsTransformerFortescuePartOfGuAdder.class)
-                        .withIsPartOfGeneratingUnit(isPartOfGeneratingUnit)
-                        .add();
+                t2wt.setProperty("isPartOfGeneratorUnit", String.valueOf(isPartOfGeneratingUnit));
                 if (extension == null) {
                     t2wt.newExtension(TwoWindingsTransformerFortescueAdder.class)
                             .withRz(t2wt.getR())
