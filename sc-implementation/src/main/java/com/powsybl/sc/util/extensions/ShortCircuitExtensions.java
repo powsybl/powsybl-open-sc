@@ -8,6 +8,7 @@
 package com.powsybl.sc.util.extensions;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.FortescueConstants;
 import com.powsybl.iidm.network.extensions.GeneratorFortescue;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuit;
 import com.powsybl.iidm.network.extensions.LineFortescue;
@@ -95,12 +96,12 @@ public final class ShortCircuitExtensions {
         double leg1Xo = twt.getLeg1().getX();
         double leg2Xo = twt.getLeg2().getX();
         double leg3Xo = twt.getLeg3().getX();
-        boolean leg1FreeFluxes = DEFAULT_FREE_FLUXES;
-        boolean leg2FreeFluxes = DEFAULT_FREE_FLUXES;
-        boolean leg3FreeFluxes = DEFAULT_FREE_FLUXES;
-        WindingConnectionType leg1ConnectionType = DEFAULT_LEG1_CONNECTION_TYPE;
-        WindingConnectionType leg2ConnectionType = DEFAULT_LEG2_CONNECTION_TYPE;
-        WindingConnectionType leg3ConnectionType = DEFAULT_LEG3_CONNECTION_TYPE;
+        boolean leg1FreeFluxes = FortescueConstants.DEFAULT_FREE_FLUXES;
+        boolean leg2FreeFluxes = FortescueConstants.DEFAULT_FREE_FLUXES;
+        boolean leg3FreeFluxes = FortescueConstants.DEFAULT_FREE_FLUXES;
+        WindingConnectionType leg1ConnectionType = FortescueConstants.DEFAULT_LEG1_CONNECTION_TYPE;
+        WindingConnectionType leg2ConnectionType = FortescueConstants.DEFAULT_LEG2_CONNECTION_TYPE;
+        WindingConnectionType leg3ConnectionType = FortescueConstants.DEFAULT_LEG3_CONNECTION_TYPE;
         double kT1R = DEFAULT_COEFF_K;
         double kT1X = DEFAULT_COEFF_K;
         double kT2R = DEFAULT_COEFF_K;
@@ -202,9 +203,9 @@ public final class ShortCircuitExtensions {
         double coeffXo = DEFAULT_COEFF_XO;
         double ro = DEFAULT_COEFF_RO * lfBranch.getPiModel().getR();
         double xo = DEFAULT_COEFF_XO * lfBranch.getPiModel().getX();
-        boolean freeFluxes = DEFAULT_FREE_FLUXES;
-        WindingConnectionType leg1ConnectionType = DEFAULT_LEG1_CONNECTION_TYPE;
-        WindingConnectionType leg2ConnectionType = DEFAULT_LEG2_CONNECTION_TYPE;
+        boolean freeFluxes = FortescueConstants.DEFAULT_FREE_FLUXES;
+        WindingConnectionType leg1ConnectionType = FortescueConstants.DEFAULT_LEG1_CONNECTION_TYPE;
+        WindingConnectionType leg2ConnectionType = FortescueConstants.DEFAULT_LEG2_CONNECTION_TYPE;
         double kT = DEFAULT_COEFF_K;
         double r1Ground = 0.;
         double x1Ground = 0.;
@@ -249,7 +250,7 @@ public final class ShortCircuitExtensions {
 
         double transRd = DEFAULT_TRANS_RD;
         double subTransRd = DEFAULT_SUB_TRANS_RD;
-        boolean toGround = DEFAULT_TO_GROUND;
+        boolean toGround = FortescueConstants.DEFAULT_GROUNDED;
         double ro = subTransRd;
         double xo = subtransX;
         double kG = 1.0;
