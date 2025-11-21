@@ -8,10 +8,7 @@
 package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
-import com.powsybl.iidm.network.extensions.GeneratorShortCircuit;
-import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
-import com.powsybl.iidm.network.extensions.WindingConnectionType;
+import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
@@ -51,7 +48,6 @@ public class ShortCircuitNormTest {
         assertEquals(0.1950430724873738, ks, 0.000001);
 
         shortCircuitNormIec.applyNormToNetwork(network);
-        TwoWindingsTransformerFortescue extensionT2w = t2w.getExtension(TwoWindingsTransformerFortescue.class);
         TwoWindingsTransformerNorm extensionT2wNorm = shortCircuitNormIec.getNormExtensions().getNormExtension(t2w);
         double knormT2w = extensionT2wNorm.getkNorm();
         assertEquals(0.1950430724873738, knormT2w, 0.000001);
@@ -60,7 +56,7 @@ public class ShortCircuitNormTest {
         double kg = extensionGenNorm.getkG();
         assertEquals(0.1950430724873738, kg, 0.000001);
 
-        extensionT2w.setPartOfGeneratingUnit(false);
+        t2w.setProperty("isPartOfGeneratorUnit", String.valueOf(false));
         shortCircuitNormIec.applyNormToT2W(network);
         shortCircuitNormIec.applyNormToGenerators(network);
         kg = extensionGenNorm.getkG();
@@ -305,14 +301,13 @@ public class ShortCircuitNormTest {
                 .setRatedS(31.5)
                 .add();
         t12.newExtension(TwoWindingsTransformerFortescueAdder.class)
-                .withLeg1ConnectionType(WindingConnectionType.Y)
-                .withLeg2ConnectionType(WindingConnectionType.Y)
-                .withIsPartOfGeneratingUnit(true)
+                .withConnectionType1(WindingConnectionType.Y)
+                .withConnectionType2(WindingConnectionType.Y)
                 .add();
+        t12.setProperty("isPartOfGeneratorUnit", String.valueOf(true));
 
         return network;
     }
-
 }
 
 

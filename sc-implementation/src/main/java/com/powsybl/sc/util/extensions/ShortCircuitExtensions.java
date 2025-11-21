@@ -8,10 +8,12 @@
 package com.powsybl.sc.util.extensions;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.FortescueConstants;
 import com.powsybl.iidm.network.extensions.GeneratorFortescue;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuit;
 import com.powsybl.iidm.network.extensions.LineFortescue;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
+import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.extensions.*;
 import org.apache.commons.math3.util.Pair;
@@ -94,12 +96,12 @@ public final class ShortCircuitExtensions {
         double leg1Xo = twt.getLeg1().getX();
         double leg2Xo = twt.getLeg2().getX();
         double leg3Xo = twt.getLeg3().getX();
-        boolean leg1FreeFluxes = DEFAULT_FREE_FLUXES;
-        boolean leg2FreeFluxes = DEFAULT_FREE_FLUXES;
-        boolean leg3FreeFluxes = DEFAULT_FREE_FLUXES;
-        WindingConnectionType leg1ConnectionType = DEFAULT_LEG1_CONNECTION_TYPE;
-        WindingConnectionType leg2ConnectionType = DEFAULT_LEG2_CONNECTION_TYPE;
-        WindingConnectionType leg3ConnectionType = DEFAULT_LEG3_CONNECTION_TYPE;
+        boolean leg1FreeFluxes = FortescueConstants.DEFAULT_FREE_FLUXES;
+        boolean leg2FreeFluxes = FortescueConstants.DEFAULT_FREE_FLUXES;
+        boolean leg3FreeFluxes = FortescueConstants.DEFAULT_FREE_FLUXES;
+        WindingConnectionType leg1ConnectionType = FortescueConstants.DEFAULT_LEG1_CONNECTION_TYPE;
+        WindingConnectionType leg2ConnectionType = FortescueConstants.DEFAULT_LEG2_CONNECTION_TYPE;
+        WindingConnectionType leg3ConnectionType = FortescueConstants.DEFAULT_LEG3_CONNECTION_TYPE;
         double kT1R = DEFAULT_COEFF_K;
         double kT1X = DEFAULT_COEFF_K;
         double kT2R = DEFAULT_COEFF_K;
@@ -116,19 +118,19 @@ public final class ShortCircuitExtensions {
         var extensions = twt.getExtension(ThreeWindingsTransformerFortescue.class);
         if (extensions != null) {
 
-            leg1Ro = extensions.getLeg1().getLegRo();
-            leg2Ro = extensions.getLeg2().getLegRo();
-            leg3Ro = extensions.getLeg3().getLegRo();
-            leg1Xo = extensions.getLeg1().getLegXo();
-            leg2Xo = extensions.getLeg2().getLegXo();
-            leg3Xo = extensions.getLeg3().getLegXo();
+            leg1Ro = extensions.getLeg1().getRz();
+            leg2Ro = extensions.getLeg2().getRz();
+            leg3Ro = extensions.getLeg3().getRz();
+            leg1Xo = extensions.getLeg1().getXz();
+            leg2Xo = extensions.getLeg2().getXz();
+            leg3Xo = extensions.getLeg3().getXz();
 
-            leg1FreeFluxes = extensions.getLeg1().isLegFreeFluxes();
-            leg2FreeFluxes = extensions.getLeg2().isLegFreeFluxes();
-            leg3FreeFluxes = extensions.getLeg3().isLegFreeFluxes();
-            leg1ConnectionType = extensions.getLeg1().getLegConnectionType();
-            leg2ConnectionType = extensions.getLeg2().getLegConnectionType();
-            leg3ConnectionType = extensions.getLeg3().getLegConnectionType();
+            leg1FreeFluxes = extensions.getLeg1().isFreeFluxes();
+            leg2FreeFluxes = extensions.getLeg2().isFreeFluxes();
+            leg3FreeFluxes = extensions.getLeg3().isFreeFluxes();
+            leg1ConnectionType = extensions.getLeg1().getConnectionType();
+            leg2ConnectionType = extensions.getLeg2().getConnectionType();
+            leg3ConnectionType = extensions.getLeg3().getConnectionType();
         }
 
         ThreeWindingsTransformerNorm t3wExtensionNorm = shortCircuitNormExtensions.getNormExtension(twt);
@@ -201,9 +203,9 @@ public final class ShortCircuitExtensions {
         double coeffXo = DEFAULT_COEFF_XO;
         double ro = DEFAULT_COEFF_RO * lfBranch.getPiModel().getR();
         double xo = DEFAULT_COEFF_XO * lfBranch.getPiModel().getX();
-        boolean freeFluxes = DEFAULT_FREE_FLUXES;
-        WindingConnectionType leg1ConnectionType = DEFAULT_LEG1_CONNECTION_TYPE;
-        WindingConnectionType leg2ConnectionType = DEFAULT_LEG2_CONNECTION_TYPE;
+        boolean freeFluxes = FortescueConstants.DEFAULT_FREE_FLUXES;
+        WindingConnectionType leg1ConnectionType = FortescueConstants.DEFAULT_LEG1_CONNECTION_TYPE;
+        WindingConnectionType leg2ConnectionType = FortescueConstants.DEFAULT_LEG2_CONNECTION_TYPE;
         double kT = DEFAULT_COEFF_K;
         double r1Ground = 0.;
         double x1Ground = 0.;
@@ -211,16 +213,16 @@ public final class ShortCircuitExtensions {
         double x2Ground = 0.;
         var extensions = twt.getExtension(TwoWindingsTransformerFortescue.class);
         if (extensions != null) {
-            ro = extensions.getRo() / zBase;
-            xo = extensions.getXo() / zBase;
+            ro = extensions.getRz() / zBase;
+            xo = extensions.getXz() / zBase;
             freeFluxes = extensions.isFreeFluxes();
-            leg1ConnectionType = extensions.getLeg1ConnectionType();
-            leg2ConnectionType = extensions.getLeg2ConnectionType();
+            leg1ConnectionType = extensions.getConnectionType1();
+            leg2ConnectionType = extensions.getConnectionType2();
 
-            r1Ground = extensions.getR1Ground() / zBase;
-            x1Ground = extensions.getX1Ground() / zBase;
-            r2Ground = extensions.getR2Ground() / zBase;
-            x2Ground = extensions.getX2Ground() / zBase;
+            r1Ground = extensions.getGroundingR1() / zBase;
+            x1Ground = extensions.getGroundingX1() / zBase;
+            r2Ground = extensions.getGroundingR2() / zBase;
+            x2Ground = extensions.getGroundingX2() / zBase;
         }
 
         TwoWindingsTransformerNorm t2wNormExtension = shortCircuitNormExtensions.getNormExtension(twt);
@@ -248,7 +250,7 @@ public final class ShortCircuitExtensions {
 
         double transRd = DEFAULT_TRANS_RD;
         double subTransRd = DEFAULT_SUB_TRANS_RD;
-        boolean toGround = DEFAULT_TO_GROUND;
+        boolean toGround = FortescueConstants.DEFAULT_GROUNDED;
         double ro = subTransRd;
         double xo = subtransX;
         double kG = 1.0;
