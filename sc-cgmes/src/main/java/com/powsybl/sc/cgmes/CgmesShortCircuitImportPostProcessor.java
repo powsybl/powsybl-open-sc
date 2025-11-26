@@ -11,10 +11,6 @@ import com.google.auto.service.AutoService;
 import com.powsybl.cgmes.conversion.CgmesImportPostProcessor;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
-import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
-import com.powsybl.iidm.network.extensions.LineFortescueAdder;
-import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.sc.extensions.*;
 import com.powsybl.triplestore.api.PropertyBag;
@@ -370,7 +366,7 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
         }
     }
 
-    public void setLegRoXoCoefs(ThreeWindingsTransformer.Leg leg, ThreeWindingsTransformerFortescue.LegFortescue extLeg, double r0, double x0, double ratedU02) {
+    public void setLegRoXoCoefs(ThreeWindingsTransformer.Leg leg, LegFortescue extLeg, double r0, double x0, double ratedU02) {
 
         double ratedRo = r0 * ratedU02 / leg.getRatedU() / leg.getRatedU();
         double ratedXo = x0 * ratedU02 / leg.getRatedU() / leg.getRatedU();
