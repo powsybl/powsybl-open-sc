@@ -8,13 +8,13 @@
 package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.Network;
-import com.powsybl.math.matrix.DenseMatrix;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.sc.util.AdmittanceEquationSystem;
 import com.powsybl.sc.util.CalculationLocation;
 import com.powsybl.sc.util.ImpedanceLinearResolution;
 import com.powsybl.sc.util.ImpedanceLinearResolutionParameters;
+import org.apache.commons.math3.complex.Complex;
 
 import java.util.Map;
 
@@ -59,18 +59,10 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
             // For each contingency that matches the given bus of the linear resolution we compute:
             // If = Eth / (Zth + Zf) gives:
-            //
-            //        ethi*(xf+xth) + ethr*(rf+rth) + j*[ethi*(rf+rth) - ethr*(xf+xth)]
-            // If = --------------------------------------------------------------------
-            //                          (rf+rth)² + (xf+xth)²
-            //
 
             // values that does not change for a given bus in input
-            double vxInit = linearResolutionResult.getEthr();
-            double vyInit = linearResolutionResult.getEthi();
-
-            double rth = linearResolutionResult.getRthz11();
-            double xth = linearResolutionResult.getXthz12();
+            Complex vInit = linearResolutionResult.getEth();
+            Complex zth = linearResolutionResult.getZthEq(); //new Complex(linearResolutionResult.getRthz11(), linearResolutionResult.getXthz12());
 
             for (CalculationLocation calculationLocation : solverFaultList) {
                 ShortCircuitFault scfe = (ShortCircuitFault) calculationLocation;
@@ -83,40 +75,34 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                     continue;
                 }
 
-                double rf = scf.getZfr();
-                double xf = scf.getZfi();
+                Complex zf = scf.getZf();
+                Complex ztotal = zf.add(zth);
 
-                double denom = (rf + rth) * (rf + rth) + (xf + xth) * (xf + xth);
-                double ifr = (vyInit * (xf + xth) + vxInit * (rf + rth)) / denom;
-                double ifi = (vyInit * (rf + rth) - vxInit * (xf + xth)) / denom;
+                Complex id = vInit.divide(ztotal);
                 // The post-fault voltage values at faulted bus are computed as follow :
-                // [Vr] = [Vr_init] - ifr * [e_dVr] + ifi * [e_dVi]
-                // [Vi] = [Vi_init] - ifr * [e_dVi] - ifi * [e_dVr]
-                double dvr = -ifr * linearResolutionResult.getEnBus().get(0, 0) + ifi * linearResolutionResult.getEnBus().get(1, 0);
-                double dvi = -ifr * linearResolutionResult.getEnBus().get(1, 0) - ifi * linearResolutionResult.getEnBus().get(0, 0);
+                // [Vk_r] = [Vk_r_init] - i_nf_r * [zknf_r] + i_nf_i * [zknf_i]
+                // [Vk_i] = [Vk_i_init] - i_nf_r * [zknf_i] - i_nf_i * [zknf_Vr]
+                Complex zknf = linearResolutionResult.getZknf();
+                Complex dv = id.multiply(zknf).multiply(-1.);
 
-                ShortCircuitResult res = new ShortCircuitResult(scf, bus, ifr, ifi, rth, xth, vxInit, vyInit, dvr, dvi, linearResolutionResult.getEqSysFeeders(), parameters.getNorm());
+                ShortCircuitResult res = new ShortCircuitResult(scf, bus, id, zth, vInit, dv, linearResolutionResult.getEqSysFeeders(), parameters.getNorm());
                 if (parameters.isVoltageUpdate()) {
                     //we get the lfNetwork to process the results
                     res.setLfNetwork(lfNetwork);
 
                     res.setTrueVoltageProfileUpdate();
-                    // The post-fault voltage values are computed as follow :
-                    // [Vr] = [Vr_init] - ifr * [e_dVr] + ifi * [e_dVi]
-                    // [Vi] = [Vi_init] - ifr * [e_dVi] - ifi * [e_dVr]
+
                     // we compute the delta values to be added to Vinit if we want the post-fault voltage :
+                    // [dVk_r] = [Vk_r] - [Vk_r_init] = - i_nf_r * [zknf_r] + i_nf_i * [zknf_i]
+                    // [dVk_i] = [Vk_i] - [Vk_i_init] = - i_nf_r * [zknf_i] - i_nf_i * [zknf_Vr]
                     int nbBusses = lfNetwork.getBuses().size();
                     res.createEmptyFortescueVoltageVector(nbBusses);
 
-                    for (Map.Entry<Integer, DenseMatrix> vd : linearResolutionResult.getDv().entrySet()) {
-                        int busNum = vd.getKey();
-                        double edVr = vd.getValue().get(0, 0);
-                        double edVi = vd.getValue().get(1, 0);
-
-                        double deltaVr = -ifr * edVr + ifi * edVi;
-                        double deltaVi = -ifr * edVi - ifi * edVr;
-
-                        res.fillVoltageInFortescueVector(busNum, deltaVr, deltaVi);
+                    for (Map.Entry<Integer, Complex> zd : linearResolutionResult.getBusToZknf().entrySet()) {
+                        int busNum = zd.getKey();
+                        Complex zdBus = zd.getValue();
+                        Complex deltaV = zdBus.multiply(id).multiply(-1.);
+                        res.fillVoltageInFortescueVector(busNum, deltaV);
                     }
                 }
 

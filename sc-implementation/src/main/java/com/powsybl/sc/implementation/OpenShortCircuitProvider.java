@@ -22,6 +22,7 @@ import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.security.LimitViolation;
 import com.powsybl.shortcircuit.*;
+import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -203,11 +204,10 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             // TODO : see how to get lfBus from iidm Bus
             String elementId = fault.getElementId();
 
-            double rFault = fault.getRToGround();
-            double xFault = fault.getXToGround();
+            Complex zFault = new Complex(fault.getRToGround(), fault.getXToGround());
             Bus bus = network.getBusBreakerView().getBus(elementId);
             String busId = bus.getId();
-            ShortCircuitFault sc = new ShortCircuitFault(busId, busId, rFault, xFault, scType);
+            ShortCircuitFault sc = new ShortCircuitFault(busId, busId, zFault, scType);
             balancedFaultsList.add(sc);
 
             // TODO improve:

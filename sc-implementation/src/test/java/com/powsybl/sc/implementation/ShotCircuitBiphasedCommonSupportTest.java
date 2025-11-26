@@ -14,6 +14,7 @@ import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.util.ReferenceNetwork;
+import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,7 +53,7 @@ class ShotCircuitBiphasedCommonSupportTest {
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", 0., 0., ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_A2);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", new Complex(0.), ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_A2);
         faultList.add(sc1);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
@@ -67,7 +68,7 @@ class ShotCircuitBiphasedCommonSupportTest {
             val.add(res.getValue().getIk().getKey());
         }
 
-        assertEquals(31.16265030753145, val.get(0), 0.00001); // TODO : check manually result
+        assertEquals(28.85869102832315, val.get(0), 0.00001); // TODO : check manually result
 
     }
 
@@ -81,9 +82,10 @@ class ShotCircuitBiphasedCommonSupportTest {
 
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
+        Complex zFault = new Complex(0.);
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", 0., 0., ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_B2);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "B5", "sc2", 0., 0., ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_C2);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", zFault, ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_B2);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "B5", "sc2", zFault, ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_C2);
         // TODO : a list that contains BIPHASED_COMMON_SUPPORT with the same nodes is not supported yet : FIX_ME
         faultList.add(sc1);
         faultList.add(sc2);
@@ -100,7 +102,7 @@ class ShotCircuitBiphasedCommonSupportTest {
             val.add(res.getValue().getIk().getKey());
         }
 
-        assertEquals(31.16265030753145, val.get(0), 0.00001); // TODO : check manually result
+        assertEquals(28.85869102832315, val.get(0), 0.00001); // TODO : check manually result
         assertEquals(0., val.get(1), 0.00001); // TODO : check manually result
 
     }

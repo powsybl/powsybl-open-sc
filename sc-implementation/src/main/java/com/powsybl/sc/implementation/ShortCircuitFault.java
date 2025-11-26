@@ -8,24 +8,23 @@
 package com.powsybl.sc.implementation;
 
 import com.powsybl.sc.util.CalculationLocation;
+import org.apache.commons.math3.complex.Complex;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class ShortCircuitFault extends CalculationLocation {
 
-    public ShortCircuitFault(String busLocation, String faultId, double zfr, double zfi, ShortCircuitType type) {
+    public ShortCircuitFault(String busLocation, String faultId, Complex zf, ShortCircuitType type) {
         super(busLocation);
-        this.zfr = zfr;
-        this.zfi = zfi;
+        this.zf = zf;
         this.type = type;
         this.faultId = faultId;
     }
 
-    public ShortCircuitFault(String busLocation, String busLocationBiPhased, String faultId, double zfr, double zfi, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
+    public ShortCircuitFault(String busLocation, String busLocationBiPhased, String faultId, Complex zf, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
         super(busLocation, busLocationBiPhased);
-        this.zfr = zfr;
-        this.zfi = zfi;
+        this.zf = zf;
         this.type = type;
         this.faultId = faultId;
         this.biphasedType = biphasedType;
@@ -48,8 +47,9 @@ public class ShortCircuitFault extends CalculationLocation {
 
     private String faultId;
 
-    private double zfr; //real part of the short circuit impedance Zf
-    private double zfi; //imaginary part of the short circuit impedance Zf
+    //private double zfr; //real part of the short circuit impedance Zf
+    //private double zfi; //imaginary part of the short circuit impedance Zf
+    private Complex zf; // the short circuit impedance Zf
 
     private ShortCircuitType type;
 
@@ -59,12 +59,8 @@ public class ShortCircuitFault extends CalculationLocation {
         return type;
     }
 
-    public double getZfr() {
-        return zfr;
-    }
-
-    public double getZfi() {
-        return zfi;
+    public Complex getZf() {
+        return zf;
     }
 
     public ShortCircuitBiphasedType getBiphasedType() {

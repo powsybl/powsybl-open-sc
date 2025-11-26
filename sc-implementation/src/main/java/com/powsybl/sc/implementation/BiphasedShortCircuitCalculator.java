@@ -7,16 +7,15 @@
  */
 package com.powsybl.sc.implementation;
 
-import com.powsybl.math.matrix.DenseMatrix;
+import org.apache.commons.math3.complex.Complex;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class BiphasedShortCircuitCalculator extends AbstractShortCircuitCalculator {
 
-    public BiphasedShortCircuitCalculator(double rdf, double xdf, double rof, double xof, double rg, double xg,
-                                            double initVx, double initVy) {
-        super(rdf, xdf, rof, xof, rg, xg, initVx, initVy);
+    public BiphasedShortCircuitCalculator(Complex zdf, Complex zof, Complex zg, Complex initV) {
+        super(zdf, zof, zg, initV);
 
     }
 
@@ -58,40 +57,15 @@ public class BiphasedShortCircuitCalculator extends AbstractShortCircuitCalculat
         // Step 3: compute the short circuit voltages:
         // From computed Ic1 we get complex values : I1o, I1d, I1i, I2o, I2d, I2i using step 1 formulas expressed with Ic1
         // Then compute the voltages from current values
-        double rt = 2 * rdf + rg;
-        double xt = 2 * xdf + xg;
 
-        // [Zt] = [ rt  -xt ]
-        //        [ xt   rt ]
-        //
-        // Cartesian expression of Ic using matrices :
-        //                                               -sqrt(3)
-        // [ibx] = - inv([Zt]) * [j] *sqrt(3) * [vdx] = ------------ * [ rt xt ] * [ 0 -1 ] * [vdx]
-        // [iby]                                [vdy]   (rt² + xt²)    [-xt rt ]   [ 1  0 ]   [vdy]
+        Complex zt = zdf.multiply(2).add(zg);
 
-        DenseMatrix vdInit = new DenseMatrix(2, 1);
-        vdInit.add(0, 0, initVx);
-        vdInit.add(1, 0, initVy);
+        Complex ib = initV.multiply(-Math.sqrt(3.)).divide(zt).multiply(new Complex(0., 1.));
 
-        DenseMatrix jmSqrt3 = getMatrixByType(BlocType.J, -Math.sqrt(3));
-        DenseMatrix invZt = getInvZt(rt, xt);
+        // Compute the currents from step 1 formula :
+        io = new Complex(0.);
+        id = ib.divide(3.).multiply(geta().subtract(geta2())); //aa2div3.times(mIb).toDense();
+        ii = id.multiply(-1.);
 
-        DenseMatrix tmpjVd = jmSqrt3.times(vdInit).toDense();
-        DenseMatrix mIb = invZt.times(tmpjVd).toDense();
-
-        // Compute the currents :
-        // [ Io ]         [ 1  1  1 ]   [ 0  ]              [  0   ]
-        // [ Id ] = 1/3 * [ 1  a  a²] * [ Ib ] = 1/3 * Ib * [a - a²]
-        // [ Ii ]         [ 1  a² a ]   [-Ib ]              [a²- a ]
-
-        // [Io] = 0
-        DenseMatrix adiv3 = getMatrixByType(BlocType.A, 1. / 3.);
-        DenseMatrix ma2div3 = getMatrixByType(BlocType.A2, -1. / 3);
-        DenseMatrix minusId = getMatrixByType(BlocType.I_D, -1.);
-        DenseMatrix aa2div3 = addMatrices22(adiv3.toDense(), ma2div3.toDense());
-
-        mId = aa2div3.times(mIb).toDense();
-        mIi = minusId.times(mId).toDense();
-        mIo = new DenseMatrix(2, 1);
     }
 }
