@@ -87,12 +87,6 @@ public class BiphasedC1A2Calculator extends BiphasedCommonSupportShortCircuitCal
         // Ic1 = ------------------------------------------------------------------------------------------------------------------
         //        Zf + 1/3*(Zd_11 - a*Zd_12 + Zd_22-a²*Zd_21 + Zo_11 - Zo_21 + Zo_22 - Zo_12 + Zi_22 - a²*Zi_12 + Zi_11 - a*Zi_21)
         //
-        //
-        // The equivalent cartesian matrix expression of Ic :
-        //                    1
-        // [ic1x] =  ------------------------ * [ rt xt ] * ( [ -1/2  -sqrt(3)/2 ] *  [vd1x] - [vd2x] )
-        // [ic1y]         (rt² + xt²)           [-xt rt ]   ( [ sqrt(3)/2  -1/2  ]    [vd1y]   [vd2y] )
-        //
 
         //compute the numerator matrix = a * V1d(init) - V2d(init)
         Complex numerator = geta().multiply(initV).subtract(v2dInit);

@@ -70,8 +70,8 @@ public class BiphasedC1C2Calculator extends BiphasedCommonSupportShortCircuitCal
         // From computed Ic1 we get complex values : I1o, I1d, I1i, I2o, I2d, I2i using step 1 formulas expressed with Ic1
         // Then compute the voltages from current values
 
-        computeZt(); // computes rt and xt
-        computeIc(); // computes Ic of common support from rt and xt
+        computeZt(); // computes zt = rt + j.xt
+        computeIc(); // computes Ic of common support from zt
         computeCurrents(); // computes Io, Id, Ii for both supports from computed Ic
         computeVoltages(); // computes Vo, Vd, Vi from computed currents and computed terms of the impedance matrix
 
@@ -85,12 +85,6 @@ public class BiphasedC1C2Calculator extends BiphasedCommonSupportShortCircuitCal
         //                                             a * (V1d(init) - V2d(init))
         // Ic1 = ---------------------------------------------------------------------------------------------------------
         //        Zf + 1/3*(Zd_11 - Zd_12 + Zd_22 - Zd_21 + Zo_11 - Zo_21 + Zo_22 - Zo_12 + Zi_22 - Zi_12 + Zi_11 - Zi_21)
-        //
-        //
-        // The equivalent cartesian matrix expression of Ic :
-        //                    1
-        // [ic1x] =  ------------------------ * [ rt xt ] *  [ -1/2  -sqrt(3)/2 ] * ( [vd1x] - [vd2x] )
-        // [ic1y]         (rt² + xt²)           [-xt rt ]    [ sqrt(3)/2  -1/2  ]   ( [vd1y]   [vd2y] )
         //
 
         Complex numerator = geta().multiply(initV.subtract(v2dInit));

@@ -47,8 +47,6 @@ public class ShortCircuitFault extends CalculationLocation {
 
     private String faultId;
 
-    //private double zfr; //real part of the short circuit impedance Zf
-    //private double zfi; //imaginary part of the short circuit impedance Zf
     private Complex zf; // the short circuit impedance Zf
 
     private ShortCircuitType type;

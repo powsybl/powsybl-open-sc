@@ -64,7 +64,7 @@ public class BiphasedShortCircuitCalculator extends AbstractShortCircuitCalculat
 
         // Compute the currents from step 1 formula :
         io = new Complex(0.);
-        id = ib.divide(3.).multiply(geta().subtract(geta2())); //aa2div3.times(mIb).toDense();
+        id = ib.divide(3.).multiply(geta().subtract(geta2()));
         ii = id.multiply(-1.);
 
     }

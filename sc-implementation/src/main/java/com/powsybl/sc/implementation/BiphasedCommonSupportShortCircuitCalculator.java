@@ -81,26 +81,19 @@ public class BiphasedCommonSupportShortCircuitCalculator extends AbstractShortCi
 
         //get the voltage vectors
         // Vo :
-        // [v1ox]          [ rof_11  -xof_11  rof_12  -xof_12 ]   [ i1ox ]
-        // [v1oy] = -1  *  [ xof_11   rof_11  xof_12   rof_12 ] * [ i1oy ]
-        // [v2ox]          [ rof_21  -xof_21  rof_22  -xof_22 ]   [ i2ox ]
-        // [v2oy]          [ xof_21   rof_21  xof_22   rof_22 ]   [ i2oy ]
+        // [v1o]          [ zof_11    zof_12 ]   [ i1o ]
+        // [v2o] = -1  *  [ zof_21    zof_22 ] * [ i2o ]
+
         vo = zof.multiply(io).add(zo12.multiply(i2o)).multiply(-1.);
         v2o = zo21.multiply(io).add(zo22.multiply(i2o)).multiply(-1.);
 
         // Vd :
-        // [v1dx]          [ rdf_11  -xdf_11  rdf_12  -xdf_12 ]   [ i1ox ]     [v1dx(init)]
-        // [v1dy] = -1  *  [ xdf_11   rdf_11  xdf_12   rdf_12 ] * [ i1oy ]  +  [v1dy(init)]
-        // [v2dx]          [ rdf_21  -xdf_21  rdf_22  -xdf_22 ]   [ i2ox ]     [v2dx(init)]
-        // [v2dy]          [ xdf_21   rdf_21  xdf_22   rdf_22 ]   [ i2oy ]     [v2dy(init)]
+        // [v1d]          [ zdf_11    zdf_12 ]   [ i1d ]    [v1d_init]
+        // [v2d] = -1  *  [ zdf_21    zdf_22 ] * [ i2d ] +  [v2d_init]
         vd = initV.subtract(zdf.multiply(id).add(zd12.multiply(i2d)));
         v2d = v2dInit.subtract(zd21.multiply(id).add(zd22.multiply(i2d)));
 
         // Vi :
-        // [v1ix]          [ rdf_11  -xdf_11  rdf_12  -xdf_12 ]   [ i1dx ]
-        // [v1iy] = -1  *  [ xdf_11   rdf_11  xdf_12   rdf_12 ] * [ i1dy ]
-        // [v2ix]          [ rdf_21  -xdf_21  rdf_22  -xdf_22 ]   [ i2dx ]
-        // [v2iy]          [ xdf_21   rdf_21  xdf_22   rdf_22 ]   [ i2dy ]
         vi = zif.multiply(ii).add(zi12.multiply(i2i)).multiply(-1.);
         v2i = zi21.multiply(ii).add(zi22.multiply(i2i)).multiply(-1.);
     }

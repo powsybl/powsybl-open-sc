@@ -194,7 +194,7 @@ public class ImpedanceLinearResolution {
         }
     }
 
-    public static void checkBlocConsistency(Complex z1, Complex z2, LfBus lfBus1, LfBus lfBus2) {
+    public static void checkMatrixExtractionConsistency(Complex z1, Complex z2, LfBus lfBus1, LfBus lfBus2) {
         double epsilon = 0.00001;
 
         String bus1Id = lfBus1.getId();
@@ -209,9 +209,9 @@ public class ImpedanceLinearResolution {
         }
     }
 
-    public static void checkBlocConsistency(Complex z1, Complex z2, LfBus lfBus1) {
-        // case of diagonal block
-        checkBlocConsistency(z1, z2, lfBus1, lfBus1);
+    public static void checkMatrixExtractionConsistency(Complex z1, Complex z2, LfBus lfBus1) {
+        // case of diagonal matrix terms
+        checkMatrixExtractionConsistency(z1, z2, lfBus1, lfBus1);
     }
 
     public static LfBus getLfBusFromIidmBranch(String iidmBranchId, int branchSide, LfNetwork lfNetwork) {
@@ -389,7 +389,7 @@ public class ImpedanceLinearResolution {
                 Complex zthBis = new Complex(en.get(tEn2Col.get(1 + 2 * numBusFault), 1 + 2 * numBusFault), en.get(tEn2Col.get(1 + 2 * numBusFault), 2 * numBusFault));
                 //     [Zth_kk] = [ rth -xth ] --> Zth
                 //                [ xth  rth ] --> Zth_Bis
-                checkBlocConsistency(zth, zthBis, lfBus);
+                checkMatrixExtractionConsistency(zth, zthBis, lfBus);
 
                 ImpedanceLinearResolutionResult res = new ImpedanceLinearResolutionResult(lfBus, zth, eth);
 
@@ -451,9 +451,9 @@ public class ImpedanceLinearResolution {
                         //       [ xij   rij ] --> enZbis
                         //
                         // We need to check consistency of terms enZ and enZbis for each block
-                        checkBlocConsistency(z22, z22bis, lfBus, bus2);
-                        checkBlocConsistency(z21, z21bis, lfBus, bus2);
-                        checkBlocConsistency(z12, z12bis, lfBus, bus2);
+                        checkMatrixExtractionConsistency(z22, z22bis, lfBus, bus2);
+                        checkMatrixExtractionConsistency(z21, z21bis, lfBus, bus2);
+                        checkMatrixExtractionConsistency(z12, z12bis, lfBus, bus2);
 
                         Complex eth2 = new Complex(1.0);
                         if (parameters.getTheveninVoltageProfileType() == AdmittanceEquationSystem.AdmittanceVoltageProfileType.CALCULATED) {
