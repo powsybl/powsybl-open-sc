@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2025, Jean-Baptiste Heyberger & Geoffroy Jamgotchian
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * SPDX-License-Identifier: MPL-2.0
+ */
 package com.powsybl.sc.implementation;
 
 import com.powsybl.cgmes.conformity.CgmesConformity1Catalog;
@@ -14,6 +21,9 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
+ */
 public class ShortCircuitFromCgmesTest {
 
     private Map<String, String> busNameToId;
