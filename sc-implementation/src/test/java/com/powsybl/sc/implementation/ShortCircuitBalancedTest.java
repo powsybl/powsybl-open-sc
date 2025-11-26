@@ -11,13 +11,13 @@ import com.powsybl.computation.ComputationManager;
 import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
+import com.powsybl.iidm.network.extensions.ThreeWindingsTransformerFortescue;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
-import com.powsybl.sc.extensions.ThreeWindingsTransformerFortescue;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.sc.util.extensions.ThreeWindingsTransformerNorm;
 import com.powsybl.shortcircuit.*;
@@ -390,7 +390,7 @@ public class ShortCircuitBalancedTest {
         shortCircuitNormIec.setKtT3Wi(t3w);
 
         ThreeWindingsTransformerFortescue extension = t3w.getExtension(ThreeWindingsTransformerFortescue.class);
-        double coefcX0 = extension.getLeg3().getLegXo() / t3w.getLeg3().getX();
+        double coefcX0 = extension.getLeg3().getXz() / t3w.getLeg3().getX();
         assertEquals(1.0, coefcX0, 0.000001);
 
         ThreeWindingsTransformerNorm t3wNormExtension = shortCircuitNormIec.getNormExtensions().getNormExtension(t3w);
