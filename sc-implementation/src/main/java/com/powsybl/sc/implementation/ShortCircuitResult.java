@@ -7,6 +7,7 @@
  */
 package com.powsybl.sc.implementation;
 
+import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.math.matrix.DenseMatrix;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
@@ -65,7 +66,7 @@ public class ShortCircuitResult {
     private FortescueValue vFortescue; //fortescue vector of voltages
 
     private boolean isVoltageProfileUpdated;
-    private List<DenseMatrix> busNum2Dv;
+    private List<FortescueValue> busNum2Dv;
 
     private FeedersAtNetwork eqSysFeedersDirect;
 
@@ -120,7 +121,7 @@ public class ShortCircuitResult {
 
         this.iFortescue = new FortescueValue(id.abs(), io.abs(), ii.abs(), id.getArgument(), io.getArgument(), ii.getArgument());
 
-        Complex vd = new Complex(eth.getReal() + dv.getReal(), eth.getImaginary() + dv.getImaginary());
+        Complex vd = eth.add(dv);
         Complex vh = dvo;
         Complex vi = dvi;
 
@@ -202,19 +203,26 @@ public class ShortCircuitResult {
                 LfBus bus1 = branch.getBus1();
                 LfBus bus2 = branch.getBus2();
                 if (bus1 != null && bus2 != null) {
-                    DenseMatrix yd12 = getAdmittanceMatrixBranch(branch, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN);
+                    ComplexMatrix ydBranch = getAdmittanceMatrixBranch(branch, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN);
+                    Complex y11 = ydBranch.get(0, 0);
+                    Complex y12 = ydBranch.get(0, 1);
+                    Complex y21 = ydBranch.get(1, 0);
+                    Complex y22 = ydBranch.get(1, 1);
+
                     int busNum1 = bus1.getNum();
-                    double dvx1 = busNum2Dv.get(busNum1).get(2, 0);
-                    double dvy1 = busNum2Dv.get(busNum1).get(3, 0);
+                    FortescueValue dv1Fort = busNum2Dv.get(busNum1);
+                    Complex dv1 = ComplexUtils.polar2Complex(dv1Fort.getPositiveMagnitude(), dv1Fort.getPositiveAngle());
                     int busNum2 = bus2.getNum();
-                    double dvx2 = busNum2Dv.get(busNum2).get(2, 0);
-                    double dvy2 = busNum2Dv.get(busNum2).get(3, 0);
+
+                    FortescueValue dv2Fort = busNum2Dv.get(busNum2);
+                    Complex dv2 = ComplexUtils.polar2Complex(dv2Fort.getPositiveMagnitude(), dv2Fort.getPositiveAngle());
                     DenseMatrix v12 = new DenseMatrix(4, 1);
-                    v12.add(0, 0, dvx1 + 0.); //TODO : replace 1. by initial value
+                    /*v12.add(0, 0, dvx1 + 0.); //TODO : replace 1. by initial value
                     v12.add(1, 0, dvy1 + 0.); //TODO : replace 0. by initial value
                     v12.add(2, 0, dvx2 + 0.); //TODO : replace 1. by initial value
-                    v12.add(3, 0, dvy2 + 0.); //TODO : replace 0. by initial value
-                    DenseMatrix i12 = yd12.times(v12).toDense();
+                    v12.add(3, 0, dvy2 + 0.); //TODO : replace 0. by initial value*/
+                    Complex i1 = y11.multiply(dv1).add(y12.multiply(dv2));
+                    Complex i2 = y21.multiply(dv1).add(y22.multiply(dv2));
                     //System.out.println(" dI1d(" + branch.getId() + ") = " + i12.get(0, 0) + " + j(" + i12.get(1, 0) + ")  Module I1d = " + 1000. * 100. / bus1.getNominalV() * Math.sqrt((i12.get(0, 0) * i12.get(0, 0) + i12.get(1, 0) * i12.get(1, 0)) / 3));
                     //System.out.println(" dI2d(" + branch.getId() + ") = " + i12.get(2, 0) + " + j(" + i12.get(3, 0) + ")  Module I2d = " + 1000. * 100. / bus2.getNominalV() * Math.sqrt((i12.get(2, 0) * i12.get(2, 0) + i12.get(3, 0) * i12.get(3, 0)) / 3));
 
@@ -223,8 +231,8 @@ public class ShortCircuitResult {
                     FeedersAtBusResult resultBus1Feeders = feedersAtBusResultsDirect.get(bus1); // TODO : homopolar
                     FeedersAtBusResult resultBus2Feeders = feedersAtBusResultsDirect.get(bus2); // TODO : homopolar
 
-                    resultBus1Feeders.addIfeeders(i12.get(0, 0), i12.get(1, 0));
-                    resultBus2Feeders.addIfeeders(i12.get(2, 0), i12.get(3, 0));
+                    resultBus1Feeders.addIfeeders(i1);
+                    resultBus2Feeders.addIfeeders(i2);
 
                 }
             }
@@ -292,34 +300,28 @@ public class ShortCircuitResult {
     }
 
     public void createEmptyFortescueVoltageVector(int nbBusses) {
-        List<DenseMatrix> busNum2Dv = new ArrayList<>();
+        List<FortescueValue> busNum2Dv = new ArrayList<>();
         for (int i = 0; i < nbBusses; i++) {
-            DenseMatrix mdV = new DenseMatrix(6, 1);
+            FortescueValue mdV = new FortescueValue(0., 0.);
             busNum2Dv.add(mdV);
         }
         this.busNum2Dv = busNum2Dv;
     }
 
     public void fillVoltageInFortescueVector(int busNum, Complex dV) {
-        this.busNum2Dv.get(busNum).add(2, 0, dV.getReal());
-        this.busNum2Dv.get(busNum).add(3, 0, dV.getImaginary());
+        this.busNum2Dv.set(busNum, new FortescueValue(dV.abs(), dV.getArgument()));
     }
 
     public void fillVoltageInFortescueVector(int busNum, Complex dVd, Complex dVo, Complex dVi) {
-        this.busNum2Dv.get(busNum).add(0, 0, dVo.getReal());
-        this.busNum2Dv.get(busNum).add(1, 0, dVo.getImaginary());
-        this.busNum2Dv.get(busNum).add(2, 0, dVd.getReal());
-        this.busNum2Dv.get(busNum).add(3, 0, dVd.getImaginary());
-        this.busNum2Dv.get(busNum).add(4, 0, dVi.getReal());
-        this.busNum2Dv.get(busNum).add(5, 0, dVi.getImaginary());
+        this.busNum2Dv.set(busNum, new FortescueValue(dVd.abs(), dVo.abs(), dVi.abs(), dVd.getArgument(), dVo.getArgument(), dVi.getArgument()));
     }
 
     public void setLfNetwork(LfNetwork lfNetwork) {
         this.lfNetwork = lfNetwork;
     }
 
-    static DenseMatrix getAdmittanceMatrixBranch(LfBranch branch,
-                                                 AdmittanceEquationSystem.AdmittanceType admittanceType) {
+    static ComplexMatrix getAdmittanceMatrixBranch(LfBranch branch,
+                                                   AdmittanceEquationSystem.AdmittanceType admittanceType) {
 
         // TODO : code duplicated with the admittance equation system, should be un-duplicated
         PiModel piModel = branch.getPiModel();
@@ -363,25 +365,12 @@ public class ShortCircuitResult {
             b2b21sum = b2b21sum * AdmittanceConstants.COEF_XO_XD;
         }
 
-        DenseMatrix mAdmittance = new DenseMatrix(4, 4);
-        mAdmittance.add(0, 0, g1g12sum);
-        mAdmittance.add(0, 1, -b1b12sum);
-        mAdmittance.add(0, 2, -g12);
-        mAdmittance.add(0, 3, b12);
-        mAdmittance.add(1, 0, b1b12sum);
-        mAdmittance.add(1, 1, g1g12sum);
-        mAdmittance.add(1, 2, -b12);
-        mAdmittance.add(1, 3, -g12);
-        mAdmittance.add(2, 0, -g21);
-        mAdmittance.add(2, 1, b21);
-        mAdmittance.add(2, 2, g2g21sum);
-        mAdmittance.add(2, 3, -b2b21sum);
-        mAdmittance.add(3, 0, -b21);
-        mAdmittance.add(3, 1, -g21);
-        mAdmittance.add(3, 2, b2b21sum);
-        mAdmittance.add(3, 3, g2g21sum);
-
-        return mAdmittance.toDense();
+        ComplexMatrix admittance = new ComplexMatrix(2, 2);
+        admittance.get(0, 0).add(new Complex(g1g12sum, b1b12sum)); // Y11
+        admittance.get(0, 1).add(new Complex(-g12, -b12)); // Y12
+        admittance.get(1, 0).add(new Complex(-g21, -b21)); // Y21
+        admittance.get(1, 1).add(new Complex(g2g21sum, b2b21sum)); // Y22
+        return admittance;
 
     }
 
@@ -394,7 +383,7 @@ public class ShortCircuitResult {
                 List<FeederResult> busFeedersResults = resultFeeder.getBusFeedersResult();
                 for (FeederResult feederResult : busFeedersResults) {
                     if (feederResult.getFeeder().getId().equals(feederId)) {
-                        ix = feederResult.getIxContribution();
+                        ix = feederResult.getIContribution().getReal();
                     }
                 }
             }

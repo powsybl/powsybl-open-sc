@@ -160,10 +160,9 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             LfBus lfBus = busAndFeedersAtBusResult.getKey();
             FeedersAtBusResult feedersAtBusResult = busAndFeedersAtBusResult.getValue();
             for (com.powsybl.sc.util.FeederResult feederResult : feedersAtBusResult.getBusFeedersResult()) {
-                double ix = feederResult.getIxContribution();
-                double iy = feederResult.getIyContribution();
+                Complex iCont = feederResult.getIContribution();
 
-                double magnitude = Math.sqrt(3. * (ix * ix + iy * iy)) * 100. / lfBus.getNominalV(); // same dimension as Ik3
+                double magnitude = Math.sqrt(3.) * iCont.abs() * 100. / lfBus.getNominalV(); // same dimension as Ik3
 
                 String feederId = lfBus.getId() + "_" + feederResult.getFeeder().getId();
 

@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
-public class ShortCircuitFromCgmesTest {
+class ShortCircuitFromCgmesTest {
 
     private Map<String, String> busNameToId;
 
@@ -48,7 +48,6 @@ public class ShortCircuitFromCgmesTest {
     void triphasedTest() {
         Properties parameters = new Properties();
         parameters.setProperty("iidm.import.cgmes.post-processors", CgmesShortCircuitImportPostProcessor.NAME);
-        //TestGridModelResources testCgm = CgmesConformity1Catalog.miniBusBranch();
         Network network = Network.read(CgmesConformity1Catalog.miniBusBranch().dataSource(), parameters);
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
@@ -125,7 +124,6 @@ public class ShortCircuitFromCgmesTest {
     void monophasedTest() {
         Properties parameters = new Properties();
         parameters.setProperty("iidm.import.cgmes.post-processors", CgmesShortCircuitImportPostProcessor.NAME);
-        //TestGridModelResources testCgm = CgmesConformity1Catalog.miniBusBranch();
         Network network = Network.read(CgmesConformity1Catalog.miniBusBranch().dataSource(), parameters);
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
