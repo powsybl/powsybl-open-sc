@@ -17,6 +17,7 @@ import com.powsybl.sc.util.extensions.ScGenerator;
 import com.powsybl.sc.util.extensions.ScLoad;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
 import net.jafama.FastMath;
+import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,14 +103,14 @@ public final class AdmittanceEquationSystem {
         double tmpB = 0.;
         if (shunt != null) {
             tmpB += shunt.getB();
-            Feeder shuntFeeder = new Feeder(shunt.getB(), 0., shunt.getId(), Feeder.FeederType.SHUNT);
+            Feeder shuntFeeder = new Feeder(new Complex(0., shunt.getB()), shunt.getId(), Feeder.FeederType.SHUNT);
             feederList.add(shuntFeeder);
             //check if g will be implemented
         }
         LfShunt controllerShunt = bus.getControllerShunt().orElse(null);
         if (controllerShunt != null) {
             tmpB += controllerShunt.getB();
-            Feeder shuntFeeder = new Feeder(controllerShunt.getB(), 0., controllerShunt.getId(), Feeder.FeederType.CONTROLLED_SHUNT);
+            Feeder shuntFeeder = new Feeder(new Complex(0., controllerShunt.getB()), controllerShunt.getId(), Feeder.FeederType.CONTROLLED_SHUNT);
             feederList.add(shuntFeeder);
             //check if g will be implemented
         }
@@ -149,7 +150,7 @@ public final class AdmittanceEquationSystem {
                 double bGen = -(vnomVl * vnomVl / SB) * x / (r * r + x * x);
                 tmpG = tmpG + gGen;
                 tmpB = tmpB + bGen; // TODO: check: for now X'd = 0 not allowed
-                Feeder shuntFeeder = new Feeder(bGen, gGen, lfgen.getId(), Feeder.FeederType.GENERATOR);
+                Feeder shuntFeeder = new Feeder(new Complex(gGen, bGen), lfgen.getId(), Feeder.FeederType.GENERATOR);
                 feederList.add(shuntFeeder);
             }
         }
@@ -218,7 +219,7 @@ public final class AdmittanceEquationSystem {
                 gLoadEq = scLoad.getGdEquivalent() / (vr * vr + vi * vi);
                 bLoadEq = scLoad.getBdEquivalent() / (vr * vr + vi * vi);
 
-                Feeder shuntFeeder = new Feeder(bLoadEq, gLoadEq, bus.getId(), Feeder.FeederType.LOAD);
+                Feeder shuntFeeder = new Feeder(new Complex(gLoadEq, bLoadEq), bus.getId(), Feeder.FeederType.LOAD);
                 feederList.add(shuntFeeder);
 
                 Pair<Double, Double> bAndG = getYtransfromRdXd(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList

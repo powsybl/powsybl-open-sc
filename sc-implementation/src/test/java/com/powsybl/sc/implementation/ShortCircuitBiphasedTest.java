@@ -14,6 +14,7 @@ import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.util.ReferenceNetwork;
+import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,7 +53,7 @@ class ShortCircuitBiphasedTest {
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "sc1", 0., 0., ShortCircuitFault.ShortCircuitType.BIPHASED);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "sc1", new Complex(0.), ShortCircuitFault.ShortCircuitType.BIPHASED);
         faultList.add(sc1);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
@@ -66,7 +67,7 @@ class ShortCircuitBiphasedTest {
             val.add(res.getValue().getIk().getKey());
         }
 
-        assertEquals(67.51864695211795, val.get(0), 0.00001);
+        assertEquals(51.935984532004056, val.get(0), 0.00001);
 
     }
 

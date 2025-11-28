@@ -7,13 +7,16 @@
  */
 package com.powsybl.sc.implementation;
 
-import com.powsybl.math.matrix.DenseMatrix;
+import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.openloadflow.network.PiModel;
 import com.powsybl.sc.util.*;
 import com.powsybl.sc.util.extensions.AdmittanceConstants;
+import com.powsybl.shortcircuit.FortescueValue;
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
@@ -27,46 +30,22 @@ public class ShortCircuitResult {
 
         private LfBus lfBus2; // FIXME : might be wrongly overwritten in the "resultsPerFault" presentation
 
-        private double eth2x;
+        private Complex eth2;
 
-        private double eth2y;
+        private FortescueValue i2Fortescue; //fortescue vector of currents
+        private FortescueValue v2Fortescue; //fortescue vector of voltages
 
-        private DenseMatrix i2Fortescue; //fortescue vector of currents
-
-        private DenseMatrix v2Fortescue; //fortescue vector of voltages
-
-        CommonSupportResult(LfBus lfBus2, double eth2x, double eth2y,
-                            double i2dx, double i2dy, double i2ox, double i2oy, double i2ix, double i2iy,
-                            double dv2dx, double dv2dy, double dv2ox, double dv2oy, double dv2ix, double dv2iy) {
+        CommonSupportResult(LfBus lfBus2, Complex eth2,
+                            Complex i2d, Complex i2o, Complex i2i,
+                            Complex dv2d, Complex dv2o, Complex dv2i) {
             this.lfBus2 = lfBus2;
-            this.eth2x = eth2x;
-            this.eth2y = eth2y;
+            this.eth2 = eth2;
 
-            DenseMatrix mI2 = new DenseMatrix(6, 1);
-            mI2.add(0, 0, i2ox);
-            mI2.add(1, 0, i2oy);
-            mI2.add(2, 0, i2dx);
-            mI2.add(3, 0, i2dy);
-            mI2.add(4, 0, i2ix);
-            mI2.add(5, 0, i2iy);
-            this.i2Fortescue = mI2.toDense();
+            this.i2Fortescue = new FortescueValue(i2d.abs(), i2o.abs(), i2i.abs(), i2d.getArgument(), i2o.getArgument(), i2i.getArgument());
 
             //construction of the fortescue vector vFortescue = t[Vh, Vd, Vi]
-            double vdx = eth2x + dv2dx;
-            double vdy = eth2y + dv2dy;
-            double vhx = dv2ox;
-            double vhy = dv2oy;
-            double vix = dv2ix;
-            double viy = dv2iy;
-
-            DenseMatrix mV2 = new DenseMatrix(6, 1);
-            mV2.add(0, 0, vhx);
-            mV2.add(1, 0, vhy);
-            mV2.add(2, 0, vdx);
-            mV2.add(3, 0, vdy);
-            mV2.add(4, 0, vix);
-            mV2.add(5, 0, viy);
-            this.v2Fortescue = mV2.toDense();
+            Complex vd = eth2.add(dv2d);
+            this.v2Fortescue = new FortescueValue(vd.abs(), dv2o.abs(), dv2i.abs(), vd.getArgument(), dv2o.getArgument(), dv2i.getArgument());
         }
     }
 
@@ -76,28 +55,17 @@ public class ShortCircuitResult {
 
     private ShortCircuitNorm norm;
 
-    private double rd; // equivalent direct impedance
+    private Complex zd; // equivalent direct impedance
+    private Complex zi; // equivalent inverse impedance
+    private Complex zh; // equivalent homopolar impedance
 
-    private double xd;
+    private Complex eth;
 
-    private double ri; // equivalent inverse impedance
-
-    private double xi;
-
-    private double rh; // equivalent homopolar impedance
-
-    private double xh;
-
-    private double ethx;
-
-    private double ethy;
-
-    private DenseMatrix iFortescue; //fortescue vector of currents
-
-    private DenseMatrix vFortescue; //fortescue vector of voltages
+    private FortescueValue iFortescue; //fortescue vector of currents
+    private FortescueValue vFortescue; //fortescue vector of voltages
 
     private boolean isVoltageProfileUpdated;
-    private List<DenseMatrix> busNum2Dv;
+    private List<FortescueValue> busNum2Dv;
 
     private FeedersAtNetwork eqSysFeedersDirect;
 
@@ -112,66 +80,31 @@ public class ShortCircuitResult {
     private CommonSupportResult commonSupportResult; // used only for biphased with common support faults
 
     public ShortCircuitResult(ShortCircuitFault shortCircuitFault, LfBus lfBus,
-                              double ifr, double ifi,
-                              double rth, double xth, double ethr, double ethi, double dvr, double dvi,
+                              Complex id, Complex zth, Complex eth, Complex dv,
                               FeedersAtNetwork eqSysFeeders, ShortCircuitNorm norm) {
         this.lfBus = lfBus;
         this.eqSysFeedersDirect = eqSysFeeders;
         this.shortCircuitFault = shortCircuitFault;
         this.norm = norm;
 
-        this.rd = rth;
-        this.xd = xth;
-        this.ri = 0.;
-        this.xi = 0.;
-        this.rh = 0.;
-        this.xh = 0.;
+        this.zd = zth;
+        this.zi = new Complex(0., 0.);
+        this.zh = new Complex(0., 0.);
 
-        this.ethx = ethr;
-        this.ethy = ethi;
+        this.eth = eth;
 
-        //construction of the fortescue vector iFortescue = t[Ih, Id, Ii]
-        double idx = ifr;
-        double idy = ifi;
-        double iix = 0.;
-        double iiy = 0.;
-        double ihx = 0.;
-        double ihy = 0.;
+        this.iFortescue = new FortescueValue(id.abs(), id.getArgument());
 
-        DenseMatrix mI = new DenseMatrix(6, 1);
-        mI.add(0, 0, ihx);
-        mI.add(1, 0, ihy);
-        mI.add(2, 0, idx);
-        mI.add(3, 0, idy);
-        mI.add(4, 0, iix);
-        mI.add(5, 0, iiy);
-        this.iFortescue = mI.toDense();
-
-        //construction of the fortescue vector vFortescue = t[Vh, Vd, Vi]
-        double vdx = ethr + dvr;
-        double vdy = ethi + dvi;
-        double vhx = 0.;
-        double vhy = 0.;
-        double vix = 0.;
-        double viy = 0.;
-
-        DenseMatrix mV = new DenseMatrix(6, 1);
-        mV.add(0, 0, vhx);
-        mV.add(1, 0, vhy);
-        mV.add(2, 0, vdx);
-        mV.add(3, 0, vdy);
-        mV.add(4, 0, vix);
-        mV.add(5, 0, viy);
-        this.vFortescue = mV.toDense();
+        Complex vd = eth.add(dv);
+        this.vFortescue = new FortescueValue(vd.abs(), vd.getArgument());
 
         isVoltageProfileUpdated = false;
-
     }
 
     public ShortCircuitResult(ShortCircuitFault shortCircuitFault, LfBus lfBus,
-                              double idx, double idy, double iox, double ioy, double iix, double iiy,
-                              double rd, double xd, double ro, double xo, double ri, double xi,
-                              double vdxinit, double vdyinit, double dvdx, double dvdy, double dvox, double dvoy, double dvix, double dviy,
+                              Complex id, Complex io, Complex ii,
+                              Complex zd, Complex zo, Complex zi,
+                              Complex vdInit, Complex dv, Complex dvo, Complex dvi,
                               FeedersAtNetwork eqSysFeedersDirect, FeedersAtNetwork eqSysFeedersHomopolar, ShortCircuitNorm norm) {
         this.lfBus = lfBus;
         this.eqSysFeedersDirect = eqSysFeedersDirect;
@@ -179,65 +112,49 @@ public class ShortCircuitResult {
         this.shortCircuitFault = shortCircuitFault;
         this.norm = norm;
 
-        this.rd = rd;
-        this.xd = xd;
-        this.ri = ri;
-        this.xi = xi;
-        this.rh = ro;
-        this.xh = xo;
+        this.zd = zd;
+        this.zi = zi;
+        this.zh = zo;
 
-        this.ethx = vdxinit;
-        this.ethy = vdyinit;
+        this.eth = vdInit;
 
-        //construction of the fortescue vector iFortescue = t[Ih, Id, Ii]
-        DenseMatrix mI = new DenseMatrix(6, 1);
-        mI.add(0, 0, iox);
-        mI.add(1, 0, ioy);
-        mI.add(2, 0, idx);
-        mI.add(3, 0, idy);
-        mI.add(4, 0, iix);
-        mI.add(5, 0, iiy);
-        this.iFortescue = mI.toDense();
+        this.iFortescue = new FortescueValue(id.abs(), io.abs(), ii.abs(), id.getArgument(), io.getArgument(), ii.getArgument());
 
-        //construction of the fortescue vector vFortescue = t[Vh, Vd, Vi]
-        double vdx = ethx + dvdx;
-        double vdy = ethy + dvdy;
-        double vhx = dvox;
-        double vhy = dvoy;
-        double vix = dvix;
-        double viy = dviy;
+        Complex vd = eth.add(dv);
+        Complex vh = dvo;
+        Complex vi = dvi;
 
-        DenseMatrix mV = new DenseMatrix(6, 1);
-        mV.add(0, 0, vhx);
-        mV.add(1, 0, vhy);
-        mV.add(2, 0, vdx);
-        mV.add(3, 0, vdy);
-        mV.add(4, 0, vix);
-        mV.add(5, 0, viy);
-        this.vFortescue = mV.toDense();
+        this.vFortescue = new FortescueValue(vd.abs(), vh.abs(), vi.abs(), vd.getArgument(), vh.getArgument(), vi.getArgument());
 
         isVoltageProfileUpdated = false;
 
     }
 
     public ShortCircuitResult(ShortCircuitFault shortCircuitFault, LfBus lfBus,
-                              double idx, double idy, double iox, double ioy, double iix, double iiy,
-                              double rd, double xd, double ro, double xo, double ri, double xi,
-                              double vdxinit, double vdyinit, double dvdx, double dvdy, double dvox, double dvoy, double dvix, double dviy,
+                              Complex id, Complex io, Complex ii,
+                              Complex zd, Complex zo, Complex zi,
+                              Complex vdInit, Complex dvd, Complex dvo, Complex dvi,
                               FeedersAtNetwork eqSysFeedersDirect, FeedersAtNetwork eqSysFeedersHomopolar, ShortCircuitNorm norm,
-                              double i2dx, double i2dy, double i2ox, double i2oy, double i2ix, double i2iy,
-                              double v2dxinit, double v2dyinit, double dv2dx, double dv2dy, double dv2ox, double dv2oy, double dv2ix, double dv2iy,
+                              Complex i2d, Complex i2o, Complex i2i,
+                              Complex v2dinit, Complex dv2d, Complex dv2o, Complex dv2i,
                               LfBus lfBus2) {
         this(shortCircuitFault, lfBus,
-                idx, idy, iox, ioy, iix, iiy,
-                rd, xd, ro, xo, ri, xi,
-                vdxinit, vdyinit, dvdx, dvdy, dvox, dvoy, dvix, dviy,
+                id, io, ii,
+                zd, zo, zi,
+                vdInit, dvd, dvo, dvi,
                 eqSysFeedersDirect, eqSysFeedersHomopolar, norm);
 
-        this.commonSupportResult = new CommonSupportResult(lfBus2, v2dxinit, v2dyinit,
-                i2dx, i2dy, i2ox, i2oy, i2ix, i2iy,
-                dv2dx, dv2dy, dv2ox, dv2oy, dv2ix, dv2iy);
+        this.commonSupportResult = new CommonSupportResult(lfBus2, v2dinit,
+                i2d, i2o, i2i, dv2d, dv2o, dv2i);
 
+    }
+
+    public Complex getZd() {
+        return zd;
+    }
+
+    public Complex getEth() {
+        return eth;
     }
 
     public void updateFeedersResult() {
@@ -285,19 +202,21 @@ public class ShortCircuitResult {
                 LfBus bus1 = branch.getBus1();
                 LfBus bus2 = branch.getBus2();
                 if (bus1 != null && bus2 != null) {
-                    DenseMatrix yd12 = getAdmittanceMatrixBranch(branch, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN);
+                    ComplexMatrix ydBranch = getAdmittanceMatrixBranch(branch, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN);
+                    Complex y11 = ydBranch.get(0, 0);
+                    Complex y12 = ydBranch.get(0, 1);
+                    Complex y21 = ydBranch.get(1, 0);
+                    Complex y22 = ydBranch.get(1, 1);
+
                     int busNum1 = bus1.getNum();
-                    double dvx1 = busNum2Dv.get(busNum1).get(2, 0);
-                    double dvy1 = busNum2Dv.get(busNum1).get(3, 0);
+                    FortescueValue dv1Fort = busNum2Dv.get(busNum1);
+                    Complex dv1 = ComplexUtils.polar2Complex(dv1Fort.getPositiveMagnitude(), dv1Fort.getPositiveAngle());
                     int busNum2 = bus2.getNum();
-                    double dvx2 = busNum2Dv.get(busNum2).get(2, 0);
-                    double dvy2 = busNum2Dv.get(busNum2).get(3, 0);
-                    DenseMatrix v12 = new DenseMatrix(4, 1);
-                    v12.add(0, 0, dvx1 + 0.); //TODO : replace 1. by initial value
-                    v12.add(1, 0, dvy1 + 0.); //TODO : replace 0. by initial value
-                    v12.add(2, 0, dvx2 + 0.); //TODO : replace 1. by initial value
-                    v12.add(3, 0, dvy2 + 0.); //TODO : replace 0. by initial value
-                    DenseMatrix i12 = yd12.times(v12).toDense();
+
+                    FortescueValue dv2Fort = busNum2Dv.get(busNum2);
+                    Complex dv2 = ComplexUtils.polar2Complex(dv2Fort.getPositiveMagnitude(), dv2Fort.getPositiveAngle());
+                    Complex i1 = y11.multiply(dv1).add(y12.multiply(dv2));
+                    Complex i2 = y21.multiply(dv1).add(y22.multiply(dv2));
                     //System.out.println(" dI1d(" + branch.getId() + ") = " + i12.get(0, 0) + " + j(" + i12.get(1, 0) + ")  Module I1d = " + 1000. * 100. / bus1.getNominalV() * Math.sqrt((i12.get(0, 0) * i12.get(0, 0) + i12.get(1, 0) * i12.get(1, 0)) / 3));
                     //System.out.println(" dI2d(" + branch.getId() + ") = " + i12.get(2, 0) + " + j(" + i12.get(3, 0) + ")  Module I2d = " + 1000. * 100. / bus2.getNominalV() * Math.sqrt((i12.get(2, 0) * i12.get(2, 0) + i12.get(3, 0) * i12.get(3, 0)) / 3));
 
@@ -306,9 +225,8 @@ public class ShortCircuitResult {
                     FeedersAtBusResult resultBus1Feeders = feedersAtBusResultsDirect.get(bus1); // TODO : homopolar
                     FeedersAtBusResult resultBus2Feeders = feedersAtBusResultsDirect.get(bus2); // TODO : homopolar
 
-                    resultBus1Feeders.addIfeeders(i12.get(0, 0), i12.get(1, 0));
-                    resultBus2Feeders.addIfeeders(i12.get(2, 0), i12.get(3, 0));
-
+                    resultBus1Feeders.addIfeeders(i1);
+                    resultBus2Feeders.addIfeeders(i2);
                 }
             }
 
@@ -320,20 +238,16 @@ public class ShortCircuitResult {
         }
     }
 
-    public double getIdx() {
-        return iFortescue.get(2, 0);
+    public Complex getId() {
+        return ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle());
     }
 
-    public double getIdy() {
-        return iFortescue.get(3, 0);
+    public Complex getIo() {
+        return ComplexUtils.polar2Complex(iFortescue.getZeroMagnitude(), iFortescue.getZeroAngle());
     }
 
-    public double getIox() {
-        return iFortescue.get(0, 0);
-    }
-
-    public double getIoy() {
-        return iFortescue.get(1, 0);
+    public Complex getVd() {
+        return ComplexUtils.polar2Complex(vFortescue.getPositiveMagnitude(), vFortescue.getPositiveAngle());
     }
 
     public Map<LfBus, FeedersAtBusResult> getFeedersAtBusResultsDirect() {
@@ -342,8 +256,8 @@ public class ShortCircuitResult {
 
     public Pair<Double, Double> getIcc() {
         // IccBase = sqrt(3) * Eth(pu) / Zth(pu) * SB(MVA) * 10e6 / (VB(kV) * 10e3)
-        double magnitudeIccBase = Math.sqrt((getIdx() * getIdx() + getIdy() * getIdy()) * 3.) * 1000. * 100. / lfBus.getNominalV();
-        double angleIcc = Math.atan2(getIdy(), getIdx());
+        double magnitudeIccBase = Math.sqrt(3.) * iFortescue.getPositiveMagnitude() * 1000. * 100. / lfBus.getNominalV();
+        double angleIcc = iFortescue.getPositiveAngle();
 
         double magnitudeIcc = magnitudeIccBase;
 
@@ -352,7 +266,6 @@ public class ShortCircuitResult {
 
         if (shortCircuitType == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
             // Icc = 1/sqrt(3) * Eth(pu) / Zth(pu) * SB(MVA) * 10e6 / (VB(kV) * 10e3)
-            //return Math.sqrt((getIdx() * getIdx() + getIdy() * getIdy()) / 3) * 1000. * 100. / lfBus.getNominalV();
             magnitudeIcc = magnitudeIcc / 3.;
 
         }
@@ -362,7 +275,6 @@ public class ShortCircuitResult {
 
     public Pair<Double, Double> getIk() {
         // Ik = c * Un / (sqrt(3) * Zk) = c / sqrt(3) * Eth(pu) / Zth(pu) * Sb / Vb
-        // Equivalent to Math.sqrt((getIdx() * getIdx() + getIdy() * getIdy()) / 3) * 100.  / lfBus.getNominalV() * norm.getCmaxVoltageFactor(lfBus.getNominalV());
         Pair<Double, Double> icc = getIcc();
         return new Pair<>(icc.getKey() * norm.getCmaxVoltageFactor(lfBus.getNominalV()) / 1000., icc.getValue());
     }
@@ -377,97 +289,58 @@ public class ShortCircuitResult {
     }
 
     public void createEmptyFortescueVoltageVector(int nbBusses) {
-        List<DenseMatrix> busNum2Dv = new ArrayList<>();
+        List<FortescueValue> busNum2Dv = new ArrayList<>();
         for (int i = 0; i < nbBusses; i++) {
-            DenseMatrix mdV = new DenseMatrix(6, 1);
+            FortescueValue mdV = new FortescueValue(0., 0.);
             busNum2Dv.add(mdV);
         }
         this.busNum2Dv = busNum2Dv;
     }
 
-    public void fillVoltageInFortescueVector(int busNum, double dVdx, double dVdy) {
-        this.busNum2Dv.get(busNum).add(2, 0, dVdx);
-        this.busNum2Dv.get(busNum).add(3, 0, dVdy);
+    public void fillVoltageInFortescueVector(int busNum, Complex dV) {
+        this.busNum2Dv.set(busNum, new FortescueValue(dV.abs(), dV.getArgument()));
     }
 
-    public void fillVoltageInFortescueVector(int busNum, double dVdx, double dVdy, double dVox, double dVoy, double dVix, double dViy) {
-        this.busNum2Dv.get(busNum).add(0, 0, dVox);
-        this.busNum2Dv.get(busNum).add(1, 0, dVoy);
-        this.busNum2Dv.get(busNum).add(2, 0, dVdx);
-        this.busNum2Dv.get(busNum).add(3, 0, dVdy);
-        this.busNum2Dv.get(busNum).add(4, 0, dVix);
-        this.busNum2Dv.get(busNum).add(5, 0, dViy);
+    public void fillVoltageInFortescueVector(int busNum, Complex dVd, Complex dVo, Complex dVi) {
+        this.busNum2Dv.set(busNum, new FortescueValue(dVd.abs(), dVo.abs(), dVi.abs(), dVd.getArgument(), dVo.getArgument(), dVi.getArgument()));
     }
 
     public void setLfNetwork(LfNetwork lfNetwork) {
         this.lfNetwork = lfNetwork;
     }
 
-    static DenseMatrix getAdmittanceMatrixBranch(LfBranch branch,
-                                                 AdmittanceEquationSystem.AdmittanceType admittanceType) {
+    static ComplexMatrix getAdmittanceMatrixBranch(LfBranch branch,
+                                                   AdmittanceEquationSystem.AdmittanceType admittanceType) {
 
         // TODO : code duplicated with the admittance equation system, should be un-duplicated
         PiModel piModel = branch.getPiModel();
         if (piModel.getX() == 0) {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has reactance equal to zero");
         }
-        double rho = piModel.getR1();
+
         if (piModel.getZ() == 0) {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
         }
-        double zInvSquare = 1 / (piModel.getZ() * piModel.getZ());
-        double r = piModel.getR();
-        double x = piModel.getX();
-        double alpha = piModel.getA1();
-        double cosA = Math.cos(Math.toRadians(alpha));
-        double sinA = Math.sin(Math.toRadians(alpha));
-        double gPi1 = piModel.getG1();
-        double bPi1 = piModel.getB1();
-        double gPi2 = piModel.getG2();
-        double bPi2 = piModel.getB2();
+        Complex z = new Complex(piModel.getR(), piModel.getX());
+        Complex y1 = new Complex(piModel.getG1(), piModel.getB1());
+        Complex y2 = new Complex(piModel.getG2(), piModel.getB1());
+        Complex rho = ComplexUtils.polar2Complex(piModel.getR1(), Math.toRadians(piModel.getA1()));
 
-        double g12 = rho * zInvSquare * (r * cosA + x * sinA);
-        double b12 = -rho * zInvSquare * (x * cosA + r * sinA);
-        double g1g12sum = rho * rho * (gPi1 + r * zInvSquare);
-        double b1b12sum = rho * rho * (bPi1 - x * zInvSquare);
+        double admCoef = 1.;
         if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
-            g12 = g12 * AdmittanceConstants.COEF_XO_XD; // Xo = 3 * Xd as a first approximation : TODO : improve when more data available
-            b12 = b12 * AdmittanceConstants.COEF_XO_XD;
-            g1g12sum = g1g12sum * AdmittanceConstants.COEF_XO_XD;
-            b1b12sum = b1b12sum * AdmittanceConstants.COEF_XO_XD;
+            admCoef = AdmittanceConstants.COEF_XO_XD; // Xo = 3 * Xd as a first approximation : TODO : improve when more data available
         }
+        Complex y11 = y1.add(z.reciprocal()).multiply(rho.abs() * rho.abs()).multiply(admCoef); // TODO : verify admittance formula for homoplar, alpha should maybe disappear
+        Complex y12 = rho.conjugate().multiply(z.reciprocal()).multiply(-1.).multiply(admCoef);
+        Complex y21 = rho.multiply(z.reciprocal()).multiply(-1.).multiply(admCoef);
+        Complex y22 = y2.add(z.reciprocal()).multiply(admCoef);
 
-        double g21 = rho * zInvSquare * (r * cosA + x * sinA);
-        double b21 = rho * zInvSquare * (r * sinA - x * cosA);
-        double g2g21sum = r * zInvSquare + gPi2;
-        double b2b21sum = -x * zInvSquare + bPi2;
-        if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
-            g21 = g21 * AdmittanceConstants.COEF_XO_XD; // Xo = 3 * Xd as a first approximation : TODO : improve when more data available
-            b21 = b21 * AdmittanceConstants.COEF_XO_XD;
-            g2g21sum = g2g21sum * AdmittanceConstants.COEF_XO_XD;
-            b2b21sum = b2b21sum * AdmittanceConstants.COEF_XO_XD;
-        }
-
-        DenseMatrix mAdmittance = new DenseMatrix(4, 4);
-        mAdmittance.add(0, 0, g1g12sum);
-        mAdmittance.add(0, 1, -b1b12sum);
-        mAdmittance.add(0, 2, -g12);
-        mAdmittance.add(0, 3, b12);
-        mAdmittance.add(1, 0, b1b12sum);
-        mAdmittance.add(1, 1, g1g12sum);
-        mAdmittance.add(1, 2, -b12);
-        mAdmittance.add(1, 3, -g12);
-        mAdmittance.add(2, 0, -g21);
-        mAdmittance.add(2, 1, b21);
-        mAdmittance.add(2, 2, g2g21sum);
-        mAdmittance.add(2, 3, -b2b21sum);
-        mAdmittance.add(3, 0, -b21);
-        mAdmittance.add(3, 1, -g21);
-        mAdmittance.add(3, 2, b2b21sum);
-        mAdmittance.add(3, 3, g2g21sum);
-
-        return mAdmittance.toDense();
-
+        ComplexMatrix admittance = new ComplexMatrix(2, 2);
+        admittance.get(0, 0).add(y11);
+        admittance.get(0, 1).add(y12);
+        admittance.get(1, 0).add(y21);
+        admittance.get(1, 1).add(y22);
+        return admittance;
     }
 
     // used for tests
@@ -479,7 +352,7 @@ public class ShortCircuitResult {
                 List<FeederResult> busFeedersResults = resultFeeder.getBusFeedersResult();
                 for (FeederResult feederResult : busFeedersResults) {
                     if (feederResult.getFeeder().getId().equals(feederId)) {
-                        ix = feederResult.getIxContribution();
+                        ix = feederResult.getIContribution().getReal();
                     }
                 }
             }

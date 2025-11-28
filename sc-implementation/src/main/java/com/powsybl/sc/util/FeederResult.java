@@ -8,6 +8,7 @@
 package com.powsybl.sc.util;
 
 import com.powsybl.openloadflow.network.LfBus;
+import org.apache.commons.math3.complex.Complex;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -16,31 +17,24 @@ public class FeederResult {
 
     private Feeder feeder;
 
-    private double ixContribution;
-    private double iyContribution;
+    private Complex iContribution;
 
-    public FeederResult(Feeder feeder, double ix, double iy) {
+    public FeederResult(Feeder feeder, Complex i) {
         this.feeder = feeder;
-        this.ixContribution = ix;
-        this.iyContribution = iy;
+        this.iContribution = i;
     }
 
-    public void updateIcontribution(double ix, double iy) {
-        ixContribution = ixContribution + ix;
-        iyContribution = iyContribution + iy;
+    public void updateIcontribution(Complex i) {
+        iContribution = iContribution.add(i);
     }
 
     public void printContributions(LfBus bus) {
-        System.out.println(" ix(" + feeder.getId() + ", " + feeder.getFeederType() + ") = " + ixContribution + " + j(" + iyContribution + ")  Module I = "
-                + 1000. * 100. / bus.getNominalV() * Math.sqrt((ixContribution * ixContribution + iyContribution * iyContribution) / 3.)); //TODO : issue with a 3x factor
+        System.out.println(" ix(" + feeder.getId() + ", " + feeder.getFeederType() + ") = " + iContribution.getReal() + " + j(" + iContribution.getImaginary() + ")  Module I = "
+                + 1000. * 100. / bus.getNominalV() * Math.sqrt(3.) * iContribution.abs()); //TODO : issue with a 3x factor
     }
 
-    public double getIxContribution() {
-        return ixContribution;
-    }
-
-    public double getIyContribution() {
-        return iyContribution;
+    public Complex getIContribution() {
+        return iContribution;
     }
 
     public Feeder getFeeder() {

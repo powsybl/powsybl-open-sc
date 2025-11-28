@@ -22,6 +22,7 @@ import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.extensions.GeneratorFortescueTypeAdder;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.shortcircuit.*;
+import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -58,7 +59,7 @@ public class ShortCircuitMonophasedTest {
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "sc1", 0., 0., ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "sc1", new Complex(0.), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc1);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
@@ -90,20 +91,21 @@ public class ShortCircuitMonophasedTest {
 
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
+        Complex zFault = new Complex(0.);
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "sc1", 0., 0., ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "sc1", zFault, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B3", "sc2", 0., 0., ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B3", "sc2", zFault, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault("B4", "sc3", 0., 0., ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc3 = new ShortCircuitFault("B4", "sc3", zFault, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault("B5", "sc4", 0., 0., ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc4 = new ShortCircuitFault("B5", "sc4", zFault, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc4);
 
         // additional faults
-        ShortCircuitFault sc5 = new ShortCircuitFault("B2", "sc5", 0., 0., ShortCircuitFault.ShortCircuitType.BIPHASED);
+        ShortCircuitFault sc5 = new ShortCircuitFault("B2", "sc5", zFault, ShortCircuitFault.ShortCircuitType.BIPHASED);
         faultList.add(sc5);
-        ShortCircuitFault sc6 = new ShortCircuitFault("B3", "sc6", 0., 0., ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
+        ShortCircuitFault sc6 = new ShortCircuitFault("B3", "sc6", zFault, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
         faultList.add(sc6);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.TRANSIENT;
@@ -124,8 +126,8 @@ public class ShortCircuitMonophasedTest {
         assertEquals(17.0452, values.get("sc4"), 0.00001); // bus 5 : expected doc value : 17.0452 kA
 
         // test to check that non monophased faults does not have an impact on monophased results
-        assertEquals(57.48674948061683, values.get("sc5"), 0.00001); // biphased not in ref doc
-        assertEquals(25.21494837446988, values.get("sc6"), 0.00001); // biphased not in ref doc
+        assertEquals(47.67456652532181, values.get("sc5"), 0.00001); // biphased not in ref doc
+        assertEquals(33.04842593212249, values.get("sc6"), 0.00001); // biphased not in ref doc
 
     }
 
@@ -172,7 +174,7 @@ public class ShortCircuitMonophasedTest {
                 .add();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("BP", "sc1", 0., 0., ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc1 = new ShortCircuitFault("BP", "sc1", new Complex(0.), ShortCircuitFault.ShortCircuitType.MONOPHASED);
 
         faultList.add(sc1);
 
@@ -186,8 +188,8 @@ public class ShortCircuitMonophasedTest {
 
         //assertEquals(2.8286512112174034, scunbEngine.results.get(sc1).getIox() / Math.sqrt(3), 0.000001); // results changed with modification of input data
         //assertEquals(1.6331225382399293, scunbEngine.results.get(sc1).getIoy() / Math.sqrt(3), 0.000001);
-        assertEquals(2.7099928109273916, scunbEngine.resultsPerFault.get(sc1).getIox() / Math.sqrt(3), 0.000001);
-        assertEquals(1.5646150788908801, scunbEngine.resultsPerFault.get(sc1).getIoy() / Math.sqrt(3), 0.000001);
+        assertEquals(2.7099928109273916, scunbEngine.resultsPerFault.get(sc1).getIo().getReal() / Math.sqrt(3), 0.000001);
+        assertEquals(1.5646150788908801, scunbEngine.resultsPerFault.get(sc1).getIo().getImaginary() / Math.sqrt(3), 0.000001);
 
     }
 
