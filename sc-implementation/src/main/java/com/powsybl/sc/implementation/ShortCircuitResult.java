@@ -8,7 +8,6 @@
 package com.powsybl.sc.implementation;
 
 import com.powsybl.math.matrix.ComplexMatrix;
-import com.powsybl.math.matrix.DenseMatrix;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
@@ -216,11 +215,6 @@ public class ShortCircuitResult {
 
                     FortescueValue dv2Fort = busNum2Dv.get(busNum2);
                     Complex dv2 = ComplexUtils.polar2Complex(dv2Fort.getPositiveMagnitude(), dv2Fort.getPositiveAngle());
-                    DenseMatrix v12 = new DenseMatrix(4, 1);
-                    /*v12.add(0, 0, dvx1 + 0.); //TODO : replace 1. by initial value
-                    v12.add(1, 0, dvy1 + 0.); //TODO : replace 0. by initial value
-                    v12.add(2, 0, dvx2 + 0.); //TODO : replace 1. by initial value
-                    v12.add(3, 0, dvy2 + 0.); //TODO : replace 0. by initial value*/
                     Complex i1 = y11.multiply(dv1).add(y12.multiply(dv2));
                     Complex i2 = y21.multiply(dv1).add(y22.multiply(dv2));
                     //System.out.println(" dI1d(" + branch.getId() + ") = " + i12.get(0, 0) + " + j(" + i12.get(1, 0) + ")  Module I1d = " + 1000. * 100. / bus1.getNominalV() * Math.sqrt((i12.get(0, 0) * i12.get(0, 0) + i12.get(1, 0) * i12.get(1, 0)) / 3));
@@ -233,7 +227,6 @@ public class ShortCircuitResult {
 
                     resultBus1Feeders.addIfeeders(i1);
                     resultBus2Feeders.addIfeeders(i2);
-
                 }
             }
 
@@ -263,9 +256,7 @@ public class ShortCircuitResult {
 
     public Pair<Double, Double> getIcc() {
         // IccBase = sqrt(3) * Eth(pu) / Zth(pu) * SB(MVA) * 10e6 / (VB(kV) * 10e3)
-        //double magnitudeIccBase = Math.sqrt((getIdx() * getIdx() + getIdy() * getIdy()) * 3.) * 1000. * 100. / lfBus.getNominalV();
         double magnitudeIccBase = Math.sqrt(3.) * iFortescue.getPositiveMagnitude() * 1000. * 100. / lfBus.getNominalV();
-        //double angleIcc = Math.atan2(getIdy(), getIdx());
         double angleIcc = iFortescue.getPositiveAngle();
 
         double magnitudeIcc = magnitudeIccBase;
@@ -275,7 +266,6 @@ public class ShortCircuitResult {
 
         if (shortCircuitType == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
             // Icc = 1/sqrt(3) * Eth(pu) / Zth(pu) * SB(MVA) * 10e6 / (VB(kV) * 10e3)
-            //return Math.sqrt((getIdx() * getIdx() + getIdy() * getIdy()) / 3) * 1000. * 100. / lfBus.getNominalV();
             magnitudeIcc = magnitudeIcc / 3.;
 
         }
@@ -285,7 +275,6 @@ public class ShortCircuitResult {
 
     public Pair<Double, Double> getIk() {
         // Ik = c * Un / (sqrt(3) * Zk) = c / sqrt(3) * Eth(pu) / Zth(pu) * Sb / Vb
-        // Equivalent to Math.sqrt((getIdx() * getIdx() + getIdy() * getIdy()) / 3) * 100.  / lfBus.getNominalV() * norm.getCmaxVoltageFactor(lfBus.getNominalV());
         Pair<Double, Double> icc = getIcc();
         return new Pair<>(icc.getKey() * norm.getCmaxVoltageFactor(lfBus.getNominalV()) / 1000., icc.getValue());
     }
@@ -328,50 +317,30 @@ public class ShortCircuitResult {
         if (piModel.getX() == 0) {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has reactance equal to zero");
         }
-        double rho = piModel.getR1();
+
         if (piModel.getZ() == 0) {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
         }
-        double zInvSquare = 1 / (piModel.getZ() * piModel.getZ());
-        double r = piModel.getR();
-        double x = piModel.getX();
-        double alpha = piModel.getA1();
-        double cosA = Math.cos(Math.toRadians(alpha));
-        double sinA = Math.sin(Math.toRadians(alpha));
-        double gPi1 = piModel.getG1();
-        double bPi1 = piModel.getB1();
-        double gPi2 = piModel.getG2();
-        double bPi2 = piModel.getB2();
+        Complex z = new Complex(piModel.getR(), piModel.getX());
+        Complex y1 = new Complex(piModel.getG1(), piModel.getB1());
+        Complex y2 = new Complex(piModel.getG2(), piModel.getB1());
+        Complex rho = ComplexUtils.polar2Complex(piModel.getR1(), Math.toRadians(piModel.getA1()));
 
-        double g12 = rho * zInvSquare * (r * cosA + x * sinA);
-        double b12 = -rho * zInvSquare * (x * cosA + r * sinA);
-        double g1g12sum = rho * rho * (gPi1 + r * zInvSquare);
-        double b1b12sum = rho * rho * (bPi1 - x * zInvSquare);
+        double admCoef = 1.;
         if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
-            g12 = g12 * AdmittanceConstants.COEF_XO_XD; // Xo = 3 * Xd as a first approximation : TODO : improve when more data available
-            b12 = b12 * AdmittanceConstants.COEF_XO_XD;
-            g1g12sum = g1g12sum * AdmittanceConstants.COEF_XO_XD;
-            b1b12sum = b1b12sum * AdmittanceConstants.COEF_XO_XD;
+            admCoef = AdmittanceConstants.COEF_XO_XD; // Xo = 3 * Xd as a first approximation : TODO : improve when more data available
         }
-
-        double g21 = rho * zInvSquare * (r * cosA + x * sinA);
-        double b21 = rho * zInvSquare * (r * sinA - x * cosA);
-        double g2g21sum = r * zInvSquare + gPi2;
-        double b2b21sum = -x * zInvSquare + bPi2;
-        if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
-            g21 = g21 * AdmittanceConstants.COEF_XO_XD; // Xo = 3 * Xd as a first approximation : TODO : improve when more data available
-            b21 = b21 * AdmittanceConstants.COEF_XO_XD;
-            g2g21sum = g2g21sum * AdmittanceConstants.COEF_XO_XD;
-            b2b21sum = b2b21sum * AdmittanceConstants.COEF_XO_XD;
-        }
+        Complex y11 = y1.add(z.reciprocal()).multiply(rho.abs() * rho.abs()).multiply(admCoef); // TODO : verify admittance formula for homoplar, alpha should maybe disappear
+        Complex y12 = rho.conjugate().multiply(z.reciprocal()).multiply(-1.).multiply(admCoef);
+        Complex y21 = rho.multiply(z.reciprocal()).multiply(-1.).multiply(admCoef);
+        Complex y22 = y2.add(z.reciprocal()).multiply(admCoef);
 
         ComplexMatrix admittance = new ComplexMatrix(2, 2);
-        admittance.get(0, 0).add(new Complex(g1g12sum, b1b12sum)); // Y11
-        admittance.get(0, 1).add(new Complex(-g12, -b12)); // Y12
-        admittance.get(1, 0).add(new Complex(-g21, -b21)); // Y21
-        admittance.get(1, 1).add(new Complex(g2g21sum, b2b21sum)); // Y22
+        admittance.get(0, 0).add(y11);
+        admittance.get(0, 1).add(y12);
+        admittance.get(1, 0).add(y21);
+        admittance.get(1, 1).add(y22);
         return admittance;
-
     }
 
     // used for tests
