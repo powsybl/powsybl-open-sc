@@ -7,6 +7,9 @@
  */
 package com.powsybl.sc.implementation;
 
+import com.powsybl.openloadflow.network.LfBus;
+import com.powsybl.shortcircuit.FortescueValue;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -18,10 +21,45 @@ public class ShortCircuitResultPrinter {
         shortCircuitResult = scr;
     }
 
-    public void printEquivalentDirectImpedance() {
-        double rd = shortCircuitResult.getZd().getReal();
-        double xd = shortCircuitResult.getZd().getImaginary();
-        //Pair<Double, Double> res = FortescueUtil.getPolarFromCartesian(rd, xd);
-        System.out.println(" Zd = " + rd + " + j(" + xd + ")");
+    public void printEquivalentDirectImpedancePu() {
+        System.out.println("Equivalent Direct Thevenin Impedance (Pu) : Zd = " + shortCircuitResult.getZd() + "  ");
+    }
+
+    public void printTheveninVoltagePu() {
+        System.out.println("Thevenin Voltage : Eth  (Pu) = " + shortCircuitResult.getZd() + "  ");
+    }
+
+    public void printIfortescuePu() {
+        System.out.println("Short Circuit Current at Bus (Pu) = " + shortCircuitResult.getLfBus().getId() + " : I = " + getStringFortescueValue(shortCircuitResult.getiFortescue()) + "  ");
+    }
+
+    public void printVfortescuePu() {
+        System.out.println("Short Circuit Voltage at Bus (Pu) = " + shortCircuitResult.getLfBus().getId() + " : V = " + getStringFortescueValue(shortCircuitResult.getvFortescue()) + "  ");
+    }
+
+    public void printDvAtBussesPu() {
+        for (LfBus bus : shortCircuitResult.getLfNetwork().getBuses()) {
+            int busNum = bus.getNum();
+            System.out.println("dV(" + bus.getId() + ") = " + getStringFortescueValue(shortCircuitResult.getBusNum2Dv().get(busNum)) + " (Pu) ");
+        }
+    }
+
+    public void printShortCircuitResult() {
+        System.out.println("-------------------------- ");
+        System.out.println("Short Circuit at Bus = " + shortCircuitResult.getLfBus().getId());
+        printEquivalentDirectImpedancePu();
+        printTheveninVoltagePu();
+        printIfortescuePu();
+        printVfortescuePu();
+        if (shortCircuitResult.isVoltageProfileUpdated()) {
+            printDvAtBussesPu();
+        }
+    }
+
+    public String getStringFortescueValue(FortescueValue fv) {
+        String s = "[ " + fv.getZeroMagnitude() + " < " + fv.getZeroAngle() + " ; "
+                        + fv.getPositiveMagnitude() + " < " + fv.getPositiveAngle() + " ; "
+                        + fv.getNegativeMagnitude() + " < " + fv.getNegativeAngle() + " ] ";
+        return s;
     }
 }

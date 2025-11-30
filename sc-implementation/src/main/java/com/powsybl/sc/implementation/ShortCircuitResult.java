@@ -258,8 +258,32 @@ public class ShortCircuitResult {
         return ComplexUtils.polar2Complex(vFortescue.getPositiveMagnitude(), vFortescue.getPositiveAngle());
     }
 
+    public FortescueValue getiFortescue() {
+        return iFortescue;
+    }
+
+    public FortescueValue getvFortescue() {
+        return vFortescue;
+    }
+
+    public LfBus getLfBus() {
+        return lfBus;
+    }
+
+    public LfNetwork getLfNetwork() {
+        return lfNetwork;
+    }
+
     public Map<LfBus, FeedersAtBusResult> getFeedersResultDirect() {
         return feedersResultDirect;
+    }
+
+    public List<FortescueValue> getBusNum2Dv() {
+        return busNum2Dv;
+    }
+
+    public boolean isVoltageProfileUpdated() {
+        return isVoltageProfileUpdated;
     }
 
     public Pair<Double, Double> getIcc() {

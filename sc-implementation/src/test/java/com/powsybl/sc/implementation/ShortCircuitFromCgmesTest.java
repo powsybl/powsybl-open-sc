@@ -107,6 +107,8 @@ class ShortCircuitFromCgmesTest {
         List<Double> values = new ArrayList<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.getResultsPerFault().entrySet()) {
             values.add(res.getValue().getIk().getKey());
+            ShortCircuitResultPrinter scp = new ShortCircuitResultPrinter(res.getValue());
+            scp.printShortCircuitResult();
         }
 
         // I"k = 1/sqrt(3) * cmax * Un /(Zeq)

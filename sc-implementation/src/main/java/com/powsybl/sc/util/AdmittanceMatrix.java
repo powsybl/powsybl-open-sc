@@ -287,22 +287,17 @@ public class AdmittanceMatrix implements AutoCloseable {
                 }
             }
 
-            //DenseMatrix tmpMat = this.matrixFactory.create(2, 2, 4).toDense();
-            Complex tmpZ = new Complex(0.);
+            // m result is [ r -x ] ---> BUS_VR
+            //             [ x  r ] ---> BUS_VI
+            Complex defaultV = new Complex(0.);
             if (!tmpV.containsKey(v.getElementNum())) {
-                tmpV.put(v.getElementNum(), tmpZ);
+                tmpV.put(v.getElementNum(), defaultV);
             }
             if (type == VariableType.BUS_VR) {
-                //tmpV.get(v.getElementNum()).add(0, 0, m.get(row, 2 * numColumn));
-                //tmpV.get(v.getElementNum()).add(0, 1, m.get(row, 2 * numColumn + 1));
-                tmpV.get(v.getElementNum()).add(new Complex(m.get(row, 2 * numColumn)));
-
-            } else if (type == VariableType.BUS_VI) {
-                //tmpV.get(v.getElementNum()).add(1, 0, m.get(row, 2 * numColumn));
-                //tmpV.get(v.getElementNum()).add(1, 1, m.get(row, 2 * numColumn + 1));
-                tmpV.get(v.getElementNum()).add(new Complex(0., m.get(row, 2 * numColumn)));
+                Complex oldV = tmpV.get(v.getElementNum());
+                Complex delta = new Complex(m.get(row, 2 * numColumn), -m.get(row, 2 * numColumn + 1));
+                tmpV.put(v.getElementNum(), oldV.add(delta));
             }
-
         }
 
         return tmpV;
