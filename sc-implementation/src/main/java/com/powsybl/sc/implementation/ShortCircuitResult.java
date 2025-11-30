@@ -67,13 +67,11 @@ public class ShortCircuitResult {
     private boolean isVoltageProfileUpdated;
     private List<FortescueValue> busNum2Dv;
 
-    private FeedersAtNetwork eqSysFeedersDirect;
-
+    private FeedersAtNetwork eqSysFeedersDirect; // This contains the equivalent admittance of feeders's injectors, they are built when the AdmittanceEquationSystem is built and put in input of the sc result
     private FeedersAtNetwork eqSysFeedersHomopolar;
 
-    private Map<LfBus, FeedersAtBusResult> feedersAtBusResultsDirect;
-
-    private Map<LfBus, FeedersAtBusResult> feedersAtBusResultsHomopolar;
+    private Map<LfBus, FeedersAtBusResult> feedersResultDirect; // For each feeder in eqSysFeedersDirect, this map contains the results
+    private Map<LfBus, FeedersAtBusResult> feedersResultsHomopolar;
 
     private ShortCircuitFault shortCircuitFault;
 
@@ -82,6 +80,7 @@ public class ShortCircuitResult {
     public ShortCircuitResult(ShortCircuitFault shortCircuitFault, LfBus lfBus,
                               Complex id, Complex zth, Complex eth, Complex dv,
                               FeedersAtNetwork eqSysFeeders, ShortCircuitNorm norm) {
+        // Called for a balanced short circuit calculation
         this.lfBus = lfBus;
         this.eqSysFeedersDirect = eqSysFeeders;
         this.shortCircuitFault = shortCircuitFault;
@@ -106,6 +105,7 @@ public class ShortCircuitResult {
                               Complex zd, Complex zo, Complex zi,
                               Complex vdInit, Complex dv, Complex dvo, Complex dvi,
                               FeedersAtNetwork eqSysFeedersDirect, FeedersAtNetwork eqSysFeedersHomopolar, ShortCircuitNorm norm) {
+        // Called for an unbalanced short circuit calculation with no common support
         this.lfBus = lfBus;
         this.eqSysFeedersDirect = eqSysFeedersDirect;
         this.eqSysFeedersHomopolar = eqSysFeedersHomopolar;
@@ -138,6 +138,7 @@ public class ShortCircuitResult {
                               Complex i2d, Complex i2o, Complex i2i,
                               Complex v2dinit, Complex dv2d, Complex dv2o, Complex dv2i,
                               LfBus lfBus2) {
+        // Called for an unbalanced short circuit calculation with a common support
         this(shortCircuitFault, lfBus,
                 id, io, ii,
                 zd, zo, zi,
@@ -177,8 +178,8 @@ public class ShortCircuitResult {
                 System.out.println(" dVi(" + vd.getKey() + ") = " + vd.getValue().get(4, 0) + " + j(" + vd.getValue().get(5, 0) + ")");
             }*/
 
-            // Building the structure to support the feeders result
-            feedersAtBusResultsDirect = new HashMap<>(); // TODO : homopolar
+            // Building the structure to support the feeders result, a FeederResult is built from each Feeder in input
+            feedersResultDirect = new HashMap<>(); // TODO : homopolar
             for (LfBus bus : lfNetwork.getBuses()) {
                 //int busNum = bus.getNum();
                 //double dvx = busNum2Dv.get(busNum).get(2, 0);
@@ -193,11 +194,18 @@ public class ShortCircuitResult {
                 // Init of feeder results
                 FeedersAtBus busFeeders = eqSysFeedersDirect.busToFeeders.get(bus);
                 FeedersAtBusResult feedersAtBusResult = new FeedersAtBusResult(busFeeders);
-                feedersAtBusResultsDirect.put(bus, feedersAtBusResult);  // TODO : homopolar
+                feedersResultDirect.put(bus, feedersAtBusResult);  // TODO : homopolar
 
             }
 
-            // Building the sum of currents at busses from branches
+            // For each branch, we build the sum of currents at busses from branches
+            // 1- Input is the voltage delta at each end of the branch
+            // 2- Then we compute dI = [Ybranch].dV
+            // 3- Then dI is added to the sum of current of bus
+            // 4- The resulting sum of current at each bus is the current coming from branches,
+            // which is equal to the current at bus injectors (Kirchhoff's law)
+            // 5- Given the admittance of each feeder at bus, computed during building of AdmittanceEquationSystem,
+            // we can then deduce the current contribution of each feeder, which is stored in feeder result
             for (LfBranch branch : lfNetwork.getBranches()) {
                 LfBus bus1 = branch.getBus1();
                 LfBus bus2 = branch.getBus2();
@@ -215,24 +223,24 @@ public class ShortCircuitResult {
 
                     FortescueValue dv2Fort = busNum2Dv.get(busNum2);
                     Complex dv2 = ComplexUtils.polar2Complex(dv2Fort.getPositiveMagnitude(), dv2Fort.getPositiveAngle());
-                    Complex i1 = y11.multiply(dv1).add(y12.multiply(dv2));
-                    Complex i2 = y21.multiply(dv1).add(y22.multiply(dv2));
+                    Complex di1 = y11.multiply(dv1).add(y12.multiply(dv2));
+                    Complex di2 = y21.multiply(dv1).add(y22.multiply(dv2));
                     //System.out.println(" dI1d(" + branch.getId() + ") = " + i12.get(0, 0) + " + j(" + i12.get(1, 0) + ")  Module I1d = " + 1000. * 100. / bus1.getNominalV() * Math.sqrt((i12.get(0, 0) * i12.get(0, 0) + i12.get(1, 0) * i12.get(1, 0)) / 3));
                     //System.out.println(" dI2d(" + branch.getId() + ") = " + i12.get(2, 0) + " + j(" + i12.get(3, 0) + ")  Module I2d = " + 1000. * 100. / bus2.getNominalV() * Math.sqrt((i12.get(2, 0) * i12.get(2, 0) + i12.get(3, 0) * i12.get(3, 0)) / 3));
 
-                    // Feeders :
-                    // compute the sum of currents from branches at each bus
-                    FeedersAtBusResult resultBus1Feeders = feedersAtBusResultsDirect.get(bus1); // TODO : homopolar
-                    FeedersAtBusResult resultBus2Feeders = feedersAtBusResultsDirect.get(bus2); // TODO : homopolar
-
-                    resultBus1Feeders.addIfeeders(i1);
-                    resultBus2Feeders.addIfeeders(i2);
+                    FeedersAtBusResult resultBus1Feeders = feedersResultDirect.get(bus1); // TODO : homopolar
+                    FeedersAtBusResult resultBus2Feeders = feedersResultDirect.get(bus2); // TODO : homopolar
+                    // Feeders : compute the sum of currents from branches at each bus
+                    // dI coming from branch to the bus are added to the actual sum of current at bus
+                    resultBus1Feeders.addItofeedersSum(di1);
+                    resultBus2Feeders.addItofeedersSum(di2);
                 }
             }
 
-            // computing feeders contribution from the sum of currents at node and based on the admittance dispatch key of feeders
+            // computing feeders contribution of each feeder at bus from the sum of currents at bus
+            // and based on the admittance dispatch key of feeders
             for (LfBus bus : lfNetwork.getBuses()) {
-                FeedersAtBusResult busFeeders = feedersAtBusResultsDirect.get(bus); // TODO : homopolar
+                FeedersAtBusResult busFeeders = feedersResultDirect.get(bus); // TODO : homopolar
                 busFeeders.updateContributions();
             }
         }
@@ -250,8 +258,8 @@ public class ShortCircuitResult {
         return ComplexUtils.polar2Complex(vFortescue.getPositiveMagnitude(), vFortescue.getPositiveAngle());
     }
 
-    public Map<LfBus, FeedersAtBusResult> getFeedersAtBusResultsDirect() {
-        return feedersAtBusResultsDirect;
+    public Map<LfBus, FeedersAtBusResult> getFeedersResultDirect() {
+        return feedersResultDirect;
     }
 
     public Pair<Double, Double> getIcc() {
@@ -348,7 +356,7 @@ public class ShortCircuitResult {
         double ix = 0.;
         for (LfBus bus : lfNetwork.getBuses()) {
             if (bus.getId().equals(busId)) {
-                FeedersAtBusResult resultFeeder = feedersAtBusResultsDirect.get(bus); // TODO : homopolar
+                FeedersAtBusResult resultFeeder = feedersResultDirect.get(bus); // TODO : homopolar
                 List<FeederResult> busFeedersResults = resultFeeder.getBusFeedersResult();
                 for (FeederResult feederResult : busFeedersResults) {
                     if (feederResult.getFeeder().getId().equals(feederId)) {

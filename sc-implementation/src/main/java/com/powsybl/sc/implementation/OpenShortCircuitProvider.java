@@ -156,7 +156,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     }
 
     public void fillFeederResults(List<FeederResult> feederResultsProvider, ShortCircuitResult scResult) {
-        for (Map.Entry<LfBus, FeedersAtBusResult> busAndFeedersAtBusResult : scResult.getFeedersAtBusResultsDirect().entrySet()) {
+        for (Map.Entry<LfBus, FeedersAtBusResult> busAndFeedersAtBusResult : scResult.getFeedersResultDirect().entrySet()) {
             LfBus lfBus = busAndFeedersAtBusResult.getKey();
             FeedersAtBusResult feedersAtBusResult = busAndFeedersAtBusResult.getValue();
             for (com.powsybl.sc.util.FeederResult feederResult : feedersAtBusResult.getBusFeedersResult()) {

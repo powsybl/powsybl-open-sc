@@ -37,7 +37,7 @@ public class FeedersAtBusResult {
         }
     }
 
-    public void addIfeeders(Complex i) {
+    public void addItofeedersSum(Complex i) {
         this.iFeedersSum = this.iFeedersSum.add(i);
     }
 
