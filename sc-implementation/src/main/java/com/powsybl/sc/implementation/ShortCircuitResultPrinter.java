@@ -8,6 +8,8 @@
 package com.powsybl.sc.implementation;
 
 import com.powsybl.openloadflow.network.LfBus;
+import com.powsybl.sc.util.FeederResult;
+import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.shortcircuit.FortescueValue;
 
 /**
@@ -40,7 +42,17 @@ public class ShortCircuitResultPrinter {
     public void printDvAtBussesPu() {
         for (LfBus bus : shortCircuitResult.getLfNetwork().getBuses()) {
             int busNum = bus.getNum();
-            System.out.println("dV(" + bus.getId() + ") = " + getStringFortescueValue(shortCircuitResult.getBusNum2Dv().get(busNum)) + " (Pu) ");
+            System.out.println("  -> dV(" + bus.getId() + ") = " + getStringFortescueValue(shortCircuitResult.getBusNum2Dv().get(busNum)) + " (Pu) ");
+        }
+    }
+
+    public void printFeedersPu() {
+        for (LfBus bus : shortCircuitResult.getLfNetwork().getBuses()) {
+            FeedersAtBusResult feedBus = shortCircuitResult.getFeedersResultDirect().get(bus);
+            System.out.println("---Feeders at bus :  " + bus.getId());
+            for (FeederResult fr : feedBus.getBusFeedersResult()) {
+                System.out.println("  -> Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
+            }
         }
     }
 
@@ -53,6 +65,7 @@ public class ShortCircuitResultPrinter {
         printVfortescuePu();
         if (shortCircuitResult.isVoltageProfileUpdated()) {
             printDvAtBussesPu();
+            printFeedersPu();
         }
     }
 

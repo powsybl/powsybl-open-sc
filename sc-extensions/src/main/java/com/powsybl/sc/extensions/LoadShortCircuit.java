@@ -10,7 +10,7 @@ package com.powsybl.sc.extensions;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.extensions.AbstractExtension;
 import com.powsybl.iidm.network.Load;
-import org.apache.commons.math3.util.Pair;
+import org.apache.commons.math3.complex.Complex;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -98,7 +98,7 @@ public class LoadShortCircuit extends AbstractExtension<Load> {
         this.asynchronousMachineLoadData = asynchronousMachineLoadData;
     }
 
-    public Pair<Double, Double> getZeqLoad() {
+    public Complex getZeqLoad() {
 
         double xn = 0.;
         double rn = 0.;
@@ -141,6 +141,6 @@ public class LoadShortCircuit extends AbstractExtension<Load> {
 
         }
 
-        return new Pair<>(rn, xn);
+        return new Complex(rn, xn);
     }
 }

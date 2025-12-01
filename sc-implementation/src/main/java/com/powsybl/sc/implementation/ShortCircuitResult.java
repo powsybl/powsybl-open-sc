@@ -368,10 +368,10 @@ public class ShortCircuitResult {
         Complex y22 = y2.add(z.reciprocal()).multiply(admCoef);
 
         ComplexMatrix admittance = new ComplexMatrix(2, 2);
-        admittance.get(0, 0).add(y11);
-        admittance.get(0, 1).add(y12);
-        admittance.get(1, 0).add(y21);
-        admittance.get(1, 1).add(y22);
+        admittance.set(0, 0, y11);
+        admittance.set(0, 1, y12);
+        admittance.set(1, 0, y21);
+        admittance.set(1, 1, y22);
         return admittance;
     }
 
