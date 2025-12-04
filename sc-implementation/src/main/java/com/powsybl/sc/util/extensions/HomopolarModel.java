@@ -8,7 +8,7 @@
 package com.powsybl.sc.util.extensions;
 
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
-import com.powsybl.math.matrix.DenseMatrix;
+import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.network.LfBranch;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
@@ -50,6 +50,8 @@ public class HomopolarModel {
 
     private boolean freeFluxes = false;
 
+    private ComplexMatrix homopolarAdmittanceMatrix;
+
     protected HomopolarModel(LfBranch branch) {
         this.branch = Objects.requireNonNull(branch);
     }
@@ -60,6 +62,10 @@ public class HomopolarModel {
 
     public Complex getZo() {
         return zo;
+    }
+
+    public ComplexMatrix getHomopolarAdmittanceMatrix() {
+        return homopolarAdmittanceMatrix;
     }
 
     public double getZoInvSquare() {
@@ -191,16 +197,20 @@ public class HomopolarModel {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has a not yet supported type");
         }
 
+        homopolarExtension.computeHomopolarAdmittanceMatrix();
+
         return homopolarExtension;
     }
 
-    public DenseMatrix computeHomopolarAdmittanceMatrix() {
-        DenseMatrix mo = new DenseMatrix(4, 4);
+    public void computeHomopolarAdmittanceMatrix() {
+        double infiniteImpedanceAdmittance = AdmittanceConstants.INFINITE_IMPEDANCE_ADMITTANCE_VALUE;
+        Complex yInfinite = new Complex(infiniteImpedanceAdmittance);
+        ComplexMatrix mY = new ComplexMatrix(2, 2);
+        mY.set(0, 0, yInfinite); // Default matrix is zero
+        mY.set(1, 1, yInfinite);
 
         var piModel = branch.getPiModel();
         Complex rhoA = ComplexUtils.polar2Complex(piModel.getR1(), Math.toRadians(piModel.getA1()));
-
-        double infiniteImpedanceAdmittance = AdmittanceConstants.INFINITE_IMPEDANCE_ADMITTANCE_VALUE;
 
         // if the free fluxes option is false, we suppose that if Yom given in input is zero, then Zom = is zero  : TODO : see if there is a more robust way to handle this
         // if the free fluxes option is true, Zom is infinite and Yom is then considered as zero
@@ -221,10 +231,6 @@ public class HomopolarModel {
                 || leg1ConnectionType == WindingConnectionType.Y_GROUNDED && leg2ConnectionType == WindingConnectionType.Y && freeFluxes
                 || leg1ConnectionType == WindingConnectionType.Y && leg2ConnectionType == WindingConnectionType.Y_GROUNDED && freeFluxes) {
             // homopolar admittance matrix is zero-Matrix
-            mo.set(0, 0, infiniteImpedanceAdmittance);
-            mo.set(1, 1, infiniteImpedanceAdmittance);
-            mo.set(2, 2, infiniteImpedanceAdmittance);
-            mo.set(3, 3, infiniteImpedanceAdmittance);
 
         } else if (leg1ConnectionType == WindingConnectionType.Y_GROUNDED && leg2ConnectionType == WindingConnectionType.Y) {
             // we suppose that Zoa = Zo given in input for the transformer
@@ -232,30 +238,17 @@ public class HomopolarModel {
 
             // we have yo11 = 1 / ( 3Zga(pu) + (Zoa(pu)+ Zom(pu))/(rho*e(jAlpha))² )
             // and yo12 = yo22 = yo21 = 0.
-            Complex yeq = zga.multiply(3.).add(zo.add(zm).divide(rhoA.multiply(rhoA))).reciprocal();
-            double bo11 = yeq.getImaginary();
-            double go11 = yeq.getReal();
-            mo.set(0, 0, go11);
-            mo.set(0, 1, -bo11);
-            mo.set(1, 0, bo11);
-            mo.set(1, 1, go11);
-            mo.set(2, 2, infiniteImpedanceAdmittance);
-            mo.set(3, 3, infiniteImpedanceAdmittance);
+            Complex yo11 = zga.multiply(3.).add(zo.add(zm).divide(rhoA.multiply(rhoA))).reciprocal();
+            mY.set(0, 0, yo11);
+
         } else if (leg1ConnectionType == WindingConnectionType.Y && leg2ConnectionType == WindingConnectionType.Y_GROUNDED) {
             // we suppose that zob = Zo given in input for the transformer
             // we suppose that if Yom given in input is zero, then Zom = is zero : if we want to model an open circuit, then set free fluxes to true
 
             // we have yo22 = 1 / ( 3Zga(pu) + Zob(pu) + Zom(pu) )
             // and yo12 = yo11 = yo21 = 0.
-            Complex yeq = zgb.multiply(3.).add(zo.add(zm)).reciprocal();
-            double bo22 = yeq.getImaginary();
-            double go22 = yeq.getReal();
-            mo.set(0, 0, infiniteImpedanceAdmittance);
-            mo.set(1, 1, infiniteImpedanceAdmittance);
-            mo.set(2, 2, go22);
-            mo.set(2, 3, -bo22);
-            mo.set(3, 2, bo22);
-            mo.set(3, 3, go22);
+            Complex yo22 = zgb.multiply(3.).add(zo.add(zm)).reciprocal();
+            mY.set(1, 1, yo22);
         } else if (leg1ConnectionType == WindingConnectionType.Y_GROUNDED && leg2ConnectionType == WindingConnectionType.DELTA) {
 
             // we suppose that if Yom given in input is zero, then Zom = is zero : if we want to model an open circuit, then set free fluxes to true
@@ -270,45 +263,28 @@ public class HomopolarModel {
                 ztmp = zoa.add(zob);
             }
 
-            Complex yeq = ztmp.divide(rhoA.multiply(rhoA)).add(zga.multiply(3.)).reciprocal();
-            double bo11 = yeq.getImaginary();
-            double go11 = yeq.getReal();
-
-            mo.set(0, 0, go11);
-            mo.set(0, 1, -bo11);
-            mo.set(1, 0, bo11);
-            mo.set(1, 1, go11);
-            mo.set(2, 2, infiniteImpedanceAdmittance);
-            mo.set(3, 3, infiniteImpedanceAdmittance);
+            Complex yo11 = ztmp.divide(rhoA.multiply(rhoA)).add(zga.multiply(3.)).reciprocal();
+            mY.set(0, 0, yo11);
 
         } else if (leg1ConnectionType == WindingConnectionType.DELTA && leg2ConnectionType == WindingConnectionType.Y_GROUNDED) {
 
             // we have yo22 = 1 / ( 3Zga(pu) + Zob(pu) + 1/(1/Zom(pu)+1/Zoa(pu)) )
             // and yo12 = yo11 = yo21 = 0.
-            Complex yeq = zgb.multiply(3.).add(zob.add(zoa.reciprocal().add(yom).reciprocal())).reciprocal();
+            Complex yo22 = zgb.multiply(3.).add(zob.add(zoa.reciprocal().add(yom).reciprocal())).reciprocal();
 
             if (freeFluxes) {
                 // we have Zm = infinity : yo22 = 1 / ( 3Zga(pu) + Zob(pu) + Zoa(pu) )
                 // and yo12 = yo11 = yo21 = 0.
 
-                yeq = zgb.multiply(3.).add(zob).add(zoa).reciprocal();
+                yo22 = zgb.multiply(3.).add(zob).add(zoa).reciprocal();
             }
-
-            double bo22 = yeq.getImaginary();
-            double go22 = yeq.getReal();
-
-            mo.set(0, 0, infiniteImpedanceAdmittance);
-            mo.set(1, 1, infiniteImpedanceAdmittance);
-            mo.set(2, 2, go22);
-            mo.set(2, 3, -bo22);
-            mo.set(3, 2, bo22);
-            mo.set(3, 3, go22);
+            mY.set(1, 1, yo22);
 
         } else if (leg1ConnectionType == WindingConnectionType.Y_GROUNDED && leg2ConnectionType == WindingConnectionType.Y_GROUNDED) {
 
-            Complex zo11;
-            Complex zo12;
-            Complex zo22;
+            Complex yo11;
+            Complex yo12;
+            Complex yo22;
 
             if (!freeFluxes) {
                 // Case where fluxes are forced, meaning that Zm is not ignored (and could be zero with a direct connection to ground)
@@ -336,11 +312,11 @@ public class HomopolarModel {
                 // [Ib]   Zc * Zd - Ze²   [-Ze  Zc ] [Vb]
                 // [  ]                   [        ] [  ]
                 //
-                // We set y2denom = 1 / Zc * Zd - Ze²
-                Complex y2denom = zc.multiply(zd).add(ze.multiply(ze)).reciprocal();
-                zo11 = y2denom.multiply(zd);
-                zo12 = y2denom.multiply(-1.).multiply(ze);
-                zo22 = y2denom.multiply(zc);
+                // We set ycde = 1 / Zc * Zd - Ze²
+                Complex ycde = zc.multiply(zd).add(ze.multiply(ze)).reciprocal();
+                yo11 = ycde.multiply(zd);
+                yo12 = ycde.multiply(-1.).multiply(ze);
+                yo22 = ycde.multiply(zc);
 
             } else {
                 //
@@ -363,33 +339,20 @@ public class HomopolarModel {
                 // [Ib]                   [-1/k  1/k²] [Vb]
                 // [  ]                   [          ] [  ]
 
-                zo11 = yc;
-                zo12 = yc.multiply(-1.).divide(rhoA);
-                zo22 = yc.divide(rhoA.multiply(rhoA));
+                yo11 = yc;
+                yo12 = yc.multiply(-1.).divide(rhoA);
+                yo22 = yc.divide(rhoA.multiply(rhoA));
             }
-            mo.set(0, 0, zo11.getReal());
-            mo.set(0, 1, -zo11.getImaginary());
-            mo.set(1, 0, zo11.getImaginary());
-            mo.set(1, 1, zo11.getReal());
 
-            mo.set(2, 2, zo22.getReal());
-            mo.set(2, 3, -zo22.getImaginary());
-            mo.set(3, 2, zo22.getImaginary());
-            mo.set(3, 3, zo22.getReal());
+            mY.set(0, 0, yo11);
+            mY.set(1, 1, yo22);
+            mY.set(0, 1, yo12);
+            mY.set(1, 0, yo12);
 
-            mo.set(0, 2, zo12.getReal());
-            mo.set(0, 3, -zo12.getImaginary());
-            mo.set(1, 2, zo12.getImaginary());
-            mo.set(1, 3, zo12.getReal());
-
-            mo.set(2, 0, zo12.getReal());
-            mo.set(2, 1, -zo12.getImaginary());
-            mo.set(3, 0, zo12.getImaginary());
-            mo.set(3, 1, zo12.getReal());
         } else {
             throw new IllegalArgumentException("Branch " + branch.getId() + " configuration is not supported yet : " + leg1ConnectionType + " --- " + leg2ConnectionType);
         }
 
-        return mo;
+        homopolarAdmittanceMatrix = mY;
     }
 }
