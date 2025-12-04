@@ -26,6 +26,12 @@ import java.util.*;
  */
 public class ShortCircuitResult {
 
+    public enum FortescueType {
+        DIRECT,
+        HOMOPOLAR,
+        INVERSE;
+    }
+
     public class CommonSupportResult {
 
         private LfBus lfBus2; // FIXME : might be wrongly overwritten in the "resultsPerFault" presentation
@@ -72,6 +78,7 @@ public class ShortCircuitResult {
 
     private Map<LfBus, FeedersAtBusResult> feedersResultDirect; // For each feeder in eqSysFeedersDirect, this map contains the results
     private Map<LfBus, FeedersAtBusResult> feedersResultsHomopolar;
+    private Map<LfBus, FeedersAtBusResult> feedersResultsInverse;
 
     private ShortCircuitFault shortCircuitFault;
 
@@ -158,91 +165,143 @@ public class ShortCircuitResult {
         return eth;
     }
 
+    public ComplexMatrix getDiFromDv(LfBranch branch, FortescueValue dv1Fort, FortescueValue dv2Fort, FortescueType fType) {
+        AdmittanceEquationSystem.AdmittanceType admType = AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN;
+        if (fType == FortescueType.HOMOPOLAR) {
+            admType = AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR;
+        }
+
+        ComplexMatrix yBranch = getAdmittanceMatrixBranch(branch, admType);
+        Complex y11 = yBranch.get(0, 0);
+        Complex y12 = yBranch.get(0, 1);
+        Complex y21 = yBranch.get(1, 0);
+        Complex y22 = yBranch.get(1, 1);
+
+        Complex dv1 = ComplexUtils.polar2Complex(dv1Fort.getPositiveMagnitude(), dv1Fort.getPositiveAngle());
+        Complex dv2 = ComplexUtils.polar2Complex(dv2Fort.getPositiveMagnitude(), dv2Fort.getPositiveAngle());
+        if (fType == FortescueType.HOMOPOLAR) {
+            dv1 = ComplexUtils.polar2Complex(dv1Fort.getZeroMagnitude(), dv1Fort.getZeroAngle());
+            dv2 = ComplexUtils.polar2Complex(dv2Fort.getZeroMagnitude(), dv2Fort.getZeroAngle());
+        } else if (fType == FortescueType.INVERSE) {
+            dv1 = ComplexUtils.polar2Complex(dv1Fort.getNegativeMagnitude(), dv1Fort.getNegativeAngle());
+            dv2 = ComplexUtils.polar2Complex(dv2Fort.getNegativeMagnitude(), dv2Fort.getNegativeAngle());
+        }
+        Complex di1 = y11.multiply(dv1).add(y12.multiply(dv2));
+        Complex di2 = y21.multiply(dv1).add(y22.multiply(dv2));
+
+        ComplexMatrix di = new ComplexMatrix(2, 1);
+        di.set(0, 0, di1);
+        di.set(1, 0, di2);
+
+        return di;
+
+    }
+
     public void updateFeedersResult() {
-        //System.out.println(" VL name = " + shortCircuitVoltageLevelLocation);
-        //System.out.println(" bus name = " + shortCircuitLfbusLocation);
-        //System.out.println(" Icc = " + getIcc());
-        //System.out.println(" Ih = " + iFortescue.get(0, 0) + " + j(" + iFortescue.get(1, 0) + ")");
-        //System.out.println(" Id = " + iFortescue.get(2, 0) + " + j(" + iFortescue.get(3, 0) + ")");
-        //System.out.println(" Ii = " + iFortescue.get(4, 0) + " + j(" + iFortescue.get(5, 0) + ")");
-        //System.out.println(" Vh = " + vFortescue.get(0, 0) + " + j(" + vFortescue.get(1, 0) + ")");
-        //System.out.println(" Vd = " + vFortescue.get(2, 0) + " + j(" + vFortescue.get(3, 0) + ")");
-        //System.out.println(" Vi = " + vFortescue.get(4, 0) + " + j(" + vFortescue.get(5, 0) + ")");
-        //System.out.println(" Eth = " + ethx + " + j(" + ethy + ")");
+        if (!isVoltageProfileUpdated) {
+            return;
+        }
+        // Building the structure to support the feeders result, a FeederResult is built from each Feeder in input
+        feedersResultDirect = new HashMap<>(); // TODO : homopolar
+        feedersResultsHomopolar = new HashMap<>();
+        feedersResultsInverse = new HashMap<>();
+        for (LfBus bus : lfNetwork.getBuses()) {
+            // Init of feeder results
+            FeedersAtBus busFeedersDirect = eqSysFeedersDirect.busToFeeders.get(bus);
+            FeedersAtBusResult feedersAtBusResultDirect = new FeedersAtBusResult(busFeedersDirect);
+            feedersResultDirect.put(bus, feedersAtBusResultDirect);
 
-        if (isVoltageProfileUpdated) {
-
-            /*for (Map.Entry<Integer, DenseMatrix> vd : bus2dv.entrySet()) {
-                System.out.println(" dVd(" + vd.getKey() + ") = " + vd.getValue().get(2, 0) + " + j(" + vd.getValue().get(3, 0) + ")");
-                System.out.println(" dVo(" + vd.getKey() + ") = " + vd.getValue().get(0, 0) + " + j(" + vd.getValue().get(1, 0) + ")");
-                System.out.println(" dVi(" + vd.getKey() + ") = " + vd.getValue().get(4, 0) + " + j(" + vd.getValue().get(5, 0) + ")");
-            }*/
-
-            // Building the structure to support the feeders result, a FeederResult is built from each Feeder in input
-            feedersResultDirect = new HashMap<>(); // TODO : homopolar
-            for (LfBus bus : lfNetwork.getBuses()) {
-                //int busNum = bus.getNum();
-                //double dvx = busNum2Dv.get(busNum).get(2, 0);
-                //double dvy = busNum2Dv.get(busNum).get(3, 0);
-                //double vx = dvx + ethx;
-                //double vy = dvy + ethy;
-
-                //System.out.println(" dVd(" + bus.getId() + ") = " + dvx + " + j(" + dvy + ")  Module = " + bus.getNominalV() * Math.sqrt(vx * vx + vy * vy));
-                //System.out.println(" dVo(" + bus.getId() + ") = " + bus2dv.get(busNum).get(0, 0) + " + j(" + bus2dv.get(busNum).get(1, 0) + ")");
-                //System.out.println(" dVi(" + bus.getId() + ") = " + bus2dv.get(busNum).get(4, 0) + " + j(" + bus2dv.get(busNum).get(5, 0) + ")");
-
-                // Init of feeder results
-                FeedersAtBus busFeeders = eqSysFeedersDirect.busToFeeders.get(bus);
-                FeedersAtBusResult feedersAtBusResult = new FeedersAtBusResult(busFeeders);
-                feedersResultDirect.put(bus, feedersAtBusResult);  // TODO : homopolar
-
+            if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+                continue;
             }
 
-            // For each branch, we build the sum of currents at busses from branches
-            // 1- Input is the voltage delta at each end of the branch
-            // 2- Then we compute dI = [Ybranch].dV
-            // 3- Then dI is added to the sum of current of bus
-            // 4- The resulting sum of current at each bus is the current coming from branches,
-            // which is equal to the current at bus injectors (Kirchhoff's law)
-            // 5- Given the admittance of each feeder at bus, computed during building of AdmittanceEquationSystem,
-            // we can then deduce the current contribution of each feeder, which is stored in feeder result
-            for (LfBranch branch : lfNetwork.getBranches()) {
-                LfBus bus1 = branch.getBus1();
-                LfBus bus2 = branch.getBus2();
-                if (bus1 != null && bus2 != null) {
-                    ComplexMatrix ydBranch = getAdmittanceMatrixBranch(branch, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN);
-                    Complex y11 = ydBranch.get(0, 0);
-                    Complex y12 = ydBranch.get(0, 1);
-                    Complex y21 = ydBranch.get(1, 0);
-                    Complex y22 = ydBranch.get(1, 1);
+            // Homopolar
+            FeedersAtBus busFeedersHomopolar = eqSysFeedersHomopolar.busToFeeders.get(bus);
+            FeedersAtBusResult feedersAtBusResultHomopolar = new FeedersAtBusResult(busFeedersHomopolar);
+            feedersResultsHomopolar.put(bus, feedersAtBusResultHomopolar);
 
-                    int busNum1 = bus1.getNum();
-                    FortescueValue dv1Fort = busNum2Dv.get(busNum1);
-                    Complex dv1 = ComplexUtils.polar2Complex(dv1Fort.getPositiveMagnitude(), dv1Fort.getPositiveAngle());
-                    int busNum2 = bus2.getNum();
+            // Inverse
+            FeedersAtBus busFeedersInverse = eqSysFeedersDirect.busToFeeders.get(bus); // for now we use direct feeder impedance to compute inverse current
+            FeedersAtBusResult feedersAtBusResultInverse = new FeedersAtBusResult(busFeedersInverse);
+            feedersResultsInverse.put(bus, feedersAtBusResultInverse);
 
-                    FortescueValue dv2Fort = busNum2Dv.get(busNum2);
-                    Complex dv2 = ComplexUtils.polar2Complex(dv2Fort.getPositiveMagnitude(), dv2Fort.getPositiveAngle());
-                    Complex di1 = y11.multiply(dv1).add(y12.multiply(dv2));
-                    Complex di2 = y21.multiply(dv1).add(y22.multiply(dv2));
-                    //System.out.println(" dI1d(" + branch.getId() + ") = " + i12.get(0, 0) + " + j(" + i12.get(1, 0) + ")  Module I1d = " + 1000. * 100. / bus1.getNominalV() * Math.sqrt((i12.get(0, 0) * i12.get(0, 0) + i12.get(1, 0) * i12.get(1, 0)) / 3));
-                    //System.out.println(" dI2d(" + branch.getId() + ") = " + i12.get(2, 0) + " + j(" + i12.get(3, 0) + ")  Module I2d = " + 1000. * 100. / bus2.getNominalV() * Math.sqrt((i12.get(2, 0) * i12.get(2, 0) + i12.get(3, 0) * i12.get(3, 0)) / 3));
+        }
 
-                    FeedersAtBusResult resultBus1Feeders = feedersResultDirect.get(bus1); // TODO : homopolar
-                    FeedersAtBusResult resultBus2Feeders = feedersResultDirect.get(bus2); // TODO : homopolar
-                    // Feeders : compute the sum of currents from branches at each bus
-                    // dI coming from branch to the bus are added to the actual sum of current at bus
-                    resultBus1Feeders.addItofeedersSum(di1);
-                    resultBus2Feeders.addItofeedersSum(di2);
+        // For each branch, we build the sum of currents at busses from branches
+        // 1- Input is the voltage delta at each end of the branch
+        // 2- Then we compute dI = [Ybranch].dV
+        // 3- Then dI is added to the sum of current of bus
+        // 4- The resulting sum of current at each bus is the current coming from branches,
+        // which is equal to the current at bus injectors (Kirchhoff's law)
+        // 5- Given the admittance of each feeder at bus, computed during building of AdmittanceEquationSystem,
+        // we can then deduce the current contribution of each feeder, which is stored in feeder result
+        for (LfBranch branch : lfNetwork.getBranches()) {
+            LfBus bus1 = branch.getBus1();
+            LfBus bus2 = branch.getBus2();
+            if (bus1 != null && bus2 != null) {
+                int busNum1 = bus1.getNum();
+                int busNum2 = bus2.getNum();
+                FortescueValue dv1Fort = busNum2Dv.get(busNum1);
+                FortescueValue dv2Fort = busNum2Dv.get(busNum2);
+
+                // Direct
+                ComplexMatrix di = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.DIRECT);
+                Complex di1 = di.get(0, 0);
+                Complex di2 = di.get(1, 0);
+
+                FeedersAtBusResult resultDirectBus1Feeders = feedersResultDirect.get(bus1); // TODO : homopolar
+                FeedersAtBusResult resultDirectBus2Feeders = feedersResultDirect.get(bus2); // TODO : homopolar
+                // Feeders : compute the sum of currents from branches at each bus
+                // dI coming from branch to the bus are added to the actual sum of current at bus
+                resultDirectBus1Feeders.addItofeedersSum(di1);
+                resultDirectBus2Feeders.addItofeedersSum(di2);
+
+                if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+                    continue;
                 }
+
+                // Homopolar
+                di = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.HOMOPOLAR);
+                di1 = di.get(0, 0);
+                di2 = di.get(1, 0);
+
+                FeedersAtBusResult resultHomopolarBus1Feeders = feedersResultsHomopolar.get(bus1); // TODO : homopolar
+                FeedersAtBusResult resultHomopolarBus2Feeders = feedersResultsHomopolar.get(bus2); // TODO : homopolar
+                // Feeders : compute the sum of currents from branches at each bus
+                // dI coming from branch to the bus are added to the actual sum of current at bus
+                resultHomopolarBus1Feeders.addItofeedersSum(di1);
+                resultHomopolarBus2Feeders.addItofeedersSum(di2);
+
+                // Inverse
+                di = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.INVERSE);
+                di1 = di.get(0, 0);
+                di2 = di.get(1, 0);
+
+                FeedersAtBusResult resultInverseBus1Feeders = feedersResultsInverse.get(bus1); // TODO : homopolar
+                FeedersAtBusResult resultInverseBus2Feeders = feedersResultsInverse.get(bus2); // TODO : homopolar
+                // Feeders : compute the sum of currents from branches at each bus
+                // dI coming from branch to the bus are added to the actual sum of current at bus
+                resultInverseBus1Feeders.addItofeedersSum(di1);
+                resultInverseBus2Feeders.addItofeedersSum(di2);
+            }
+        }
+
+        // computing feeders contribution of each feeder at bus from the sum of currents at bus
+        // and based on the admittance dispatch key of feeders
+        for (LfBus bus : lfNetwork.getBuses()) {
+            FeedersAtBusResult busFeedersDirect = feedersResultDirect.get(bus);
+            busFeedersDirect.updateContributions();
+
+            if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+                continue;
             }
 
-            // computing feeders contribution of each feeder at bus from the sum of currents at bus
-            // and based on the admittance dispatch key of feeders
-            for (LfBus bus : lfNetwork.getBuses()) {
-                FeedersAtBusResult busFeeders = feedersResultDirect.get(bus); // TODO : homopolar
-                busFeeders.updateContributions();
-            }
+            FeedersAtBusResult busFeedersHomopolar = feedersResultsHomopolar.get(bus);
+            busFeedersHomopolar.updateContributions();
+
+            FeedersAtBusResult busFeedersInverse = feedersResultsInverse.get(bus);
+            busFeedersInverse.updateContributions();
+
         }
     }
 
@@ -278,12 +337,24 @@ public class ShortCircuitResult {
         return feedersResultDirect;
     }
 
+    public Map<LfBus, FeedersAtBusResult> getFeedersResultsHomopolar() {
+        return feedersResultsHomopolar;
+    }
+
+    public Map<LfBus, FeedersAtBusResult> getFeedersResultsInverse() {
+        return feedersResultsInverse;
+    }
+
     public List<FortescueValue> getBusNum2Dv() {
         return busNum2Dv;
     }
 
     public boolean isVoltageProfileUpdated() {
         return isVoltageProfileUpdated;
+    }
+
+    public ShortCircuitFault getShortCircuitFault() {
+        return shortCircuitFault;
     }
 
     public Pair<Double, Double> getIcc() {
@@ -361,9 +432,10 @@ public class ShortCircuitResult {
         double admCoef = 1.;
         if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
             admCoef = AdmittanceConstants.COEF_XO_XD; // Xo = 3 * Xd as a first approximation : TODO : improve when more data available
+            rho = new Complex(rho.getReal(), 0.); // In homopolar, the phase shift is canceled TODO : verify
         }
-        Complex y11 = y1.add(z.reciprocal()).multiply(rho.abs() * rho.abs()).multiply(admCoef); // TODO : verify admittance formula for homoplar, alpha should maybe disappear
-        Complex y12 = rho.conjugate().multiply(z.reciprocal()).multiply(-1.).multiply(admCoef);
+        Complex y11 = y1.add(z.reciprocal()).multiply(rho.abs() * rho.abs()).multiply(admCoef);
+        Complex y12 = rho.conjugate().multiply(z.reciprocal()).multiply(-1.).multiply(admCoef); // TODO : check if case of phase shift if it is the conjugate of direct y
         Complex y21 = rho.multiply(z.reciprocal()).multiply(-1.).multiply(admCoef);
         Complex y22 = y2.add(z.reciprocal()).multiply(admCoef);
 

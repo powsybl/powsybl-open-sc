@@ -12,6 +12,8 @@ import com.powsybl.sc.util.FeederResult;
 import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.shortcircuit.FortescueValue;
 
+import static com.powsybl.sc.extensions.LoadShortCircuit.EPSILON;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -49,9 +51,31 @@ public class ShortCircuitResultPrinter {
     public void printFeedersPu() {
         for (LfBus bus : shortCircuitResult.getLfNetwork().getBuses()) {
             FeedersAtBusResult feedBus = shortCircuitResult.getFeedersResultDirect().get(bus);
-            System.out.println("---Feeders at bus :  " + bus.getId());
+            System.out.println("---Feeders Direct at bus :  " + bus.getId());
             for (FeederResult fr : feedBus.getBusFeedersResult()) {
-                System.out.println("  -> Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
+                if (fr.getIContribution().abs() > EPSILON) {
+                    System.out.println("  -> Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
+                }
+            }
+
+            if (shortCircuitResult.getShortCircuitFault().getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+                continue;
+            }
+
+            feedBus = shortCircuitResult.getFeedersResultsHomopolar().get(bus);
+            System.out.println("---Feeders Homopolar at bus :  " + bus.getId());
+            for (FeederResult fr : feedBus.getBusFeedersResult()) {
+                if (fr.getIContribution().abs() > EPSILON) {
+                    System.out.println("  -> Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
+                }
+            }
+
+            feedBus = shortCircuitResult.getFeedersResultsInverse().get(bus);
+            System.out.println("---Feeders Inverse at bus :  " + bus.getId());
+            for (FeederResult fr : feedBus.getBusFeedersResult()) {
+                if (fr.getIContribution().abs() > EPSILON) {
+                    System.out.println("  -> Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
+                }
             }
         }
     }

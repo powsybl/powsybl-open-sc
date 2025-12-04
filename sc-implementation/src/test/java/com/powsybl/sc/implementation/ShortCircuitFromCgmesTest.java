@@ -157,13 +157,15 @@ class ShortCircuitFromCgmesTest {
         LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
         MatrixFactory matrixFactory = new DenseMatrixFactory();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
         Map<String, Double> values = new HashMap<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.getResultsPerFault().entrySet()) {
             values.put(res.getKey().getFaultId(), res.getValue().getIk().getKey());
+            ShortCircuitResultPrinter scp = new ShortCircuitResultPrinter(res.getValue());
+            scp.printShortCircuitResult();
         }
 
         //I"k = sqrt(3) * cmax * Un /(Zeq)

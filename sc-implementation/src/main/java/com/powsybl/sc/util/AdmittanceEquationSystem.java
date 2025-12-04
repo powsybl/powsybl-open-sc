@@ -216,6 +216,9 @@ public final class AdmittanceEquationSystem {
 
                 y = getYtransfromRdXdAndUpdateFeederList(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList
                 //TODO : check how to verify that the generators are operating
+
+                FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
+                feeders.busToFeeders.put(bus, shortCircuitEquationSystemBusFeeders);
             }
 
             y = y.add(yLoadEq).add(yGenEq);
