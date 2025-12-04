@@ -16,7 +16,7 @@ import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.extensions.*;
-import org.apache.commons.math3.util.Pair;
+import org.apache.commons.math3.complex.Complex;
 
 import java.util.List;
 import java.util.Objects;
@@ -289,39 +289,31 @@ public final class ShortCircuitExtensions {
     }
 
     private static void addLoadExtension(Network network, LfBus lfBus) {
-        double bLoads = 0.;
-        double gLoads = 0.;
+        Complex yLoads = new Complex(0.);
         for (LfLoad lfLoad : lfBus.getLoads()) {
             for (String loadId : lfLoad.getOriginalIds()) {
                 Load load = network.getLoad(loadId);
                 double uNom = load.getTerminal().getVoltageLevel().getNominalV();
                 LoadShortCircuit extension = load.getExtension(LoadShortCircuit.class);
-                double xd = 0.;
-                double rd = 0.;
+                Complex zd = new Complex(0.);
                 if (extension != null) {
-                    Pair<Double, Double> rnxn = extension.getZeqLoad();
-                    rd = rnxn.getFirst();
-                    xd = rnxn.getSecond();
+                    zd = extension.getZeqLoad();
                 } else {
                     // No info available in extension we use the default formula with P and Q
-                    double p = load.getP0();
-                    double q = load.getQ0();
-                    double s2 = p * p + q * q;
+                    Complex s = new Complex(load.getP0(), load.getQ0());
+                    double s2 = s.abs() * s.abs();
 
                     if (s2 > EPSILON) {
-                        xd = q / s2 * uNom * uNom;
-                        rd = p / s2 * uNom * uNom;
+                        zd = s.multiply(uNom * uNom / s2);
                     }
                 }
-                if (Math.abs(rd) > EPSILON || Math.abs(xd) > EPSILON) {
-                    double tmpG = (uNom * uNom / SB) * rd / (rd * rd + xd * xd);
-                    double tmpB = -(uNom * uNom / SB) * xd / (rd * rd + xd * xd);
-                    gLoads = gLoads + tmpG; // yLoads represents the equivalent admittance of the loads connected at bus at Vnom voltage
-                    bLoads = bLoads + tmpB;
+                if (zd.abs() > EPSILON) {
+                    Complex tmpY = zd.reciprocal().multiply(uNom * uNom / SB);
+                    yLoads = yLoads.add(tmpY);
                 }
             }
         }
-
-        lfBus.setProperty(PROPERTY_SHORT_CIRCUIT, new ScLoad(gLoads, bLoads)); // for now load extension is attached to the bus
+        // TODO : create load only if it is not zero
+        lfBus.setProperty(PROPERTY_SHORT_CIRCUIT, new ScLoad(yLoads.getReal(), yLoads.getImaginary())); // for now load extension is attached to the bus
     }
 }

@@ -7,16 +7,15 @@
  */
 package com.powsybl.sc.implementation;
 
-import com.powsybl.math.matrix.DenseMatrix;
+import org.apache.commons.math3.complex.Complex;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class BiphasedGroundShortCircuitCalculator extends AbstractShortCircuitCalculator {
 
-    public BiphasedGroundShortCircuitCalculator(double rdf, double xdf, double rof, double xof, double rg, double xg,
-                                            double initVx, double initVy) {
-        super(rdf, xdf, rof, xof, rg, xg, initVx, initVy);
+    public BiphasedGroundShortCircuitCalculator(Complex zdf, Complex zof, Complex zg, Complex initV) {
+        super(zdf, zof, zg, initV);
 
     }
 
@@ -58,9 +57,6 @@ public class BiphasedGroundShortCircuitCalculator extends AbstractShortCircuitCa
         // From computed Ic1 we get complex values : I1o, I1d, I1i, I2o, I2d, I2i using step 1 formulas expressed with Ic1
         // Then compute the voltages from current values
 
-        DenseMatrix zof = getZ(rof, xof);
-        DenseMatrix zdf = getZ(rdf, xdf);
-
         //         (zof + zdf) * [Vinit]
         // Id = ---------------------------
         //         Zdf * (Zdf + 2 * Zof)
@@ -77,28 +73,10 @@ public class BiphasedGroundShortCircuitCalculator extends AbstractShortCircuitCa
         // Va = ---------------------
         //          Zdf + 2 * Zof
 
-        DenseMatrix vdInit = new DenseMatrix(2, 1);
-        vdInit.add(0, 0, initVx);
-        vdInit.add(1, 0, initVy);
+        Complex zdf2zof = zdf.add(zof.multiply(2.));
 
-        DenseMatrix twoId = getMatrixByType(BlocType.I_D, 2.);
-        DenseMatrix minusId = getMatrixByType(BlocType.I_D, -1.);
-
-        DenseMatrix twoZof = twoId.times(zof).toDense();
-        DenseMatrix zdf2Zof = addMatrices22(zdf.toDense(), twoZof.toDense());
-        DenseMatrix zdfZof = addMatrices22(zdf.toDense(), zof.toDense());
-        DenseMatrix minusZof = zof.times(minusId).toDense();
-        DenseMatrix minusZdf = zdf.times(minusId).toDense();
-
-        DenseMatrix numId = zdfZof.times(vdInit).toDense();
-        DenseMatrix numIo = minusZdf.times(vdInit).toDense();
-        DenseMatrix numIi = minusZof.times(vdInit).toDense();
-
-        DenseMatrix demonI = zdf.times(zdf2Zof).toDense();
-        DenseMatrix invDemonI = getInvZt(demonI.get(0, 0), demonI.get(1, 0));
-
-        mId = invDemonI.times(numId).toDense();
-        mIo = invDemonI.times(numIo).toDense();
-        mIi = invDemonI.times(numIi).toDense();
+        id = initV.multiply(zof.add(zdf)).divide(zdf.multiply(zdf2zof));
+        io = initV.multiply(-1.).divide(zdf2zof);
+        ii = initV.multiply(zof.multiply(-1.)).divide(zdf.multiply(zdf2zof));
     }
 }

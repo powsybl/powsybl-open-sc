@@ -7,7 +7,7 @@
  */
 package com.powsybl.sc.util;
 
-import com.powsybl.math.matrix.DenseMatrix;
+import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.equations.Variable;
 import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.LfBranch;
@@ -37,20 +37,20 @@ public class AdmittanceEquationTermY2 extends AbstractAdmittanceEquationTerm {
             HomopolarModel homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL);
             if (branch.getBranchType() == LfBranch.BranchType.LINE) {
                 // case where branch is a line with available homopolar parameters
-                g21 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getRo() * cosA + homopolarModel.getXo() * sinA);
-                b21 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getRo() * sinA - homopolarModel.getXo() * cosA);
-                g2g21sum = homopolarModel.getRo() * homopolarModel.getZoInvSquare() + gPi2 * AdmittanceConstants.COEF_XO_XD;
-                b2b21sum = -homopolarModel.getXo() * homopolarModel.getZoInvSquare() + bPi2 * AdmittanceConstants.COEF_XO_XD;
+                g21 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getZo().getReal() * cosA + homopolarModel.getZo().getImaginary() * sinA);
+                b21 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getZo().getReal() * sinA - homopolarModel.getZo().getImaginary() * cosA);
+                g2g21sum = homopolarModel.getZo().getReal() * homopolarModel.getZoInvSquare() + gPi2 * AdmittanceConstants.COEF_XO_XD;
+                b2b21sum = -homopolarModel.getZo().getImaginary() * homopolarModel.getZoInvSquare() + bPi2 * AdmittanceConstants.COEF_XO_XD;
             } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_2
                     || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_1
                     || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_2
                     || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_3) {
                 // case where branch is part of a transformer
-                DenseMatrix mo = homopolarModel.computeHomopolarAdmittanceMatrix();
-                b2b21sum = mo.get(3, 2);
-                g2g21sum = mo.get(3, 3);
-                b21 = -mo.get(3, 0);
-                g21 = -mo.get(3, 1);
+                ComplexMatrix mo = homopolarModel.getHomopolarAdmittanceMatrix();
+                b2b21sum = mo.get(1, 1).getImaginary();
+                g2g21sum = mo.get(1, 1).getReal();
+                b21 = -mo.get(1, 0).getImaginary();
+                g21 = -mo.get(1, 0).getReal();
             } else {
                 throw new IllegalArgumentException("branch type not yet handled");
             }
