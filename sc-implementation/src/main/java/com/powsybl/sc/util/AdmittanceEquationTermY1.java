@@ -36,10 +36,10 @@ public class AdmittanceEquationTermY1 extends AbstractAdmittanceEquationTerm {
             HomopolarModel homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL);
             if (branch.getBranchType() == LfBranch.BranchType.LINE) {
                 // case where branch is a line with available homopolar parameters
-                g12 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getRo() * cosA + homopolarModel.getXo() * sinA);
-                b12 = -rho * homopolarModel.getZoInvSquare() * (homopolarModel.getXo() * cosA + homopolarModel.getRo() * sinA);
-                g1g12sum = rho * rho * (homopolarModel.getGom() + homopolarModel.getRo() * homopolarModel.getZoInvSquare());
-                b1b12sum = rho * rho * (homopolarModel.getBom() - homopolarModel.getXo() * homopolarModel.getZoInvSquare());
+                g12 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getZo().getReal() * cosA + homopolarModel.getZo().getImaginary() * sinA);
+                b12 = -rho * homopolarModel.getZoInvSquare() * (homopolarModel.getZo().getImaginary() * cosA + homopolarModel.getZo().getReal() * sinA);
+                g1g12sum = rho * rho * (homopolarModel.getYom().getReal() + homopolarModel.getZo().getReal() * homopolarModel.getZoInvSquare());
+                b1b12sum = rho * rho * (homopolarModel.getYom().getImaginary() - homopolarModel.getZo().getImaginary() * homopolarModel.getZoInvSquare());
             } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_2
                     || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_1
                     || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_2

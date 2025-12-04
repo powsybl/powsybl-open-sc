@@ -37,10 +37,10 @@ public class AdmittanceEquationTermY2 extends AbstractAdmittanceEquationTerm {
             HomopolarModel homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL);
             if (branch.getBranchType() == LfBranch.BranchType.LINE) {
                 // case where branch is a line with available homopolar parameters
-                g21 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getRo() * cosA + homopolarModel.getXo() * sinA);
-                b21 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getRo() * sinA - homopolarModel.getXo() * cosA);
-                g2g21sum = homopolarModel.getRo() * homopolarModel.getZoInvSquare() + gPi2 * AdmittanceConstants.COEF_XO_XD;
-                b2b21sum = -homopolarModel.getXo() * homopolarModel.getZoInvSquare() + bPi2 * AdmittanceConstants.COEF_XO_XD;
+                g21 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getZo().getReal() * cosA + homopolarModel.getZo().getImaginary() * sinA);
+                b21 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getZo().getReal() * sinA - homopolarModel.getZo().getImaginary() * cosA);
+                g2g21sum = homopolarModel.getZo().getReal() * homopolarModel.getZoInvSquare() + gPi2 * AdmittanceConstants.COEF_XO_XD;
+                b2b21sum = -homopolarModel.getZo().getImaginary() * homopolarModel.getZoInvSquare() + bPi2 * AdmittanceConstants.COEF_XO_XD;
             } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_2
                     || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_1
                     || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_2
