@@ -119,7 +119,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> scResult : scuEngine.resultsPerFault.entrySet()) {
             ShortCircuitFault scFault = scResult.getKey();
 
-            double iccMagnitude = scResult.getValue().getIcc().getKey();
+            double iccMagnitude = scResult.getValue().getIk().abs();
 
             Fault fault = scFaultToFault.get(scFault);
 
@@ -140,8 +140,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             ShortCircuitFault scFault = scFaultResult.getKey();
             ShortCircuitResult scResult = scFaultResult.getValue();
 
-            double iccMagnitude = scResult.getIk().getKey();
-            double iccAngle = scResult.getIk().getValue();
+            double iccMagnitude = scResult.getIk().abs();
 
             Fault fault = scFaultToFault.get(scFault);
 

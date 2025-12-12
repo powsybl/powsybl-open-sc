@@ -70,7 +70,7 @@ public class ShortCircuitMonophasedTest {
         scbEngine.run();
         List<Double> val = new ArrayList<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            val.add(res.getValue().getIk().getKey());
+            val.add(res.getValue().getIk().abs());
         }
 
         // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
@@ -116,7 +116,7 @@ public class ShortCircuitMonophasedTest {
         scbEngine.run();
         Map<String, Double> values = new HashMap<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            values.put(res.getKey().getFaultId(), res.getValue().getIk().getKey());
+            values.put(res.getKey().getFaultId(), res.getValue().getIk().abs());
         }
 
         //I"k = sqrt(3) * cmax * Un /(Zeq)
@@ -126,8 +126,8 @@ public class ShortCircuitMonophasedTest {
         assertEquals(17.0452, values.get("sc4"), 0.00001); // bus 5 : expected doc value : 17.0452 kA
 
         // test to check that non monophased faults does not have an impact on monophased results
-        assertEquals(47.67456652532181, values.get("sc5"), 0.00001); // biphased not in ref doc
-        assertEquals(33.04842593212249, values.get("sc6"), 0.00001); // biphased not in ref doc
+        assertEquals(27.524923816893264, values.get("sc5"), 0.00001); // biphased not in ref doc
+        assertEquals(7.078052952491013, values.get("sc6"), 0.00001); // biphased not in ref doc
 
     }
 
@@ -152,7 +152,7 @@ public class ShortCircuitMonophasedTest {
         List<FaultResult> frs = scar.getFaultResults();
         MagnitudeFaultResult magnitudeFaultResult = (MagnitudeFaultResult) frs.get(0);
 
-        assertEquals(14548.104511643787, magnitudeFaultResult.getCurrent(), 0.01);
+        assertEquals(14.548104511643936, magnitudeFaultResult.getCurrent(), 0.01);
 
     }
 

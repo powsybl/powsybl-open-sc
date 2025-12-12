@@ -17,7 +17,7 @@ import com.powsybl.sc.util.extensions.AdmittanceConstants;
 import com.powsybl.shortcircuit.FortescueValue;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
-import org.apache.commons.math3.util.Pair;
+import org.apache.commons.math3.util.FastMath;
 
 import java.util.*;
 
@@ -357,35 +357,107 @@ public class ShortCircuitResult {
         return shortCircuitFault;
     }
 
-    public Pair<Double, Double> getIcc() {
+    public double getIbase() {
+        // I(A) = I(pu) * I(base)
+        // I(base) = SB(MVA) * 10e6 / (VB(kV) * 10e3)
+        return 1000. * 100. / lfBus.getNominalV();
+    }
+
+    public Complex getIk() {
+
+        ShortCircuitFault.ShortCircuitType faultType = shortCircuitFault.getType();
+        Complex ik;
+
+        switch (faultType) {
+
+            case ShortCircuitFault.ShortCircuitType.MONOPHASED:
+                ik = getIk1pp();
+                break;
+            case ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND:
+                ik = getIkpp();
+                break;
+            case ShortCircuitFault.ShortCircuitType.BIPHASED:
+                ik = getIk2pp();
+                break;
+            case ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND:
+                ik = getIke2epp();
+                break;
+            default:
+                ik = getIk();
+        }
+
+        return ik;
+    }
+
+    public Complex getIkpp() {
+        // for a Triphased fault, by definition Ik"(A) = c * Un / (sqrt(3) * Zk)
+        double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
+        Complex id = ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle()); // id(pu) = Eth(pu) / Zk(pu) // TODo: check if radians
+        // Ik"(kA) = c * id(pu) * I(base) / (sqrt(3) * 1000) : the 1000 factor is to move from A to kA
+        return id.multiply(c).divide(Math.sqrt(3.) * 1000.).multiply(getIbase());
+    }
+
+    public Complex getIk1pp() {
+        // for a Monphased fault, by definition Ik"1(A) = c * Un * sqrt(3) / Zk
+        double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
+        Complex id = ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle()); // id(pu) = Eth(pu) / Zk(pu) // TODo: check if radians
+        // Ik"1(kA) = c * id(pu) * sqrt(3) * I(base) / 1000 : the 1000 factor is to move from A to kA
+        return id.multiply(c).divide(1000.).multiply(Math.sqrt(3.) * getIbase());
+    }
+
+    public Complex getIk2pp() {
+        // for a biphased fault (no ground), by definition Ik2" = c * Un / abs(Zd + Zi + Zf)
+        // given that Ib = j * sqrt(3) * tM * [Vinit] / (Zdf + Zif +Zf)  and that Id = Ib * j / sqrt(3) we have Ik2" = c * Id
+        double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
+        Complex id = ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle());
+        return id.multiply(c).divide(1000.).multiply(getIbase());
+    }
+
+    public Complex getIk2el2pp() {
+        // for a biphased ground fault , by definition Ik2EL2" = c * Ib / sqrt(3)
+        // given that Ib = Io + a².Id + a.Ii
+        Complex a = new Complex(-0.5, FastMath.sqrt(3.) / 2);
+        double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
+        Complex id = ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle());
+        Complex io = ComplexUtils.polar2Complex(iFortescue.getZeroMagnitude(), iFortescue.getZeroAngle());
+        Complex ii = ComplexUtils.polar2Complex(iFortescue.getNegativeMagnitude(), iFortescue.getNegativeAngle());
+        Complex ib = io.add(a.multiply(a).multiply(id)).add(ii.multiply(a));
+        return ib.multiply(c).divide(1000. * Math.sqrt(3.)).multiply(getIbase());
+    }
+
+    public Complex getIk2el3pp() {
+        // for a biphased ground fault , by definition Ik2EL3" = c * Ic / sqrt(3)
+        // given that Ic = Io + a.Id + a².Ii
+        Complex a = new Complex(-0.5, FastMath.sqrt(3.) / 2);
+        double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
+        Complex id = ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle());
+        Complex io = ComplexUtils.polar2Complex(iFortescue.getZeroMagnitude(), iFortescue.getZeroAngle());
+        Complex ii = ComplexUtils.polar2Complex(iFortescue.getNegativeMagnitude(), iFortescue.getNegativeAngle());
+        Complex ic = io.add(a.multiply(a).multiply(ii)).add(id.multiply(a));
+        return ic.multiply(c).divide(1000. * Math.sqrt(3.)).multiply(getIbase());
+    }
+
+    public Complex getIke2epp() {
+        // by definition IkE2E" = Ik2EL3" + Ik2EL2"
+        return getIk2el2pp().add(getIk2el3pp());
+    }
+
+    public Complex getDefaultIk() {
+        // Ik is a default value used for testing
         // IccBase = sqrt(3) * Eth(pu) / Zth(pu) * SB(MVA) * 10e6 / (VB(kV) * 10e3)
         double magnitudeIccBase = Math.sqrt(3.) * iFortescue.getPositiveMagnitude() * 1000. * 100. / lfBus.getNominalV();
         double angleIcc = iFortescue.getPositiveAngle();
-
         double magnitudeIcc = magnitudeIccBase;
+        Complex val = ComplexUtils.polar2Complex(magnitudeIcc, angleIcc);
 
-        // provided value will depend on the type of the fault
-        ShortCircuitFault.ShortCircuitType shortCircuitType = shortCircuitFault.getType();
-
-        if (shortCircuitType == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
-            // Icc = 1/sqrt(3) * Eth(pu) / Zth(pu) * SB(MVA) * 10e6 / (VB(kV) * 10e3)
-            magnitudeIcc = magnitudeIcc / 3.;
-
-        }
-
-        return new Pair<>(magnitudeIcc, angleIcc);
-    }
-
-    public Pair<Double, Double> getIk() {
         // Ik = c * Un / (sqrt(3) * Zk) = c / sqrt(3) * Eth(pu) / Zth(pu) * Sb / Vb
-        Pair<Double, Double> icc = getIcc();
-        return new Pair<>(icc.getKey() * norm.getCmaxVoltageFactor(lfBus.getNominalV()) / 1000., icc.getValue());
+        return val.multiply(norm.getCmaxVoltageFactor(lfBus.getNominalV()) / 1000.);
     }
 
-    public double getPcc() {
+    /*public double getPcc() {
         //Pcc = |Eth|*Icc*sqrt(3)
         return Math.sqrt(3) * getIcc().getKey() * lfBus.getV() * lfBus.getNominalV(); //TODO: check formula
-    }
+    }*/
 
     public void setTrueVoltageProfileUpdate() {
         isVoltageProfileUpdated = true;

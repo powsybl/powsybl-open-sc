@@ -65,7 +65,7 @@ class ShortCircuitBiphasedCommonSupportTest {
 
         List<Double> val = new ArrayList<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            val.add(res.getValue().getIk().getKey());
+            val.add(res.getValue().getDefaultIk().abs());
         }
 
         assertEquals(28.85869102832315, val.get(0), 0.00001); // TODO : check manually result
@@ -99,7 +99,7 @@ class ShortCircuitBiphasedCommonSupportTest {
 
         List<Double> val = new ArrayList<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            val.add(res.getValue().getIk().getKey());
+            val.add(res.getValue().getDefaultIk().abs());
         }
 
         assertEquals(28.85869102832315, val.get(0), 0.00001); // TODO : check manually result

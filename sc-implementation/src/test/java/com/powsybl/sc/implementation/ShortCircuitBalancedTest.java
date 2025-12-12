@@ -246,13 +246,13 @@ public class ShortCircuitBalancedTest {
         scbEngine.run();
         List<Double> val = new ArrayList<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            val.add(res.getValue().getIcc().getKey());
+            val.add(res.getValue().getIk().abs());
         }
 
         // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
         // and Idocumentation = Ib*Eth(pu)/Zth(pu15) then Idocumentation = Icc * Ib * sqrt(3) * Vb / (1000 * Sb15)  with Ib = 18.064
         // in the documentation, expected Idocumentation ~ 35.656 kA
-        assertEquals(35.69309945355154, val.get(0) * 18.064 * 0.277 * Math.sqrt(3) / (1000. * 15.), 0.00001);
+        assertEquals(35.69309945355154, val.get(0) * 18.064 * 0.277 * Math.sqrt(3) / 15., 0.00001);
 
     }
 
@@ -278,7 +278,7 @@ public class ShortCircuitBalancedTest {
         scbEngine.run();
         List<Double> val = new ArrayList<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            val.add(res.getValue().getIk().getKey());
+            val.add(res.getValue().getIk().abs());
         }
 
         // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
@@ -328,7 +328,7 @@ public class ShortCircuitBalancedTest {
         List<Complex> valuesVd = new ArrayList<>();
         List<Complex> valuesEth = new ArrayList<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            valuesIk.add(res.getValue().getIk().getKey());
+            valuesIk.add(res.getValue().getIk().abs());
             valuesZd.add(res.getValue().getZd());
             valuesId.add(res.getValue().getId());
             valuesVd.add(res.getValue().getVd());
