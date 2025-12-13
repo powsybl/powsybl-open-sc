@@ -106,8 +106,6 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
             for (ShortCircuitFault scf : matchingFaultsAtBus1) {
 
-                Complex zf = scf.getZf();
-
                 Complex io = new Complex(0.);
                 Complex id = new Complex(0.);
                 Complex ii = new Complex(0.);
@@ -118,7 +116,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                         || shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED
                         || shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND) {
                     if (shortCircuitType == ShortCircuitFault.ShortCircuitType.MONOPHASED) {
-                        MonophasedShortCircuitCalculator monophasedCalculator = new MonophasedShortCircuitCalculator(zdf, zof, zf, v1dInit);
+                        MonophasedShortCircuitCalculator monophasedCalculator = new MonophasedShortCircuitCalculator(zdf, zof, scf.getZf(), v1dInit);
                         monophasedCalculator.computeCurrents();
 
                         io = monophasedCalculator.getIo();
@@ -126,14 +124,14 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                         ii = monophasedCalculator.getIi();
 
                     } else if (shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED) {
-                        BiphasedShortCircuitCalculator biphasedCalculator = new BiphasedShortCircuitCalculator(zdf, zof, zf, v1dInit);
+                        BiphasedShortCircuitCalculator biphasedCalculator = new BiphasedShortCircuitCalculator(zdf, zof, scf.getZf(), v1dInit);
                         biphasedCalculator.computeCurrents();
 
                         io = biphasedCalculator.getIo();
                         id = biphasedCalculator.getId();
                         ii = biphasedCalculator.getIi();
                     } else if (shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND) {
-                        BiphasedGroundShortCircuitCalculator biphasedGrCalculator = new BiphasedGroundShortCircuitCalculator(zdf, zof, zf, v1dInit);
+                        BiphasedGroundShortCircuitCalculator biphasedGrCalculator = new BiphasedGroundShortCircuitCalculator(zdf, zof, scf.getZf(), v1dInit);
                         biphasedGrCalculator.computeCurrents();
 
                         io = biphasedGrCalculator.getIo();
@@ -169,15 +167,15 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
                             BiphasedCommonSupportShortCircuitCalculator biCsSc;
                             if (scf.getBiphasedType() == ShortCircuitFault.ShortCircuitBiphasedType.C1_A2) {
-                                biCsSc = new BiphasedC1A2Calculator(zdf, zof, zf, v1dInit, biphasedDirectResult.getV2(),
+                                biCsSc = new BiphasedC1A2Calculator(zdf, zof, scf.getZf(), v1dInit, biphasedDirectResult.getV2(),
                                         zo12, zo22, zo21,
                                         zd12, zd22, zd21);
                             } else if (scf.getBiphasedType() == ShortCircuitFault.ShortCircuitBiphasedType.C1_B2) {
-                                biCsSc = new BiphasedC1B2Calculator(zdf, zof, zf, v1dInit, biphasedDirectResult.getV2(),
+                                biCsSc = new BiphasedC1B2Calculator(zdf, zof, scf.getZf(), v1dInit, biphasedDirectResult.getV2(),
                                         zo12, zo22, zo21,
                                         zd12, zd22, zd21);
                             } else if (scf.getBiphasedType() == ShortCircuitFault.ShortCircuitBiphasedType.C1_C2) {
-                                biCsSc = new BiphasedC1C2Calculator(zdf, zof, zf, v1dInit, biphasedDirectResult.getV2(),
+                                biCsSc = new BiphasedC1C2Calculator(zdf, zof, scf.getZf(), v1dInit, biphasedDirectResult.getV2(),
                                         zo12, zo22, zo21,
                                         zd12, zd22, zd21);
                             } else {

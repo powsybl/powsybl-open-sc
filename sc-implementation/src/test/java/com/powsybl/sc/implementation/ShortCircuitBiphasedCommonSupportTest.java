@@ -53,7 +53,7 @@ class ShortCircuitBiphasedCommonSupportTest {
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", new Complex(0.), ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_A2);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_A2);
         faultList.add(sc1);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
@@ -82,10 +82,11 @@ class ShortCircuitBiphasedCommonSupportTest {
 
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
-        Complex zFault = new Complex(0.);
+        Complex zFaultToGround = new Complex(0.);
+        ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", zFault, ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_B2);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "B5", "sc2", zFault, ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_C2);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", scz, ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_B2);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "B5", "sc2", scz, ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_C2);
         // TODO : a list that contains BIPHASED_COMMON_SUPPORT with the same nodes is not supported yet : FIX_ME
         faultList.add(sc1);
         faultList.add(sc2);

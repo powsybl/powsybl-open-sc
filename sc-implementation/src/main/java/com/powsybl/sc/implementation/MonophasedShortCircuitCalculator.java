@@ -14,8 +14,8 @@ import org.apache.commons.math3.complex.Complex;
  */
 public class MonophasedShortCircuitCalculator extends AbstractShortCircuitCalculator {
 
-    public MonophasedShortCircuitCalculator(Complex zdf, Complex zof, Complex zg, Complex initV) {
-        super(zdf, zof, zg, initV);
+    public MonophasedShortCircuitCalculator(Complex zdf, Complex zof, ShortCircuitFaultImpedance zFault, Complex initV) {
+        super(zdf, zof, zFault, initV);
 
     }
 
@@ -26,7 +26,7 @@ public class MonophasedShortCircuitCalculator extends AbstractShortCircuitCalcul
         // b ---------------x------------------
         // c ---------------+------------------                  Vc = Zf * Ic
         //                  |
-        //                 Zf
+        //                 Zground
         //                  |
         //                /////
 
@@ -50,7 +50,7 @@ public class MonophasedShortCircuitCalculator extends AbstractShortCircuitCalcul
         //
         //            a * tM * [Vinit]
         // Ic = -----------------------------
-        //       1/3 * (Zof + 2 * Zdf) + Zf
+        //       1/3 * (Zof + 2 * Zdf) + Zground
         //
         // Where Zof and Zdf are complex impedance matrix elements :
         // Zof = tM * inv(Yo) * M   and Zdf = tM * inv(Yd) * M
@@ -62,11 +62,11 @@ public class MonophasedShortCircuitCalculator extends AbstractShortCircuitCalcul
         // Complex expression of Ic :
         //            a * Vd(init)                 a * Vd(init)
         // Ic = ----------------------------- = -----------------
-        //       1/3 * (Zof + 2 * Zdf) + Zf            Zt
+        //       1/3 * (Zof + 2 * Zdf) + Zground            Zt
 
         Complex z1 = zdf.multiply(2.).add(zof);
         Complex z2 = z1.divide(3.);
-        Complex zt = zg.add(z2);
+        Complex zt = zfault.getZg().add(z2);
         Complex ic = initV.multiply(geta()).divide(zt);
 
         io = ic.divide(3.);

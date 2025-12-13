@@ -14,12 +14,12 @@ import org.apache.commons.math3.complex.Complex;
  */
 public class BiphasedC1B2Calculator extends BiphasedCommonSupportShortCircuitCalculator {
 
-    public BiphasedC1B2Calculator(Complex zdf, Complex zof, Complex zg,
+    public BiphasedC1B2Calculator(Complex zdf, Complex zof, ShortCircuitFaultImpedance zFault,
                                   Complex initV,
                                   Complex v2dInit,
                                   Complex zo12, Complex zo22, Complex zo21,
                                   Complex zd12, Complex zd22, Complex zd21) {
-        super(zdf, zof, zg, initV, v2dInit, zo12, zo22, zo21, zd12, zd22, zd21);
+        super(zdf, zof, zFault, initV, v2dInit, zo12, zo22, zo21, zd12, zd22, zd21);
 
         //Description of the fault (short circuit between c1 and a2) :
         // a1 ---------------x------------------  by definition : Ia1 = Ib1 = Ia2 = Ic2 = 0
@@ -108,7 +108,7 @@ public class BiphasedC1B2Calculator extends BiphasedCommonSupportShortCircuitCal
                 .add(zif)
                 .subtract(zi21.multiply(geta()));
 
-        zt = zg.add(ztmp.divide(3.));
+        zt = zfault.getZg().add(ztmp.divide(3.));
     }
 
     @Override

@@ -75,8 +75,8 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                     continue;
                 }
 
-                Complex zf = scf.getZf();
-                Complex ztotal = zf.add(zth);
+                Complex zfToGround = scf.getZf().getZg();
+                Complex ztotal = zfToGround.add(zth);
 
                 Complex id = vInit.divide(ztotal);
                 // The post-fault voltage values at faulted bus are computed as follow :

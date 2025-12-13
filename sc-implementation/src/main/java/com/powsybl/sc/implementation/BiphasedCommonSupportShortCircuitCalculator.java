@@ -45,11 +45,11 @@ public class BiphasedCommonSupportShortCircuitCalculator extends AbstractShortCi
 
     protected Complex ic; // short circuit phase C1 current circulating from common support 1 to 2
 
-    public BiphasedCommonSupportShortCircuitCalculator(Complex zdf, Complex zof, Complex zg,
+    public BiphasedCommonSupportShortCircuitCalculator(Complex zdf, Complex zof, ShortCircuitFaultImpedance zFault,
                                                        Complex initV, Complex v2dInit,
                                                        Complex zo12, Complex zo22, Complex zo21,
                                                        Complex zd12, Complex zd22, Complex zd21) {
-        super(zdf, zof, zg, initV);
+        super(zdf, zof, zFault, initV);
         this.zo12 = zo12;
         this.zo22 = zo22;
         this.zo21 = zo21;

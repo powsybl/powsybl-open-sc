@@ -17,8 +17,8 @@ import org.apache.commons.math3.complex.Complex;
  */
 public class BiphasedGroundShortCircuitCalculator extends AbstractShortCircuitCalculator {
 
-    public BiphasedGroundShortCircuitCalculator(Complex zdf, Complex zof, Complex zg, Complex initV) {
-        super(zdf, zof, zg, initV);
+    public BiphasedGroundShortCircuitCalculator(Complex zdf, Complex zof, ShortCircuitFaultImpedance zFault, Complex initV) {
+        super(zdf, zof, zFault, initV);
 
     }
 
@@ -137,14 +137,11 @@ public class BiphasedGroundShortCircuitCalculator extends AbstractShortCircuitCa
         // [ Id ] = inv([0,1] - [Zeq].[ 0   Zd]) . [Zeq] . [0; Vd_init ; 0]
         //             (              [-Zi -Zi])
 
-        Complex zb = new Complex(0.0001, 0.0002); // TODO : have the value in input
-        Complex zc = new Complex(0.0001, 0.0003);
-
         ComplexMatrix zbcg = new ComplexMatrix(2, 2);
-        zbcg.set(0, 0, zb.add(zg));
-        zbcg.set(1, 0, zg);
-        zbcg.set(0, 1, zg);
-        zbcg.set(1, 1, zc.add(zg));
+        zbcg.set(0, 0, zfault.getZb().add(zfault.getZg()));
+        zbcg.set(1, 0, zfault.getZg());
+        zbcg.set(0, 1, zfault.getZg());
+        zbcg.set(1, 1, zfault.getZc().add(zfault.getZg()));
 
         ComplexMatrix mF1 = new ComplexMatrix(2, 2);
         Complex third = new Complex(1. / 3.);
@@ -234,8 +231,6 @@ public class BiphasedGroundShortCircuitCalculator extends AbstractShortCircuitCa
         //   11-         [ -Zo            1                                       ]    Vo - Zo . Io = 0
         //   12-         [     -Zd            1                                   ]    Vd - Zd . Id = Vd_init
         //   13-         [         -Zi            1                               ]    Vi - Zi . Ii = 0
-        Complex zb = new Complex(0.000, 0.000); // TODO : have the value in input
-        Complex zc = new Complex(0.000, 0.000);
 
         Complex c1 = new Complex(1.);
         Complex mc1 = new Complex(-1.);
@@ -245,13 +240,13 @@ public class BiphasedGroundShortCircuitCalculator extends AbstractShortCircuitCa
         mSystem.set(0, 1, c1);
         mSystem.set(0, 2, c1);
         mSystem.set(1, 6, c1);
-        mSystem.set(1, 7, zg.multiply(-1.));
+        mSystem.set(1, 7, zfault.getZg().multiply(-1.));
         mSystem.set(2, 6, mc1);
         mSystem.set(2, 9, c1);
-        mSystem.set(2, 11, zb.multiply(-1.));
+        mSystem.set(2, 11, zfault.getZb().multiply(-1.));
         mSystem.set(3, 6, mc1);
         mSystem.set(3, 10, c1);
-        mSystem.set(3, 12, zc.multiply(-1.));
+        mSystem.set(3, 12, zfault.getZc().multiply(-1.));
         mSystem.set(4, 7, mc1);
         mSystem.set(4, 11, c1);
         mSystem.set(4, 12, c1);

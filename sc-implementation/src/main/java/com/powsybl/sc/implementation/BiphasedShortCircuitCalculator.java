@@ -14,8 +14,8 @@ import org.apache.commons.math3.complex.Complex;
  */
 public class BiphasedShortCircuitCalculator extends AbstractShortCircuitCalculator {
 
-    public BiphasedShortCircuitCalculator(Complex zdf, Complex zof, Complex zg, Complex initV) {
-        super(zdf, zof, zg, initV);
+    public BiphasedShortCircuitCalculator(Complex zdf, Complex zof, ShortCircuitFaultImpedance zFault, Complex initV) {
+        super(zdf, zof, zFault, initV);
 
     }
 
@@ -58,7 +58,7 @@ public class BiphasedShortCircuitCalculator extends AbstractShortCircuitCalculat
         // From computed Ic1 we get complex values : I1o, I1d, I1i, I2o, I2d, I2i using step 1 formulas expressed with Ic1
         // Then compute the voltages from current values
 
-        Complex zt = zdf.multiply(2).add(zg);
+        Complex zt = zdf.multiply(2).add(zfault.getZb());
 
         Complex ib = initV.multiply(-Math.sqrt(3.)).divide(zt).multiply(new Complex(0., 1.));
 

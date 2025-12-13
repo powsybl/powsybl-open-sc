@@ -202,10 +202,11 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             // TODO : see how to get lfBus from iidm Bus
             String elementId = fault.getElementId();
 
-            Complex zFault = new Complex(fault.getRToGround(), fault.getXToGround());
+            Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
+            ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
             Bus bus = network.getBusBreakerView().getBus(elementId);
             String busId = bus.getId();
-            ShortCircuitFault sc = new ShortCircuitFault(busId, busId, zFault, scType);
+            ShortCircuitFault sc = new ShortCircuitFault(busId, busId, scz, scType);
             balancedFaultsList.add(sc);
 
             // TODO improve:

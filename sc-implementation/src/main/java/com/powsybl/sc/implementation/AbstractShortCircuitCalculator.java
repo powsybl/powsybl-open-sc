@@ -21,15 +21,15 @@ public abstract class AbstractShortCircuitCalculator {
 
     Complex zdf;
     Complex zof;
-    Complex zg;
+    ShortCircuitFaultImpedance zfault;
 
     Complex initV;
 
-    protected AbstractShortCircuitCalculator(Complex zdf, Complex zof, Complex zg,
+    protected AbstractShortCircuitCalculator(Complex zdf, Complex zof, ShortCircuitFaultImpedance zfault,
                                              Complex initV) {
         this.zdf = zdf;
         this.zof = zof;
-        this.zg = zg;
+        this.zfault = zfault;
         this.initV = initV;
     }
 
