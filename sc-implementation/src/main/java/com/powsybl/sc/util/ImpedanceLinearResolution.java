@@ -13,6 +13,7 @@ import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
+import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.ArrayList;
@@ -49,18 +50,17 @@ public class ImpedanceLinearResolution {
     public class ImpedanceLinearResolutionResult {
 
         private LfBus bus;
+        private Complex zthEq;
+        private Complex eth; // Thevenin voltage
 
-        private double xEq12;
-        private double xEq21;
-        private double rEq11;
-        private double rEq22;
+        // zknf corresponds to extracted impedance term z(k,nf) from inv(Y) to be able to compute Vk = z(k,nf).icc.
+        // k is the bus index of the voltage Vk we want to compute and nf is the index of faulted bus
+        private Complex zknf;
 
-        private double ethx; //real part of Thevenin voltage
-        private double ethy; //imaginary part of Thevenin voltage
-
-        private DenseMatrix enBus;
-
-        private Map<Integer, DenseMatrix> dE; // the key stores the number of the bus, the value stores the resolved value [Res] = inv(Y)*[En], with n of vector [En] corresponding to the studied short circuit fault and values at lines of [Res] corresponding real and imaginary parts at bus in key
+        // This is a map to easily access the impedance terms resulting from inv(Y), extracting only useful z(i,j) terms
+        // the key stores the number of the bus k at which we want to compute the voltage from formula Vk = z(k,nf).icc, the value stores the resolved value [Res] = inv(Y)*[En],
+        // with n of vector [En] corresponding to the studied short circuit fault and values at lines of [Res] corresponding real and imaginary parts at bus in key
+        private Map<Integer, Complex> busToZknf;
 
         private FeedersAtNetwork eqSysFeeders;
 
@@ -72,45 +72,32 @@ public class ImpedanceLinearResolution {
 
             private int numBus2Fault; // stored to easily access the extraction vector at bus2 to get the full voltage export if required
 
-            private double v2x;
-            private double v2y;
+            private Complex v2;
 
-            private double z22txx; //additional impedance matrix terms to keep as they are needed for biphased common support faults
-            private double z22txy;
+            private Complex z22; //additional impedance matrix terms to keep as they are needed for biphased common support faults
+            private Complex z21;
+            private Complex z12;
 
-            private double z21txx;
-            private double z21txy;
+            // This map is similar to busToZknf map, applied for bus2 k
+            // store necessary data to compute voltage delta of the full grid for a common support biphased fault
+            // the key stores the number of the bus2 for a biphased common support fault, the value stores the resolved value [Res] = inv(Y)*[En],
+            // with n of vector [En] corresponding to the studied short circuit fault and values at lines of [Res] corresponding real and imaginary parts at bus2 in key
+            private Map<Integer, Complex> bus2ToZknf;
 
-            private double z12txx;
-            private double z12txy;
-
-            private Map<Integer, DenseMatrix> dE2; // store necessary data to compute voltage delta of the full grid for a common support biphased fault
-            // the key stores the number of the bus2 for a biphased common support fault, the value stores the resolved value [Res] = inv(Y)*[En], with n of vector [En] corresponding to the studied short circuit fault and values at lines of [Res] corresponding real and imaginary parts at bus2 in key
-
-            ImpedanceLinearResolutionResultBiphased(LfBus bus2, double v2x, double v2y,
-                                                    double z22txx, double z22txy,
-                                                    double z21txx, double z21txy,
-                                                    double z12txx, double z12txy, int numBus2Fault) {
+            ImpedanceLinearResolutionResultBiphased(LfBus bus2, Complex v2, Complex z22, Complex z21, Complex z12, int numBus2Fault) {
                 this.bus2 = bus2;
 
                 this.numBus2Fault = numBus2Fault;
 
-                this.v2x = v2x;
-                this.v2y = v2y;
+                this.v2 = v2;
 
-                this.z22txx = z22txx;
-                this.z22txy = z22txy;
-
-                this.z21txx = z21txx;
-                this.z21txy = z21txy;
-
-                this.z12txx = z12txx;
-                this.z12txy = z12txy;
-
+                this.z22 = z22;
+                this.z21 = z21;
+                this.z12 = z12;
             }
 
             public void updateWithVoltagesdelta2(AdmittanceMatrix y, DenseMatrix dEn) {
-                dE2 = y.getDeltaV(dEn, numBus2Fault);
+                bus2ToZknf = y.getDeltaV(dEn, numBus2Fault);
                 //eqSysFeeders = feeders; // TODO : check if feeder are necessary for v2 : contains necessary data to update the contribution of feeders for each shortcircuit
             }
 
@@ -118,82 +105,51 @@ public class ImpedanceLinearResolution {
                 return bus2;
             }
 
-            public double getZ12txx() {
-                return z12txx;
+            public Complex getZ12() {
+                return z12;
             }
 
-            public double getZ12txy() {
-                return z12txy;
+            public Complex getZ21() {
+                return z21;
             }
 
-            public double getZ21txx() {
-                return z21txx;
+            public Complex getZ22() {
+                return z22;
             }
 
-            public double getZ21txy() {
-                return z21txy;
+            public Complex getV2() {
+                return v2;
             }
 
-            public double getZ22txx() {
-                return z22txx;
-            }
-
-            public double getZ22txy() {
-                return z22txy;
-            }
-
-            public double getV2x() {
-                return v2x;
-            }
-
-            public double getV2y() {
-                return v2y;
-            }
-
-            public Map<Integer, DenseMatrix> getDv2() {
-                return dE2;
+            public Map<Integer, Complex> getBus2ToZknf() {
+                return bus2ToZknf;
             }
         }
 
-        ImpedanceLinearResolutionResult(LfBus bus, double rEq11, double rEq22, double xEq12, double xEq21, double ethx, double ethy) {
+        ImpedanceLinearResolutionResult(LfBus bus, Complex zth, Complex eth) {
             this.bus = bus;
-            this.rEq11 = rEq11;
-            this.rEq22 = rEq22;
-            this.xEq12 = xEq12;
-            this.xEq21 = xEq21;
-
-            this.ethx = ethx;
-            this.ethy = ethy;
-
-            checkResults();
+            this.zthEq = zth;
+            this.eth = eth;
         }
 
         public LfBus getBus() {
             return bus;
         }
 
-        public double getXthz12() {
-            return xEq12;
+        public Complex getEth() {
+            return eth;
         }
 
-        public double getRthz11() {
-            return rEq11;
+        public Complex getZthEq() {
+            return zthEq;
         }
 
-        public double getEthr() {
-            return ethx;
+        public Map<Integer, Complex> getBusToZknf() {
+            return busToZknf;
         }
 
-        public double getEthi() {
-            return ethy;
-        }
-
-        public Map<Integer, DenseMatrix> getDv() {
-            return dE;
-        }
-
-        public DenseMatrix getEnBus() {
-            return enBus;
+        public Complex getZknf() {
+            return zknf;
         }
 
         public FeedersAtNetwork getEqSysFeeders() {
@@ -204,27 +160,17 @@ public class ImpedanceLinearResolution {
             return biphasedResultsAtBus;
         }
 
-        private void checkResults() {
-            checkBlocConsistency(rEq11, rEq22, -xEq12, xEq21, bus);
-        }
-
-        public void updateEnBus(double enBus11, double enBus12, double enBus21, double enBus22) {
-            enBus = parameters.getMatrixFactory().create(2, 2, 4).toDense();
-            enBus.add(0, 0, enBus11);
-            enBus.add(0, 1, enBus12);
-            enBus.add(1, 0, enBus21);
-            enBus.add(1, 1, enBus22);
+        public void updatezknf(Complex enBus) {
+            this.zknf = enBus;
         }
 
         public void updateWithVoltagesdelta(AdmittanceMatrix y, DenseMatrix dEn, int numDef, FeedersAtNetwork feeders) {
-            dE = y.getDeltaV(dEn, numDef);
+            busToZknf = y.getDeltaV(dEn, numDef);
             eqSysFeeders = feeders; // contains necessary data to update the contribution of feeders for each short circuit
         }
 
         public void printResult() {
-            System.out.println(" Zth(" + bus.getId() + ") = ");
-            System.out.println(" [ rth=" + rEq11 + "  -xth=" + -xEq12 + "]");
-            System.out.println(" [ xth=" + xEq21 + "   rth=" + rEq22 + "]");
+            System.out.println(" Zth(" + bus.getId() + ") = " + zthEq);
 
             if (parameters.isVoltageUpdate()) {
                 /*for (Map.Entry<Integer, Double> b : dvr1.entrySet()) {
@@ -236,12 +182,10 @@ public class ImpedanceLinearResolution {
             }
         }
 
-        public void addBiphasedResult(LfBus bus2, double initV2x, double initV2y, double z22txx, double z22txy,
-                                      double z21txx, double z21txy,
-                                      double z12txx, double z12txy, int numBus2Fault) {
+        public void addBiphasedResult(LfBus bus2, Complex initV2, Complex z22, Complex z21, Complex z12, int numBus2Fault) {
             // numBus2Fault is store to easily get the extraction vector for the second bus, in order to compute the full voltage export if required
-            ImpedanceLinearResolutionResult.ImpedanceLinearResolutionResultBiphased biphasedResult = new ImpedanceLinearResolutionResult.ImpedanceLinearResolutionResultBiphased(bus2, initV2x, initV2y,
-                    z22txx, z22txy, z21txx, z21txy, z12txx, z12txy, numBus2Fault);
+            ImpedanceLinearResolutionResult.ImpedanceLinearResolutionResultBiphased biphasedResult = new ImpedanceLinearResolutionResult.ImpedanceLinearResolutionResultBiphased(bus2, initV2,
+                    z22, z21, z12, numBus2Fault);
 
             if (biphasedResultsAtBus == null) {
                 biphasedResultsAtBus = new ArrayList<>();
@@ -250,25 +194,24 @@ public class ImpedanceLinearResolution {
         }
     }
 
-    public static void checkBlocConsistency(double rEq11, double rEq22, double minusXEq12, double xEq21, LfBus lfBus1, LfBus lfBus2) {
+    public static void checkMatrixExtractionConsistency(Complex z1, Complex z2, LfBus lfBus1, LfBus lfBus2) {
         double epsilon = 0.00001;
-        double xEq12 = -minusXEq12;
 
         String bus1Id = lfBus1.getId();
         String bus2Id = lfBus2.getId();
 
-        if (Math.abs(rEq11 - rEq22) > epsilon) {
-            throw new IllegalArgumentException("Impedance block values rth : z11 and Z22 of nodes Bus1 = {" + bus1Id + "} and Bus2 = {" + bus2Id + "} have inconsitant values z11= " + rEq11 + " y1i2i=" + rEq22);
+        if (Math.abs(z1.getReal() - z2.getReal()) > epsilon) {
+            throw new IllegalArgumentException("Impedance block values rth : z11 and Z22 of nodes Bus1 = {" + bus1Id + "} and Bus2 = {" + bus2Id + "} have inconsitant values z11= " + z1.getReal() + " y1i2i=" + z2.getReal());
         }
 
-        if (Math.abs(xEq12 - xEq21) > epsilon) {
-            throw new IllegalArgumentException("Impedance block values xth : z12 and Z21 of nodes Bus1 = {" + bus1Id + "} and Bus2 = {" + bus2Id + "} have inconsitant values z12= " + xEq12 + " z21=" + xEq21);
+        if (Math.abs(z2.getImaginary() - z1.getImaginary()) > epsilon) {
+            throw new IllegalArgumentException("Impedance block values xth : z12 and Z21 of nodes Bus1 = {" + bus1Id + "} and Bus2 = {" + bus2Id + "} have inconsitant values z12= " + z1.getImaginary() + " z21=" + z2.getImaginary());
         }
     }
 
-    public static void checkBlocConsistency(double rEq11, double rEq22, double minusXEq12, double xEq21, LfBus lfBus1) {
-        // case of diagonal block
-        checkBlocConsistency(rEq11, rEq22, minusXEq12, xEq21, lfBus1, lfBus1);
+    public static void checkMatrixExtractionConsistency(Complex z1, Complex z2, LfBus lfBus1) {
+        // case of diagonal matrix terms
+        checkMatrixExtractionConsistency(z1, z2, lfBus1, lfBus1);
     }
 
     public static LfBus getLfBusFromIidmBranch(String iidmBranchId, int branchSide, LfNetwork lfNetwork) {
@@ -428,8 +371,8 @@ public class ImpedanceLinearResolution {
 
             //DenseMatrix z = (DenseMatrix) tEn.times(en);
 
-            double ethx = 1.0;
-            double ethy = 0.0;
+            Complex eth = new Complex(1.0);
+
             numBusFault = 0;
             for (LfBus lfBus : inputBusses) {
 
@@ -437,30 +380,36 @@ public class ImpedanceLinearResolution {
                 int yRow1y = yd.getRowBus(lfBus.getNum(), EquationType.BUS_YI);
 
                 if (parameters.getTheveninVoltageProfileType() == AdmittanceEquationSystem.AdmittanceVoltageProfileType.CALCULATED) {
-                    ethx = lfBus.getV() * Math.cos(lfBus.getAngle());
-                    ethy = lfBus.getV() * Math.sin(lfBus.getAngle());
+                    eth = new Complex(lfBus.getV() * Math.cos(lfBus.getAngle()), lfBus.getV() * Math.sin(lfBus.getAngle()));
                 }
 
-                //this is equivalent to get the diagonal blocks of tEn * inv(Y) * En but taking advantage of the sparsity of tEn
-                ImpedanceLinearResolutionResult res = new ImpedanceLinearResolutionResult(lfBus,
-                        en.get(tEn2Col.get(2 * numBusFault), 2 * numBusFault),
-                        en.get(tEn2Col.get(1 + 2 * numBusFault), 1 + 2 * numBusFault),
-                        -en.get(tEn2Col.get(2 * numBusFault), 1 + 2 * numBusFault),
-                        en.get(tEn2Col.get(1 + 2 * numBusFault), 2 * numBusFault),
-                        ethx,
-                        ethy);
+                // This is equivalent to get the diagonal blocks of tEn * inv(Y) * En but taking advantage of the sparsity of tEn
+                // The diagonal terms of the impedance matrix are the Thevenin impedance at each corresponding bus
+                Complex zth = new Complex(en.get(tEn2Col.get(2 * numBusFault), 2 * numBusFault), -en.get(tEn2Col.get(2 * numBusFault), 1 + 2 * numBusFault));
+                Complex zthBis = new Complex(en.get(tEn2Col.get(1 + 2 * numBusFault), 1 + 2 * numBusFault), en.get(tEn2Col.get(1 + 2 * numBusFault), 2 * numBusFault));
+                //     [Zth_kk] = [ rth -xth ] --> Zth
+                //                [ xth  rth ] --> Zth_Bis
+                checkMatrixExtractionConsistency(zth, zthBis, lfBus);
+
+                ImpedanceLinearResolutionResult res = new ImpedanceLinearResolutionResult(lfBus, zth, eth);
 
                 //step 4 : add deltaVoltage vectors if required
                 //extract values at the faulting bus that will be used to compute the post-fault voltage delta at bus
-                // This equivalent to compute  t[En]*inv(Y)*[En] in :
-                // [ Vx ]                        [ Ix ]           [ Vx_init ]
-                // [ Vy ] = -t[En]*inv(Y)*[En] * [ Iy ] + t[En] * [ Vy_init ]
-                double enBusxx = en.get(yRow1x, 2 * numBusFault);
-                double enBusyx = en.get(yRow1x, 2 * numBusFault + 1);
-                double enBusxy = en.get(yRow1y, 2 * numBusFault);
-                double enBusyy = en.get(yRow1y, 2 * numBusFault + 1);
 
-                res.updateEnBus(enBusxx, enBusyx, enBusxy, enBusyy);
+                // [ V ] = -inv(Y) * M * [ Icc ] + [ V(init) ]
+                // Where is the short circuit current vector [Icc] = [ 0 ; 0 .... 0 ; icc ; 0 .... 0 ; 0 ] with non zero term corresponds to faulted node nf
+                // Where [V] is the resulting voltage profile avec short circuit, [V] = [ V1 ; V2 ; ..... ; Vk ; .... ; Vm ]
+                // Vk = z(k,nf) . icc
+                // we need then to extract z(k,nf) if we want to compute updated Vk from computed icc value
+
+                //double enBusxx = en.get(yRow1x, 2 * numBusFault);
+                //double enBusyx = en.get(yRow1x, 2 * numBusFault + 1);
+                //double enBusxy = en.get(yRow1y, 2 * numBusFault);
+                //double enBusyy = en.get(yRow1y, 2 * numBusFault + 1);
+
+                Complex zknf = new Complex(en.get(yRow1x, 2 * numBusFault), en.get(yRow1y, 2 * numBusFault));
+
+                res.updatezknf(zknf);
 
                 // handle biphased common support faults extra data
                 for (Pair<LfBus, LfBus> pairBusses : biphasedinputBusses) {
@@ -487,39 +436,31 @@ public class ImpedanceLinearResolution {
                             throw new IllegalArgumentException(" Biphased fault second bus = " + bus2.getId() + " : not found in the extraction matrix");
                         }
 
-                        double enZ22txx = en.get(yCol2x, 2 * numBus2Fault);
-                        double enZ22tyx = en.get(yCol2y, 2 * numBus2Fault);
-                        double enZ22txy = en.get(yCol2x, 2 * numBus2Fault + 1);
-                        double enZ22tyy = en.get(yCol2y, 2 * numBus2Fault + 1);
+                        Complex z22 = new Complex(en.get(yCol2x, 2 * numBus2Fault), -en.get(yCol2x, 2 * numBus2Fault + 1));
+                        Complex z22bis = new Complex(en.get(yCol2y, 2 * numBus2Fault + 1), en.get(yCol2y, 2 * numBus2Fault));
 
-                        double enZ21txx = en.get(yCol2x, 2 * numBusFault);
-                        double enZ21tyx = en.get(yCol2y, 2 * numBusFault);
-                        double enZ21txy = en.get(yCol2x, 2 * numBusFault + 1);
-                        double enZ21tyy = en.get(yCol2y, 2 * numBusFault + 1);
+                        Complex z21 = new Complex(en.get(yCol2x, 2 * numBusFault), -en.get(yCol2x, 2 * numBusFault + 1));
+                        Complex z21bis = new Complex(en.get(yCol2y, 2 * numBusFault + 1), en.get(yCol2y, 2 * numBusFault));
 
-                        double enZ12txx = en.get(yCol1x, 2 * numBus2Fault);
-                        double enZ12tyx = en.get(yCol1y, 2 * numBus2Fault);
-                        double enZ12txy = en.get(yCol1x, 2 * numBus2Fault + 1);
-                        double enZ12tyy = en.get(yCol1y, 2 * numBus2Fault + 1);
+                        Complex z12 = new Complex(en.get(yCol1x, 2 * numBus2Fault), -en.get(yCol1x, 2 * numBus2Fault + 1));
+                        Complex z12bis = new Complex(en.get(yCol1y, 2 * numBus2Fault + 1), en.get(yCol1y, 2 * numBus2Fault));
 
                         // By construction we have for each block
                         //
-                        // Zij = [ rij  -xij ]
-                        //       [ xij   rij ]
+                        // Zij = [ rij  -xij ] --> enZ
+                        //       [ xij   rij ] --> enZbis
                         //
-                        // We need to check consistency of terms for each block
-                        checkBlocConsistency(enZ22txx, enZ22tyy, enZ22txy, enZ22tyx, lfBus, bus2);
-                        checkBlocConsistency(enZ21txx, enZ21tyy, enZ21txy, enZ21tyx, lfBus, bus2);
-                        checkBlocConsistency(enZ12txx, enZ12tyy, enZ12txy, enZ12tyx, lfBus, bus2);
+                        // We need to check consistency of terms enZ and enZbis for each block
+                        checkMatrixExtractionConsistency(z22, z22bis, lfBus, bus2);
+                        checkMatrixExtractionConsistency(z21, z21bis, lfBus, bus2);
+                        checkMatrixExtractionConsistency(z12, z12bis, lfBus, bus2);
 
-                        double eth2x = 1.0;
-                        double eth2y = 0.;
+                        Complex eth2 = new Complex(1.0);
                         if (parameters.getTheveninVoltageProfileType() == AdmittanceEquationSystem.AdmittanceVoltageProfileType.CALCULATED) {
-                            eth2x = bus2.getV() * Math.cos(lfBus.getAngle());
-                            eth2y = bus2.getV() * Math.sin(lfBus.getAngle());
+                            eth2 = new Complex(bus2.getV() * Math.cos(lfBus.getAngle()), bus2.getV() * Math.sin(lfBus.getAngle()));
                         }
 
-                        res.addBiphasedResult(bus2, eth2x, eth2y, enZ22txx, enZ22txy, enZ21txx, enZ21txy, enZ12txx, enZ12txy, numBus2Fault);
+                        res.addBiphasedResult(bus2, eth2, z22, z21, z12, numBus2Fault);
                     }
                 }
 

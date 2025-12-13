@@ -7,16 +7,15 @@
  */
 package com.powsybl.sc.implementation;
 
-import com.powsybl.math.matrix.DenseMatrix;
+import org.apache.commons.math3.complex.Complex;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class MonophasedShortCircuitCalculator extends AbstractShortCircuitCalculator {
 
-    public MonophasedShortCircuitCalculator(double rdf, double xdf, double rof, double xof, double rg, double xg,
-                                            double initVx, double initVy) {
-        super(rdf, xdf, rof, xof, rg, xg, initVx, initVy);
+    public MonophasedShortCircuitCalculator(Complex zdf, Complex zof, ShortCircuitFaultImpedance zFault, Complex initV) {
+        super(zdf, zof, zFault, initV);
 
     }
 
@@ -27,7 +26,7 @@ public class MonophasedShortCircuitCalculator extends AbstractShortCircuitCalcul
         // b ---------------x------------------
         // c ---------------+------------------                  Vc = Zf * Ic
         //                  |
-        //                 Zf
+        //                 Zground
         //                  |
         //                /////
 
@@ -51,7 +50,7 @@ public class MonophasedShortCircuitCalculator extends AbstractShortCircuitCalcul
         //
         //            a * tM * [Vinit]
         // Ic = -----------------------------
-        //       1/3 * (Zof + 2 * Zdf) + Zf
+        //       1/3 * (Zof + 2 * Zdf) + Zground
         //
         // Where Zof and Zdf are complex impedance matrix elements :
         // Zof = tM * inv(Yo) * M   and Zdf = tM * inv(Yd) * M
@@ -63,49 +62,15 @@ public class MonophasedShortCircuitCalculator extends AbstractShortCircuitCalcul
         // Complex expression of Ic :
         //            a * Vd(init)                 a * Vd(init)
         // Ic = ----------------------------- = -----------------
-        //       1/3 * (Zof + 2 * Zdf) + Zf            Zt
+        //       1/3 * (Zof + 2 * Zdf) + Zground            Zt
 
-        double rt = (2 * rdf + rof) / 3 + rg;
-        double xt = (2 * xdf + xof) / 3 + xg;
+        Complex z1 = zdf.multiply(2.).add(zof);
+        Complex z2 = z1.divide(3.);
+        Complex zt = zfault.getZg().add(z2);
+        Complex ic = initV.multiply(geta()).divide(zt);
 
-        // [Zt] = [ rt  -xt ]
-        //        [ xt   rt ]
-        //
-        // Cartesian expression of Ic using matrices :
-        //                                        1
-        // [icx] = inv([Zt]) * [a] * [vdx] = ------------ * [ rt xt ] * [ -1/2  -sqrt(3)/2 ] * [vdx]
-        // [icy]                     [vdy]   (rt² + xt²)    [-xt rt ]   [ sqrt(3)/2  -1/2  ]   [vdy]
-
-        DenseMatrix vdInit = new DenseMatrix(2, 1);
-        vdInit.add(0, 0, initVx);
-        vdInit.add(1, 0, initVy);
-
-        DenseMatrix ma = getMatrixByType(BlocType.A, 1.0);
-        DenseMatrix ma2 = getMatrixByType(BlocType.A2, 1.0);
-
-        DenseMatrix invZt = getInvZt(rt, xt);
-
-        DenseMatrix tmpaVd = ma.times(vdInit).toDense();
-        DenseMatrix mIc = invZt.times(tmpaVd).toDense();
-
-        //
-        //        -rt*(vdxi + vdyi*sqrt(3)) + xt*(vdxi*sqrt(3)-vdyi)
-        //Icx =  ----------------------------------------------------
-        //                        2 * (rt² + xt²)
-
-        //double icx = (-rt * (v1dxInit + v1dyInit * Math.sqrt(3)) + xt*(v1dxInit * Math.sqrt(3) - v1dyInit)) / (2 * detZt);
-
-        //
-        //         rt*(vdxi*sqrt(3) - vdyi) + xt*(vdxi+sqrt(3)*vdyi)
-        //Icy =  ----------------------------------------------------
-        //                        2 * (rt² + xt²)
-
-        //double icy = (-rt * (v1dxInit * Math.sqrt(3) - v1dyInit) + xt * (v1dxInit + v1dyInit * Math.sqrt(3))) / (2 * detZt);
-
-        DenseMatrix mIdiv3 = getMatrixByType(BlocType.I_D, 1. / 3.);
-
-        mIo = mIdiv3.times(mIc).toDense();
-        mId = ma2.times(mIo).toDense();
-        mIi = ma.times(mIo).toDense();
+        io = ic.divide(3.);
+        id = io.multiply(geta2());
+        ii = io.multiply(geta());
     }
 }

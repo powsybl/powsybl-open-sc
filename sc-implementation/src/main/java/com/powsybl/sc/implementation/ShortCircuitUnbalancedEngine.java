@@ -8,10 +8,10 @@
 package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.Network;
-import com.powsybl.math.matrix.DenseMatrix;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.sc.util.*;
+import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.ArrayList;
@@ -100,23 +100,15 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                 }
             }
 
-            double v1dxInit = directResult.getEthr();
-            double v1dyInit = directResult.getEthi();
-
-            double rdf = directResult.getRthz11();
-            double xdf = directResult.getXthz12();
-
-            double rof = homopolarResult.getRthz11();
-            double xof = homopolarResult.getXthz12();
+            Complex v1dInit = directResult.getEth();
+            Complex zdf = directResult.getZthEq();
+            Complex zof = homopolarResult.getZthEq();
 
             for (ShortCircuitFault scf : matchingFaultsAtBus1) {
 
-                double rf = scf.getZfr();
-                double xf = scf.getZfi();
-
-                DenseMatrix mIo = new DenseMatrix(2, 1);
-                DenseMatrix mId = new DenseMatrix(2, 1);
-                DenseMatrix mIi = new DenseMatrix(2, 1);
+                Complex io = new Complex(0.);
+                Complex id = new Complex(0.);
+                Complex ii = new Complex(0.);
 
                 ShortCircuitResult res;
 
@@ -124,32 +116,32 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                         || shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED
                         || shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND) {
                     if (shortCircuitType == ShortCircuitFault.ShortCircuitType.MONOPHASED) {
-                        MonophasedShortCircuitCalculator monophasedCalculator = new MonophasedShortCircuitCalculator(rdf, xdf, rof, xof, rf, xf, v1dxInit, v1dyInit);
+                        MonophasedShortCircuitCalculator monophasedCalculator = new MonophasedShortCircuitCalculator(zdf, zof, scf.getZf(), v1dInit);
                         monophasedCalculator.computeCurrents();
 
-                        mIo = monophasedCalculator.getmIo();
-                        mId = monophasedCalculator.getmId();
-                        mIi = monophasedCalculator.getmIi();
+                        io = monophasedCalculator.getIo();
+                        id = monophasedCalculator.getId();
+                        ii = monophasedCalculator.getIi();
 
                     } else if (shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED) {
-                        BiphasedShortCircuitCalculator biphasedCalculator = new BiphasedShortCircuitCalculator(rdf, xdf, rof, xof, rf, xf, v1dxInit, v1dyInit);
+                        BiphasedShortCircuitCalculator biphasedCalculator = new BiphasedShortCircuitCalculator(zdf, zof, scf.getZf(), v1dInit);
                         biphasedCalculator.computeCurrents();
 
-                        mIo = biphasedCalculator.getmIo();
-                        mId = biphasedCalculator.getmId();
-                        mIi = biphasedCalculator.getmIi();
+                        io = biphasedCalculator.getIo();
+                        id = biphasedCalculator.getId();
+                        ii = biphasedCalculator.getIi();
                     } else if (shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND) {
-                        BiphasedGroundShortCircuitCalculator biphasedGrCalculator = new BiphasedGroundShortCircuitCalculator(rdf, xdf, rof, xof, rf, xf, v1dxInit, v1dyInit);
+                        BiphasedGroundShortCircuitCalculator biphasedGrCalculator = new BiphasedGroundShortCircuitCalculator(zdf, zof, scf.getZf(), v1dInit);
                         biphasedGrCalculator.computeCurrents();
 
-                        mIo = biphasedGrCalculator.getmIo();
-                        mId = biphasedGrCalculator.getmId();
-                        mIi = biphasedGrCalculator.getmIi();
+                        io = biphasedGrCalculator.getIo();
+                        id = biphasedGrCalculator.getId();
+                        ii = biphasedGrCalculator.getIi();
                     }
 
-                    res = buildUnbalancedResult(mId, mIo, mIi, rdf, xdf, rof, xof,
+                    res = buildUnbalancedResult(id, io, ii, zdf, zof,
                             directResult, homopolarResult,
-                            scf, lfBus1, v1dxInit, v1dyInit, lfNetwork);
+                            scf, lfBus1, v1dInit, lfNetwork);
 
                     res.updateFeedersResult(); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
                     resultsPerFault.put(scf, res);
@@ -165,63 +157,44 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                         LfBus lfBus2 = biphasedDirectResult.getBus2();
                         if (lfBus2.getId().equals(scf.getLfBus2Info())) {
 
-                            double ro12 = biphasedHomopolarResult.getZ12txx();
-                            double xo12 = -biphasedHomopolarResult.getZ12txy();
-                            double ro22 = biphasedHomopolarResult.getZ22txx();
-                            double xo22 = -biphasedHomopolarResult.getZ22txy();
-                            double ro21 = biphasedHomopolarResult.getZ21txx();
-                            double xo21 = -biphasedHomopolarResult.getZ21txy();
+                            Complex zo12 = biphasedHomopolarResult.getZ12();
+                            Complex zo22 = biphasedHomopolarResult.getZ22();
+                            Complex zo21 = biphasedHomopolarResult.getZ21();
 
-                            double rd12 = biphasedDirectResult.getZ12txx();
-                            double xd12 = -biphasedDirectResult.getZ12txy();
-                            double rd22 = biphasedDirectResult.getZ22txx();
-                            double xd22 = -biphasedDirectResult.getZ22txy();
-                            double rd21 = biphasedDirectResult.getZ21txx();
-                            double xd21 = -biphasedDirectResult.getZ21txy();
+                            Complex zd12 = biphasedDirectResult.getZ12();
+                            Complex zd22 = biphasedDirectResult.getZ22();
+                            Complex zd21 = biphasedDirectResult.getZ21();
 
-                            BiphasedCommonSupportShortCircuitCalculator biphasedCommonCalculator;
+                            BiphasedCommonSupportShortCircuitCalculator biCsSc;
                             if (scf.getBiphasedType() == ShortCircuitFault.ShortCircuitBiphasedType.C1_A2) {
-                                biphasedCommonCalculator = new BiphasedC1A2Calculator(rdf, xdf, rof, xof, rf, xf, v1dxInit, v1dyInit,
-                                        biphasedDirectResult.getV2x(), biphasedDirectResult.getV2y(),
-                                        ro12, xo12, ro22, xo22, ro21, xo21,
-                                        rd12, xd12, rd22, xd22, rd21, xd21);
+                                biCsSc = new BiphasedC1A2Calculator(zdf, zof, scf.getZf(), v1dInit, biphasedDirectResult.getV2(),
+                                        zo12, zo22, zo21,
+                                        zd12, zd22, zd21);
                             } else if (scf.getBiphasedType() == ShortCircuitFault.ShortCircuitBiphasedType.C1_B2) {
-                                biphasedCommonCalculator = new BiphasedC1B2Calculator(rdf, xdf, rof, xof, rf, xf, v1dxInit, v1dyInit,
-                                        biphasedDirectResult.getV2x(), biphasedDirectResult.getV2y(),
-                                        ro12, xo12, ro22, xo22, ro21, xo21,
-                                        rd12, xd12, rd22, xd22, rd21, xd21);
+                                biCsSc = new BiphasedC1B2Calculator(zdf, zof, scf.getZf(), v1dInit, biphasedDirectResult.getV2(),
+                                        zo12, zo22, zo21,
+                                        zd12, zd22, zd21);
                             } else if (scf.getBiphasedType() == ShortCircuitFault.ShortCircuitBiphasedType.C1_C2) {
-                                biphasedCommonCalculator = new BiphasedC1C2Calculator(rdf, xdf, rof, xof, rf, xf, v1dxInit, v1dyInit,
-                                        biphasedDirectResult.getV2x(), biphasedDirectResult.getV2y(),
-                                        ro12, xo12, ro22, xo22, ro21, xo21,
-                                        rd12, xd12, rd22, xd22, rd21, xd21);
+                                biCsSc = new BiphasedC1C2Calculator(zdf, zof, scf.getZf(), v1dInit, biphasedDirectResult.getV2(),
+                                        zo12, zo22, zo21,
+                                        zd12, zd22, zd21);
                             } else {
                                 throw new IllegalArgumentException(" short circuit fault of type : " + scf.getBiphasedType() + " not yet handled");
                             }
 
-                            //biphasedCommonCalculator.computeCurrents();
-                            mIo = biphasedCommonCalculator.getmIo();
-                            mId = biphasedCommonCalculator.getmId();
-                            mIi = biphasedCommonCalculator.getmIi();
-
-                            DenseMatrix mI2o = biphasedCommonCalculator.getmI2o();
-                            DenseMatrix mI2d = biphasedCommonCalculator.getmI2d();
-                            DenseMatrix mI2i = biphasedCommonCalculator.getmI2i();
-
+                            //biCsSc.computeCurrents();
                             //biphasedCommonCalculator.computeVoltages();
-                            DenseMatrix mdVo = biphasedCommonCalculator.getmVo(); // Contains variations of voltages, without Vinit
-                            DenseMatrix mdVd = biphasedCommonCalculator.getmVd(); // each voltage vector contains [V1x; V1y; V2x; V2y]
-                            DenseMatrix mdVi = biphasedCommonCalculator.getmVi();
-
                             //LfBus lfBus2 = biphasedDirectResult.getBus2();
+                            Complex v2dInit = biphasedDirectResult.getV2();
 
-                            double v2dxInit = biphasedDirectResult.getV2x();
-                            double v2dyInit = biphasedDirectResult.getV2y();
-
-                            res = buildUnbalancedCommunSuppportResult(mId, mIo, mIi, mI2d, mI2o, mI2i, mdVd, mdVo, mdVi, rdf, xdf, rof, xof,
+                            res = buildUnbalancedCommunSuppportResult(biCsSc.getId(), biCsSc.getIo(), biCsSc.getIi(),
+                                    biCsSc.getI2d(), biCsSc.getI2o(), biCsSc.getI2i(),
+                                    biCsSc.getVd(), biCsSc.getVo(), biCsSc.getVi(),
+                                    biCsSc.getV2d(), biCsSc.getV2o(), biCsSc.getV2i(),
+                                    zdf, zof,
                                     directResult, homopolarResult, scf,
-                                    lfBus1, v1dxInit, v1dyInit, lfNetwork,
-                                    lfBus2, v2dxInit, v2dyInit, biphasedDirectResult, biphasedHomopolarResult);
+                                    lfBus1, v1dInit, lfNetwork,
+                                    lfBus2, v2dInit, biphasedDirectResult, biphasedHomopolarResult);
 
                             res.updateFeedersResult(); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
                             resultsPerFault.put(scf, res);
@@ -235,36 +208,28 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         }
     }
 
-    public ShortCircuitResult buildUnbalancedResult(DenseMatrix mId, DenseMatrix mIo, DenseMatrix mIi, double rdf, double xdf, double rof, double xof,
+    public ShortCircuitResult buildUnbalancedResult(Complex id, Complex io, Complex ii, Complex zdf, Complex zof,
                                                     ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult,
                                                     ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult,
-                                                    ShortCircuitFault scf, LfBus lfBus1, double v1dxInit, double v1dyInit,
+                                                    ShortCircuitFault scf, LfBus lfBus1, Complex v1dInit,
                                                     LfNetwork lfNetwork) {
         //get the voltage vectors
         // Vo :
         // [vox]      [ rof  -xof ]   [ iox ]
         // [voy] = -  [ xof   rof ] * [ ioy ]
 
-        DenseMatrix zof = getZ(rof, xof);
-        DenseMatrix zdf = getZ(rdf, xdf);
-
-        DenseMatrix minusVo = zof.times(mIo).toDense();
-        DenseMatrix minusVd = zdf.times(mId).toDense();
-        DenseMatrix minusVi = zdf.times(mIi).toDense();
+        Complex vo = zof.multiply(io).multiply(-1.);
+        Complex vd = zdf.multiply(id).multiply(-1.);
+        Complex vi = zdf.multiply(ii).multiply(-1.);
 
         //record the results
         FeedersAtNetwork equationSystemFeedersDirect = directResult.getEqSysFeeders();
         FeedersAtNetwork equationSystemFeedersHomopolar = homopolarResult.getEqSysFeeders();
 
         ShortCircuitResult res = new ShortCircuitResult(scf, lfBus1,
-                mId.get(0, 0), mId.get(1, 0),
-                mIo.get(0, 0), mIo.get(1, 0),
-                mIi.get(0, 0), mIi.get(1, 0),
-                rdf, xdf, rof, xof, rdf, xdf,
-                v1dxInit, v1dyInit,
-                -minusVd.get(0, 0), -minusVd.get(1, 0),
-                -minusVo.get(0, 0), -minusVo.get(1, 0),
-                -minusVi.get(0, 0), -minusVi.get(1, 0),
+                id, io, ii,
+                zdf, zof, zdf,
+                v1dInit, vd, vo, vi,
                 equationSystemFeedersDirect, equationSystemFeedersHomopolar, parameters.getNorm());
 
         if (parameters.isVoltageUpdate()) {
@@ -280,50 +245,34 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
             int nbBusses = lfNetwork.getBuses().size();
             res.createEmptyFortescueVoltageVector(nbBusses);
 
-            for (Map.Entry<Integer, DenseMatrix> vd : directResult.getDv().entrySet()) {
-                int busNum = vd.getKey();
+            for (Map.Entry<Integer, Complex> zd : directResult.getBusToZknf().entrySet()) {
+                int busNum = zd.getKey();
 
                 //direct
-                double edVr = vd.getValue().get(0, 0);
-                double edVi = vd.getValue().get(1, 0);
-
-                double idr = -mId.get(0, 0);
-                double idi = -mId.get(1, 0);
-
-                double deltaVdr = -idr * edVr + idi * edVi;
-                double deltaVdi = -idr * edVi - idi * edVr;
+                Complex zdBus = zd.getValue();
+                Complex deltaVd = zdBus.multiply(id);
 
                 //inverse
-                double iir = -mIi.get(0, 0);
-                double iii = -mIi.get(1, 0);
-
-                double deltaVir = -iir * edVr + iii * edVi;
-                double deltaVii = -iir * edVi - iii * edVr;
+                Complex deltaVi = zdBus.multiply(ii);
 
                 //homopolar
-                double eoVr = homopolarResult.getDv().get(busNum).get(0, 0);
-                double eoVi = homopolarResult.getDv().get(busNum).get(1, 0);
-
-                double ior = -mIo.get(0, 0);
-                double ioi = -mIo.get(1, 0);
-
-                double deltaVor = -ior * eoVr + ioi * eoVi;
-                double deltaVoi = -ior * eoVi - ioi * eoVr;
+                Complex zo = homopolarResult.getBusToZknf().get(busNum);
+                Complex deltaVo = zo.multiply(io);
 
                 //System.out.println(" dVth(" + vdr.getKey() + ") = " + edVr + " + j(" + edVi + ")");
 
-                res.fillVoltageInFortescueVector(busNum, deltaVdr, deltaVdi, deltaVor, deltaVoi, deltaVir, deltaVii);
+                res.fillVoltageInFortescueVector(busNum, deltaVd, deltaVo, deltaVi);
             }
         }
 
         return res;
     }
 
-    public ShortCircuitResult buildUnbalancedCommunSuppportResult(DenseMatrix mId, DenseMatrix mIo, DenseMatrix mIi, DenseMatrix mI2d, DenseMatrix mI2o, DenseMatrix mI2i, DenseMatrix mVd, DenseMatrix mVo, DenseMatrix mVi, double rdf, double xdf, double rof, double xof,
+    public ShortCircuitResult buildUnbalancedCommunSuppportResult(Complex id, Complex io, Complex ii, Complex i2d, Complex i2o, Complex i2i, Complex dvd, Complex dvo, Complex dvi, Complex dv2d, Complex dv2o, Complex dv2i, Complex zdf, Complex zof,
                                                                   ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult,
                                                                   ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult, ShortCircuitFault scf,
-                                                                  LfBus lfBus1, double v1dxInit, double v1dyInit, LfNetwork lfNetwork,
-                                                                  LfBus lfBus2, double v2dxInit, double v2dyInit,
+                                                                  LfBus lfBus1, Complex v1dInit, LfNetwork lfNetwork,
+                                                                  LfBus lfBus2, Complex v2dInit,
                                                                   ImpedanceLinearResolution.ImpedanceLinearResolutionResult.ImpedanceLinearResolutionResultBiphased biphasedDirectResult,
                                                                   ImpedanceLinearResolution.ImpedanceLinearResolutionResult.ImpedanceLinearResolutionResultBiphased biphasedHomopolarResult) {
 
@@ -332,22 +281,14 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         FeedersAtNetwork equationSystemFeedersHomopolar = homopolarResult.getEqSysFeeders();
 
         ShortCircuitResult res = new ShortCircuitResult(scf, lfBus1,
-                mId.toDense().get(0, 0), mId.toDense().get(1, 0),
-                mIo.toDense().get(0, 0), mIo.toDense().get(1, 0),
-                mIi.toDense().get(0, 0), mIi.toDense().get(1, 0),
-                rdf, xdf, rof, xof, rdf, xdf,
-                v1dxInit, v1dyInit,
-                mVd.toDense().get(0, 0), mVd.toDense().get(1, 0),
-                mVo.toDense().get(0, 0), mVo.toDense().get(1, 0),
-                mVi.toDense().get(0, 0), mVi.toDense().get(1, 0),
+                id, io, ii,
+                zdf, zof, zdf,
+                v1dInit,
+                dvd, dvo, dvi,
                 equationSystemFeedersDirect, equationSystemFeedersHomopolar, parameters.getNorm(),
-                mI2d.toDense().get(0, 0), mI2d.toDense().get(1, 0),
-                mI2o.toDense().get(0, 0), mI2o.toDense().get(1, 0),
-                mI2i.toDense().get(0, 0), mI2i.toDense().get(1, 0),
-                v2dxInit, v2dyInit,
-                mVd.toDense().get(2, 0), mVd.toDense().get(3, 0),
-                mVo.toDense().get(2, 0), mVo.toDense().get(3, 0),
-                mVi.toDense().get(2, 0), mVi.toDense().get(3, 0),
+                i2d, i2o, i2i,
+                v2dInit,
+                dv2d, dv2o, dv2i,
                 lfBus2);
 
         if (parameters.isVoltageUpdate()) {
@@ -363,60 +304,26 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
             int nbBusses = lfNetwork.getBuses().size();
             res.createEmptyFortescueVoltageVector(nbBusses);
 
-            for (Map.Entry<Integer, DenseMatrix> vd : directResult.getDv().entrySet()) {
-                int busNum = vd.getKey();
+            for (Map.Entry<Integer, Complex> zd : directResult.getBusToZknf().entrySet()) {
+                int busNum = zd.getKey();
 
                 //direct
-                double edVr = vd.getValue().get(0, 0);
-                double edVi = vd.getValue().get(1, 0);
-                double edV2r = biphasedDirectResult.getDv2().get(busNum).get(0, 0);
-                double edV2i = biphasedDirectResult.getDv2().get(busNum).get(1, 0);
-
-                double idr = -mId.toDense().get(0, 0);
-                double idi = -mId.toDense().get(1, 0);
-                double i2dr = -mI2d.toDense().get(0, 0);
-                double i2di = -mI2d.toDense().get(1, 0);
-
-                double deltaVdr = -idr * edVr + idi * edVi - i2dr * edV2r + i2di * edV2i;
-                double deltaVdi = -idr * edVi - idi * edVr - i2dr * edV2i - i2di * edV2r;
+                Complex zdBus2 = biphasedDirectResult.getBus2ToZknf().get(busNum);
+                Complex deltaVd = id.multiply(zd.getValue()).add(i2d.multiply(zdBus2));
 
                 //inverse
-                double iir = -mIi.toDense().get(0, 0);
-                double iii = -mIi.toDense().get(1, 0);
-                double i2ir = -mI2i.toDense().get(0, 0);
-                double i2ii = -mI2i.toDense().get(1, 0);
-
-                double deltaVir = -iir * edVr + iii * edVi - i2ir * edV2r - i2ii * edV2i;
-                double deltaVii = -iir * edVi - iii * edVr - i2ir * edV2i - i2ii * edV2r;
+                Complex deltaVi = ii.multiply(zd.getValue()).add(i2i.multiply(zdBus2));
 
                 //homopolar
-                double eoVr = homopolarResult.getDv().get(busNum).get(0, 0);
-                double eoVi = homopolarResult.getDv().get(busNum).get(1, 0);
-                double eoV2r = biphasedHomopolarResult.getDv2().get(busNum).get(0, 0);
-                double eoV2i = biphasedHomopolarResult.getDv2().get(busNum).get(1, 0);
+                Complex zoBus = homopolarResult.getBusToZknf().get(busNum);
+                Complex zoBus2 = biphasedHomopolarResult.getBus2ToZknf().get(busNum);
 
-                double ior = -mIo.toDense().get(0, 0);
-                double ioi = -mIo.toDense().get(1, 0);
-                double i2or = -mI2o.toDense().get(0, 0);
-                double i2oi = -mI2o.toDense().get(1, 0);
+                Complex deltaVo = io.multiply(zoBus).add(i2o.multiply(zoBus2));
 
-                double deltaVor = -ior * eoVr + ioi * eoVi - i2or * eoV2r + i2oi * eoV2i;
-                double deltaVoi = -ior * eoVi - ioi * eoVr - i2or * eoV2i - i2oi * eoV2r;
-
-                res.fillVoltageInFortescueVector(busNum, deltaVdr, deltaVdi, deltaVor, deltaVoi, deltaVir, deltaVii);
+                res.fillVoltageInFortescueVector(busNum, deltaVd, deltaVo, deltaVi);
             }
         }
 
         return res;
-    }
-
-    public static DenseMatrix getZ(double r, double x) {
-        DenseMatrix z = new DenseMatrix(2, 2);
-        z.add(0, 0, r);
-        z.add(0, 1, -x);
-        z.add(1, 0, x);
-        z.add(1, 1, r);
-
-        return z;
     }
 }

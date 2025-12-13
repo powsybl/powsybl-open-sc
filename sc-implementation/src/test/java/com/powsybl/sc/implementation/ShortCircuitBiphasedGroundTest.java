@@ -14,6 +14,7 @@ import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.util.ReferenceNetwork;
+import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,8 +53,17 @@ class ShortCircuitBiphasedGroundTest {
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "sc1", 0., 0., ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
+        ShortCircuitFaultImpedance scZ1 = new ShortCircuitFaultImpedance(new Complex(0.));
+        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "sc1", scZ1, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
         faultList.add(sc1);
+
+        ShortCircuitFaultImpedance scZ2 = new ShortCircuitFaultImpedance(new Complex(0.), new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
+        ShortCircuitFault sc2 = new ShortCircuitFault("B3", "sc2", scZ2, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
+        faultList.add(sc2);
+
+        ShortCircuitFaultImpedance scZ3 = new ShortCircuitFaultImpedance(new Complex(0.000007, 0.00005), new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
+        ShortCircuitFault sc3 = new ShortCircuitFault("B3", "sc3", scZ3, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
+        faultList.add(sc3);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
@@ -63,10 +73,12 @@ class ShortCircuitBiphasedGroundTest {
         scbEngine.run();
         List<Double> val = new ArrayList<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            val.add(res.getValue().getIk().getKey());
+            val.add(res.getValue().getIk().abs());
         }
 
-        assertEquals(52.3687065865033, val.get(0), 0.00001);
+        assertEquals(36.83479069716216, val.get(0), 0.00001);
+        assertEquals(36.83269305365278, val.get(1), 0.00001);
+        assertEquals(36.831803523930354, val.get(2), 0.00001);
 
     }
 }
