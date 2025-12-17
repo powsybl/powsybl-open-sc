@@ -363,6 +363,36 @@ public class ShortCircuitResult {
         return 1000. * 100. / lfBus.getNominalV();
     }
 
+    public double getPeakCoef(double r, double x) {
+        if (x == 0.) {
+            throw new IllegalArgumentException("Peak current could not be computed because Xth is zero = ");
+        }
+        return getPeakCoef(r / x);
+    }
+
+    public double getPeakCoef(double rOverx) {
+        return 1.02 + 0.98 * Math.exp(-3. * rOverx);
+    }
+
+    public double getPeakCoefb() {
+        double r = zd.getReal();
+        double x = zd.getImaginary();
+        if (x == 0.) {
+            throw new IllegalArgumentException("Peak current could not be computed because Xth is zero = ");
+        }
+        double factor = 1.15;
+        if (r / x < 0.3) {
+            factor = 1.;
+        }
+        double coef = getPeakCoef(r, x) * factor;
+        if (lfBus.getNominalV() <= 20.) {
+            coef = Math.min(coef, 1.8);
+        } else {
+            coef = Math.min(coef, 2.0);
+        }
+        return coef;
+    }
+
     public Complex getIk() {
 
         ShortCircuitFault.ShortCircuitType faultType = shortCircuitFault.getType();

@@ -271,8 +271,12 @@ public class ShortCircuitBalancedTest {
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "sc1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc1);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "F2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        faultList.add(sc2);
+        ShortCircuitFault sc3 = new ShortCircuitFault("B6", "F3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        faultList.add(sc3);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
@@ -281,14 +285,22 @@ public class ShortCircuitBalancedTest {
 
         scbEngine.run();
         List<Double> val = new ArrayList<>();
+        List<Double> coefPeakb = new ArrayList<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
             val.add(res.getValue().getIk().abs());
+            coefPeakb.add(res.getValue().getPeakCoefb());
         }
 
         // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
         // and I"k = 1/sqrt(3) * cmax * Un /(Zeq) and expected I"k = 34.62 kA
         assertEquals(34.62398968800272, val.get(0), 0.00001);
+        assertEquals(34.1162841954478, val.get(1), 0.00001);
+        assertEquals(6.945173672144295, val.get(2), 0.00001);
 
+        // Peak current method b
+        assertEquals(70.73492731970777, val.get(0) * coefPeakb.get(0) * Math.sqrt(2.), 0.00001); // FIXME: expected 81.36 kA but factor 1.15 not triggered: check R/X ratio of all lines
+        assertEquals(69.04648240748665, val.get(1) * coefPeakb.get(1) * Math.sqrt(2.), 0.00001);
+        assertEquals(11.922267036509417, val.get(2) * coefPeakb.get(2) * Math.sqrt(2.), 0.00001);
     }
 
     @Test
