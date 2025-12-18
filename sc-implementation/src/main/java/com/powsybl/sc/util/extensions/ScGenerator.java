@@ -7,6 +7,8 @@
  */
 package com.powsybl.sc.util.extensions;
 
+import org.apache.commons.math3.complex.Complex;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -19,81 +21,47 @@ public class ScGenerator {
         ASYNCHRONOUS_MOTOR;
     }
 
-    private final double transXd;
-    private final double transRd;
+    private final Complex transZd;
 
-    private final double subTransXd;
-    private final double subTransRd;
+    private final Complex subTransZd;
 
-    private final double stepUpTfoX;
-    private final double stepUpTfoR;
+    private final Complex stepUpTfoZ;
 
     private final boolean grounded;
-    private final double groundR;
-    private final double groundX;
+    private final Complex groundZ;
 
-    private final double ro;
-    private final double xo;
+    private final Complex zo;
 
     private final MachineType machineType;
 
-    public ScGenerator(double transXd, double stepUpTfoX, MachineType machineType, double transRd, double stepUpTfoR, double subTransRd, double subTransXd,
-                       boolean grounded, double groundR, double groundX, double ro, double xo) {
-        this.transXd = transXd;
-        this.stepUpTfoX = stepUpTfoX;
+    public ScGenerator(Complex transZd, Complex stepUpTfoZ, MachineType machineType, Complex subTransZd,
+                       boolean grounded, Complex groundZ, Complex zo) {
+        this.transZd = transZd;
+        this.stepUpTfoZ = stepUpTfoZ;
         this.machineType = machineType;
-        this.transRd = transRd;
-        this.stepUpTfoR = stepUpTfoR;
-        this.subTransRd = subTransRd;
-        this.subTransXd = subTransXd;
+        this.subTransZd = subTransZd;
         this.grounded = grounded;
-        this.groundR = groundR;
-        this.groundX = groundX;
-        this.ro = ro;
-        this.xo = xo;
-    }
-
-    public double getTransXd() {
-        return transXd;
-    }
-
-    public double getSubTransXd() {
-        return subTransXd;
-    }
-
-    public double getStepUpTfoX() {
-        return stepUpTfoX;
-    }
-
-    public double getTransRd() {
-        return transRd;
-    }
-
-    public double getSubTransRd() {
-        return subTransRd;
-    }
-
-    public double getStepUpTfoR() {
-        return stepUpTfoR;
+        this.groundZ = groundZ;
+        this.zo = zo;
     }
 
     public boolean isGrounded() {
         return grounded;
     }
 
-    public double getGroundR() {
-        return groundR;
+    public Complex getStepUpTfoZ() {
+        return stepUpTfoZ;
     }
 
-    public double getGroundX() {
-        return groundX;
+    public Complex getZo() {
+        return zo;
     }
 
-    public double getRo() {
-        return ro;
+    public Complex getTransZd() {
+        return transZd;
     }
 
-    public double getXo() {
-        return xo;
+    public Complex getSubTransZd() {
+        return subTransZd;
     }
 }

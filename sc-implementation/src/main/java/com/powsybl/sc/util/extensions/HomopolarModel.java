@@ -93,21 +93,20 @@ public class HomopolarModel {
             // branch is a line and homopolar data available
             ScLine scLine = (ScLine) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
             if (scLine != null) {
-                double r0 = scLine.getRo();
-                double x0 = scLine.getXo();
+                Complex zo = scLine.getZo();
 
                 // We propose to scale b and g accordingly with x / x0 and r / r0
                 // this assumption could be changed if not relevant
                 double gCoeff = 1.;
                 double bCoeff = 1.;
-                if (Math.abs(x0) > EPSILON) {
-                    bCoeff = x / x0;
+                if (Math.abs(zo.getImaginary()) > EPSILON) {
+                    bCoeff = x / zo.getImaginary();
                 }
-                if (Math.abs(r0) > EPSILON) {
-                    gCoeff = r / r0;
+                if (Math.abs(zo.getReal()) > EPSILON) {
+                    gCoeff = r / zo.getReal();
                 }
 
-                homopolarExtension.zo = new Complex(r0, x0);
+                homopolarExtension.zo = zo;
                 homopolarExtension.yom = new Complex(gPi1 * gCoeff, bPi1 * bCoeff);
             }
         } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_2) {
@@ -120,24 +119,21 @@ public class HomopolarModel {
                     kT = (Double) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
                 }
 
-                double ro = scTransfo.getRo();
-                double xo = scTransfo.getXo();
-
-                double rok = ro * kT;
-                double xok = xo * kT;
+                Complex zo = scTransfo.getZo();
+                Complex zok = zo.multiply(kT);
 
                 // We propose to scale b and g accordingly with x / x0 and r / r0
                 // this assumption could be changed if not relevant
                 double gCoeff = 1.;
                 double bCoeff = 1.;
-                if (Math.abs(xo) > EPSILON) {
-                    bCoeff = x / xo;
+                if (Math.abs(zo.getImaginary()) > EPSILON) {
+                    bCoeff = x / zo.getImaginary();
                 }
-                if (Math.abs(ro) > EPSILON) {
-                    gCoeff = r / ro;
+                if (Math.abs(zo.getReal()) > EPSILON) {
+                    gCoeff = r / zo.getReal();
                 }
 
-                homopolarExtension.zo = new Complex(rok + scTransfo.getR1Ground() + scTransfo.getR2Ground(), xok + scTransfo.getX1Ground() + scTransfo.getX2Ground());
+                homopolarExtension.zo = zok.add(scTransfo.getZ1Ground().add(scTransfo.getZ2Ground()));
                 homopolarExtension.yom = new Complex(gPi1 * gCoeff / kT, bPi1 * bCoeff / kT);
 
                 homopolarExtension.leg1ConnectionType = scTransfo.getLeg1ConnectionType();
@@ -150,27 +146,23 @@ public class HomopolarModel {
             ScTransfo3W scTransfo = (ScTransfo3W) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
             ScTransfo3wKt scTransfoKt = (ScTransfo3wKt) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
             if (scTransfoKt != null && scTransfo != null) {
-                double ro;
-                double xo;
+                Complex zo;
                 double kTro;
                 double kTxo;
                 if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_1) {
-                    ro = scTransfo.getLeg1().getRo();
-                    xo = scTransfo.getLeg1().getXo();
+                    zo = scTransfo.getLeg1().getZo();
                     kTro = scTransfoKt.getLeg1().getkTro();
                     kTxo = scTransfoKt.getLeg1().getkTxo();
                     homopolarExtension.leg1ConnectionType = scTransfo.getLeg1().getLegConnectionType();
                     homopolarExtension.freeFluxes = scTransfo.getLeg1().isFreeFluxes();
                 } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_2) {
-                    ro = scTransfo.getLeg2().getRo();
-                    xo = scTransfo.getLeg2().getXo();
+                    zo = scTransfo.getLeg2().getZo();
                     kTro = scTransfoKt.getLeg2().getkTro();
                     kTxo = scTransfoKt.getLeg2().getkTxo();
                     homopolarExtension.leg1ConnectionType = scTransfo.getLeg2().getLegConnectionType();
                     homopolarExtension.freeFluxes = scTransfo.getLeg2().isFreeFluxes();
                 } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_3) {
-                    ro = scTransfo.getLeg3().getRo();
-                    xo = scTransfo.getLeg3().getXo();
+                    zo = scTransfo.getLeg3().getZo();
                     kTro = scTransfoKt.getLeg3().getkTro();
                     kTxo = scTransfoKt.getLeg3().getkTxo();
                     homopolarExtension.leg1ConnectionType = scTransfo.getLeg3().getLegConnectionType();
@@ -183,14 +175,14 @@ public class HomopolarModel {
                 // this assumption could be changed if not relevant
                 double gCoeff = 1.;
                 double bCoeff = 1.;
-                if (Math.abs(xo) > EPSILON) {
-                    bCoeff = x / xo;
+                if (Math.abs(zo.getImaginary()) > EPSILON) {
+                    bCoeff = x / zo.getImaginary();
                 }
-                if (Math.abs(ro) > EPSILON) {
-                    gCoeff = r / ro;
+                if (Math.abs(zo.getReal()) > EPSILON) {
+                    gCoeff = r / zo.getReal();
                 }
 
-                homopolarExtension.zo = new Complex(ro * kTro, xo * kTxo);
+                homopolarExtension.zo = new Complex(zo.getReal() * kTro, zo.getImaginary() * kTxo);
                 homopolarExtension.yom = new Complex(gPi1 * gCoeff, bPi1 * bCoeff);
             }
         } else {

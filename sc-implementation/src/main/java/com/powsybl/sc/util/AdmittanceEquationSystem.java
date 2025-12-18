@@ -125,9 +125,9 @@ public final class AdmittanceEquationSystem {
         for (LfGenerator lfgen : bus.getGenerators()) { //compute R'd or R"d from generators at bus
             ScGenerator scGen = (ScGenerator) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
             double kG = (Double) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
-            Complex z = new Complex(scGen.getTransRd() + scGen.getStepUpTfoR(), scGen.getTransXd() + scGen.getStepUpTfoX()).multiply(kG);
+            Complex z = scGen.getTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
             if (admittancePeriodType == AdmittancePeriodType.ADM_SUB_TRANSIENT) {
-                z = new Complex(scGen.getSubTransRd() + scGen.getStepUpTfoR(), scGen.getSubTransXd() + scGen.getStepUpTfoX()).multiply(kG);
+                z = scGen.getSubTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
             }
 
             if (admittanceType == AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
@@ -135,7 +135,7 @@ public final class AdmittanceEquationSystem {
                 // further improvement might be needed if xo and ro are different for transient and subTransient short circuit analysis
                 z = new Complex(0.);
                 if (scGen.isGrounded()) {
-                    z = new Complex(scGen.getRo(), scGen.getXo());
+                    z = scGen.getZo();
                 }
             }
 
@@ -176,7 +176,7 @@ public final class AdmittanceEquationSystem {
                 }
 
                 ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-                yLoadEq = new Complex(scLoad.getGdEquivalent(), scLoad.getBdEquivalent()).divide(v.abs() * v.abs());
+                yLoadEq = scLoad.getYdEquivalent().divide(v.abs() * v.abs());
 
                 // Handling transformation of generators into equivalent shunts
                 // Warning !!! : evaluation of power injections mandatory
@@ -199,7 +199,7 @@ public final class AdmittanceEquationSystem {
 
                 ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
 
-                yLoadEq = new Complex(scLoad.getGdEquivalent(), scLoad.getBdEquivalent()).divide(v.abs() * v.abs());
+                yLoadEq = scLoad.getYdEquivalent().divide(v.abs() * v.abs());
 
                 Feeder shuntFeeder = new Feeder(yLoadEq, bus.getId(), Feeder.FeederType.LOAD);
                 feederList.add(shuntFeeder);

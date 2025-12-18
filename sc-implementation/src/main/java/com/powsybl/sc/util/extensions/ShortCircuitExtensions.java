@@ -162,9 +162,9 @@ public final class ShortCircuitExtensions {
         // building of pu base supposing that impedances are on star bus side (ratedU0)
         double zBase = twt.getRatedU0() * twt.getRatedU0() / SB;
 
-        ScTransfo3W.Leg leg1 = new ScTransfo3W.Leg(leg1ConnectionType, leg1Ro / zBase, leg1Xo / zBase, leg1FreeFluxes);
-        ScTransfo3W.Leg leg2 = new ScTransfo3W.Leg(leg2ConnectionType, leg2Ro / zBase, leg2Xo / zBase, leg2FreeFluxes);
-        ScTransfo3W.Leg leg3 = new ScTransfo3W.Leg(leg3ConnectionType, leg3Ro / zBase, leg3Xo / zBase, leg3FreeFluxes);
+        ScTransfo3W.Leg leg1 = new ScTransfo3W.Leg(leg1ConnectionType, new Complex(leg1Ro, leg1Xo).divide(zBase), leg1FreeFluxes);
+        ScTransfo3W.Leg leg2 = new ScTransfo3W.Leg(leg2ConnectionType, new Complex(leg2Ro, leg2Xo).divide(zBase), leg2FreeFluxes);
+        ScTransfo3W.Leg leg3 = new ScTransfo3W.Leg(leg3ConnectionType, new Complex(leg3Ro, leg3Xo).divide(zBase), leg3FreeFluxes);
 
         ScTransfo3wKt.Leg leg1kT = new ScTransfo3wKt.Leg(kT1R, kT1X, kT1R0, kT1X0);
         ScTransfo3wKt.Leg leg2kT = new ScTransfo3wKt.Leg(kT2R, kT2X, kT2R0, kT2X0);
@@ -175,54 +175,44 @@ public final class ShortCircuitExtensions {
     }
 
     private static void addLineExtension(Network network, LfBranch lfBranch) {
-        String lineId = lfBranch.getOriginalIds().get(0);
+        String lineId = lfBranch.getOriginalIds().getFirst();
         Line line = network.getLine(lineId);
 
         double vNom2 = line.getTerminal2().getVoltageLevel().getNominalV();
         double zBase = vNom2 * vNom2 / SB;
-        double ro = line.getR() / zBase;
-        double xo = line.getX() / zBase;
+        Complex zo = new Complex(line.getR(), line.getX()).divide(zBase);
         LineFortescue extensions = line.getExtension(LineFortescue.class);
         if (extensions != null) {
-            ro = extensions.getRz() / zBase;
-            xo = extensions.getXz() / zBase;
+            zo = new Complex(extensions.getRz(), extensions.getXz()).divide(zBase);
         }
 
-        lfBranch.setProperty(PROPERTY_SHORT_CIRCUIT, new ScLine(ro, xo));
+        lfBranch.setProperty(PROPERTY_SHORT_CIRCUIT, new ScLine(zo));
     }
 
     private static void addTransfo2Extension(Network network, LfBranch lfBranch, ShortCircuitNormExtensions shortCircuitNormExtensions) {
-        String t2wId = lfBranch.getOriginalIds().get(0);
+        String t2wId = lfBranch.getOriginalIds().getFirst();
         TwoWindingsTransformer twt = network.getTwoWindingsTransformer(t2wId);
 
         // per unitizing of grounding Z for LfNetwork
         double u2Nom = twt.getTerminal2().getVoltageLevel().getNominalV();
         double zBase = u2Nom * u2Nom / SB;
 
-        double coeffRo = DEFAULT_COEFF_RO;
-        double coeffXo = DEFAULT_COEFF_XO;
-        double ro = DEFAULT_COEFF_RO * lfBranch.getPiModel().getR();
-        double xo = DEFAULT_COEFF_XO * lfBranch.getPiModel().getX();
+        Complex zo = new Complex(DEFAULT_COEFF_RO * lfBranch.getPiModel().getR(), DEFAULT_COEFF_XO * lfBranch.getPiModel().getX());
         boolean freeFluxes = FortescueConstants.DEFAULT_FREE_FLUXES;
         WindingConnectionType leg1ConnectionType = FortescueConstants.DEFAULT_LEG1_CONNECTION_TYPE;
         WindingConnectionType leg2ConnectionType = FortescueConstants.DEFAULT_LEG2_CONNECTION_TYPE;
         double kT = DEFAULT_COEFF_K;
-        double r1Ground = 0.;
-        double x1Ground = 0.;
-        double r2Ground = 0.;
-        double x2Ground = 0.;
+        Complex z1Ground = new Complex(0.);
+        Complex z2Ground = new Complex(0.);
         var extensions = twt.getExtension(TwoWindingsTransformerFortescue.class);
         if (extensions != null) {
-            ro = extensions.getRz() / zBase;
-            xo = extensions.getXz() / zBase;
+            zo = new Complex(extensions.getRz(), extensions.getXz()).divide(zBase);
             freeFluxes = extensions.isFreeFluxes();
             leg1ConnectionType = extensions.getConnectionType1();
             leg2ConnectionType = extensions.getConnectionType2();
 
-            r1Ground = extensions.getGroundingR1() / zBase;
-            x1Ground = extensions.getGroundingX1() / zBase;
-            r2Ground = extensions.getGroundingR2() / zBase;
-            x2Ground = extensions.getGroundingX2() / zBase;
+            z1Ground = new Complex(extensions.getGroundingR1(), extensions.getGroundingX1()).divide(zBase);
+            z2Ground = new Complex(extensions.getGroundingR2(), extensions.getGroundingX2()).divide(zBase);
         }
 
         TwoWindingsTransformerNorm t2wNormExtension = shortCircuitNormExtensions.getNormExtension(twt);
@@ -230,7 +220,7 @@ public final class ShortCircuitExtensions {
             kT = t2wNormExtension.getkNorm();
         }
 
-        lfBranch.setProperty(PROPERTY_SHORT_CIRCUIT, new ScTransfo2W(leg1ConnectionType, leg2ConnectionType, ro, xo, freeFluxes, r1Ground, x1Ground, r2Ground, x2Ground));
+        lfBranch.setProperty(PROPERTY_SHORT_CIRCUIT, new ScTransfo2W(leg1ConnectionType, leg2ConnectionType, zo, freeFluxes, z1Ground, z2Ground));
         lfBranch.setProperty(PROPERTY_SHORT_CIRCUIT_NORM, kT); // set in a separate extension because is does not depend only on iidm in input but also on the type of norm
     }
 
@@ -251,8 +241,7 @@ public final class ShortCircuitExtensions {
         double transRd = DEFAULT_TRANS_RD;
         double subTransRd = DEFAULT_SUB_TRANS_RD;
         boolean toGround = FortescueConstants.DEFAULT_GROUNDED;
-        double ro = subTransRd;
-        double xo = subtransX;
+        Complex zo = new Complex(subTransRd, subtransX);
         double kG = 1.0;
 
         GeneratorShortCircuit2 extensions2 = generator.getExtension(GeneratorShortCircuit2.class);
@@ -264,8 +253,7 @@ public final class ShortCircuitExtensions {
         GeneratorFortescue extensionFortescue = generator.getExtension(GeneratorFortescue.class);
         if (extensionFortescue != null) {
             toGround = extensionFortescue.isGrounded();
-            ro = extensionFortescue.getRz();
-            xo = extensionFortescue.getXz();
+            zo = new Complex(extensionFortescue.getRz(), extensionFortescue.getXz());
         }
 
         GeneratorNorm extensionGenNorm = shortCircuitNormExtensions.getNormExtension(generator);
@@ -273,18 +261,9 @@ public final class ShortCircuitExtensions {
             kG = extensionGenNorm.getkG();
         }
 
-        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT, new ScGenerator(transX,
-                stepUpTfoX,
-                ScGenerator.MachineType.SYNCHRONOUS_GEN,
-                transRd,
-                0.,
-                subTransRd,
-                subtransX,
-                toGround,
-                0.,
-                0.,
-                ro,
-                xo));
+        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT, new ScGenerator(new Complex(transRd, transX),
+                new Complex(0., stepUpTfoX), ScGenerator.MachineType.SYNCHRONOUS_GEN,
+                new Complex(subTransRd, subtransX), toGround, new Complex(0.), zo));
         lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT_NORM, kG); // set in a separate extension because is does not depend only on iidm in input but also on the type of norm
     }
 
@@ -314,6 +293,6 @@ public final class ShortCircuitExtensions {
             }
         }
         // TODO : create load only if it is not zero
-        lfBus.setProperty(PROPERTY_SHORT_CIRCUIT, new ScLoad(yLoads.getReal(), yLoads.getImaginary())); // for now load extension is attached to the bus
+        lfBus.setProperty(PROPERTY_SHORT_CIRCUIT, new ScLoad(yLoads)); // for now load extension is attached to the bus
     }
 }

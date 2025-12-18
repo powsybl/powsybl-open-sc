@@ -7,24 +7,20 @@
  */
 package com.powsybl.sc.util.extensions;
 
+import org.apache.commons.math3.complex.Complex;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class ScLoad {
 
-    private double bdEquivalent;
-    private double gdEquivalent;
+    private Complex ydEquivalent;
 
-    public ScLoad(double gdEquivalent, double bdEquivalent) {
-        this.bdEquivalent = bdEquivalent;
-        this.gdEquivalent = gdEquivalent;
+    public ScLoad(Complex ydEquivalent) {
+        this.ydEquivalent = ydEquivalent;
     }
 
-    public double getBdEquivalent() {
-        return bdEquivalent;
-    }
-
-    public double getGdEquivalent() {
-        return gdEquivalent;
+    public Complex getYdEquivalent() {
+        return ydEquivalent;
     }
 }
