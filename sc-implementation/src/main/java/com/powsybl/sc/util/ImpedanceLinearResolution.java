@@ -14,6 +14,7 @@ import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.ArrayList;
@@ -380,7 +381,7 @@ public class ImpedanceLinearResolution {
                 int yRow1y = yd.getRowBus(lfBus.getNum(), EquationType.BUS_YI);
 
                 if (parameters.getTheveninVoltageProfileType() == AdmittanceEquationSystem.AdmittanceVoltageProfileType.CALCULATED) {
-                    eth = new Complex(lfBus.getV() * Math.cos(lfBus.getAngle()), lfBus.getV() * Math.sin(lfBus.getAngle()));
+                    eth = ComplexUtils.polar2Complex(lfBus.getV(), Math.toRadians(lfBus.getAngle()));
                 }
 
                 // This is equivalent to get the diagonal blocks of tEn * inv(Y) * En but taking advantage of the sparsity of tEn
@@ -457,7 +458,7 @@ public class ImpedanceLinearResolution {
 
                         Complex eth2 = new Complex(1.0);
                         if (parameters.getTheveninVoltageProfileType() == AdmittanceEquationSystem.AdmittanceVoltageProfileType.CALCULATED) {
-                            eth2 = new Complex(bus2.getV() * Math.cos(lfBus.getAngle()), bus2.getV() * Math.sin(lfBus.getAngle()));
+                            eth2 = ComplexUtils.polar2Complex(bus2.getV(), Math.toRadians(bus2.getAngle()));
                         }
 
                         res.addBiphasedResult(bus2, eth2, z22, z21, z12, numBus2Fault);
