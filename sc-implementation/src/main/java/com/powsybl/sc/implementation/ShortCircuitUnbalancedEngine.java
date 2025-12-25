@@ -230,7 +230,8 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                 id, io, ii,
                 zdf, zof, zdf,
                 v1dInit, vd, vo, vi,
-                equationSystemFeedersDirect, equationSystemFeedersHomopolar, parameters.getNorm());
+                equationSystemFeedersDirect, equationSystemFeedersHomopolar, parameters.getNorm(),
+                directResult.getZthEq20Hz(), homopolarResult.getZthEq20Hz());
 
         if (parameters.isVoltageUpdate()) {
             res.setLfNetwork(lfNetwork);
@@ -289,7 +290,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                 i2d, i2o, i2i,
                 v2dInit,
                 dv2d, dv2o, dv2i,
-                lfBus2);
+                lfBus2, directResult.getZthEq20Hz(), homopolarResult.getZthEq20Hz());
 
         if (parameters.isVoltageUpdate()) {
             res.setLfNetwork(lfNetwork);

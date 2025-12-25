@@ -28,12 +28,16 @@ public class AdmittanceEquationTermX1 extends AbstractAdmittanceEquationTerm {
 
     private final double b1b12sum;
 
-    public AdmittanceEquationTermX1(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, AdmittanceEquationSystem.AdmittanceType admittanceType) {
-        super(branch, bus1, bus2, variableSet);
+    public AdmittanceEquationTermX1(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet,
+                                    AdmittanceEquationSystem.AdmittanceType admittanceType, AdmittanceEquationSystem.FrequencyType frequencyType) {
+        super(branch, bus1, bus2, variableSet, frequencyType);
         // Direct component:
         // I1x = (g1 + g12)V1x - (b1 + b12)V1y - g12 * V2x + b12 * V2y
         if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
             HomopolarModel homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL);
+            if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
+                homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL_20HZ);
+            }
             if (branch.getBranchType() == LfBranch.BranchType.LINE) {
                 // default if branch type is a line
                 g12 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getZo().getReal() * cosA + homopolarModel.getZo().getImaginary() * sinA);

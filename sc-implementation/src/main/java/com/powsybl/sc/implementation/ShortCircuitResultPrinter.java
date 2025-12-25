@@ -7,6 +7,7 @@
  */
 package com.powsybl.sc.implementation;
 
+import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.sc.util.FeederResult;
 import com.powsybl.sc.util.FeedersAtBusResult;
@@ -29,8 +30,32 @@ public class ShortCircuitResultPrinter {
         System.out.println("Equivalent Direct Thevenin Impedance (Pu) : Zd = " + shortCircuitResult.getZd() + "  ");
     }
 
+    public void printEquivalentDirectImpedance20hzPu() {
+        System.out.println("Equivalent Direct Thevenin Impedance at 20 Hz (Pu) : Zd = " + shortCircuitResult.getZd20hz() + "  ");
+    }
+
     public void printTheveninVoltagePu() {
-        System.out.println("Thevenin Voltage : Eth  (Pu) = " + shortCircuitResult.getZd() + "  ");
+        System.out.println("Thevenin Voltage : Eth  (Pu) = " + shortCircuitResult.getEth() + "  ");
+    }
+
+    public void printEquivalentHomopolarImpedancePu() {
+        System.out.println("Equivalent Homopolar Thevenin Impedance (Pu) : Zo = " + shortCircuitResult.getZh() + "  ");
+    }
+
+    public void printEquivalentHomopolarImpedance20hzPu() {
+        System.out.println("Equivalent Homopolar Thevenin Impedance at 20 Hz (Pu) : Zo = " + shortCircuitResult.getZh20hz() + "  ");
+    }
+
+    public void printIk() {
+        System.out.println("Ik (kA) = " + shortCircuitResult.getIk() + "   => |Ik| (kA) = " + shortCircuitResult.getIk().abs());
+    }
+
+    public void printSk() {
+        System.out.println("Sk (MVA) = " + shortCircuitResult.getSk() + "   => |Sk| (MVA) = " + shortCircuitResult.getSk().abs());
+    }
+
+    public void printIpeakc() {
+        System.out.println("Ipeak(c) (kA) = " + shortCircuitResult.getIpeakc());
     }
 
     public void printIfortescuePu() {
@@ -42,19 +67,30 @@ public class ShortCircuitResultPrinter {
     }
 
     public void printDvAtBussesPu() {
+        System.out.println("---Bus voltage deltas :  ");
         for (LfBus bus : shortCircuitResult.getLfNetwork().getBuses()) {
             int busNum = bus.getNum();
             System.out.println("  -> dV(" + bus.getId() + ") = " + getStringFortescueValue(shortCircuitResult.getBusNum2Dv().get(busNum)) + " (Pu) ");
         }
     }
 
+    public void printDIAtBranchPu() {
+        System.out.println("---Branch currents :  ");
+        for (LfBranch branch : shortCircuitResult.getLfNetwork().getBranches()) {
+            //int busNum = bus.getNum();
+            System.out.println("  -> dI1(" + branch.getId() + ") = " + getStringFortescueValue(shortCircuitResult.getBranchDi1().get(branch)) + " (Pu) ");
+            System.out.println("  -> dI2(" + branch.getId() + ") = " + getStringFortescueValue(shortCircuitResult.getBranchDi2().get(branch)) + " (Pu) ");
+            System.out.println(" ");
+        }
+    }
+
     public void printFeedersPu() {
+        System.out.println("---Feeders : ");
         for (LfBus bus : shortCircuitResult.getLfNetwork().getBuses()) {
             FeedersAtBusResult feedBus = shortCircuitResult.getFeedersResultDirect().get(bus);
-            System.out.println("---Feeders Direct at bus :  " + bus.getId());
             for (FeederResult fr : feedBus.getBusFeedersResult()) {
                 if (fr.getIContribution().abs() > EPSILON) {
-                    System.out.println("  -> Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
+                    System.out.println("  -> Direct Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
                 }
             }
 
@@ -63,32 +99,40 @@ public class ShortCircuitResultPrinter {
             }
 
             feedBus = shortCircuitResult.getFeedersResultsHomopolar().get(bus);
-            System.out.println("---Feeders Homopolar at bus :  " + bus.getId());
+            //System.out.println("---Feeders Homopolar at bus :  " + bus.getId());
             for (FeederResult fr : feedBus.getBusFeedersResult()) {
                 if (fr.getIContribution().abs() > EPSILON) {
-                    System.out.println("  -> Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
+                    System.out.println("  -> Homopolar Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
                 }
             }
 
             feedBus = shortCircuitResult.getFeedersResultsInverse().get(bus);
-            System.out.println("---Feeders Inverse at bus :  " + bus.getId());
+            //System.out.println("---Feeders Inverse at bus :  " + bus.getId());
             for (FeederResult fr : feedBus.getBusFeedersResult()) {
                 if (fr.getIContribution().abs() > EPSILON) {
-                    System.out.println("  -> Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
+                    System.out.println("  -> Inverse Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
                 }
             }
+            System.out.println("  ---- ");
         }
     }
 
     public void printShortCircuitResult() {
-        System.out.println("-------------------------- ");
+        System.out.println("--------------- " + shortCircuitResult.getShortCircuitFault().getFaultId() + " --------------- ");
         System.out.println("Short Circuit at Bus = " + shortCircuitResult.getLfBus().getId());
         printEquivalentDirectImpedancePu();
+        printEquivalentHomopolarImpedancePu();
+        printEquivalentDirectImpedance20hzPu();
+        printEquivalentHomopolarImpedance20hzPu();
         printTheveninVoltagePu();
         printIfortescuePu();
         printVfortescuePu();
+        printIk();
+        printSk();
+        printIpeakc();
         if (shortCircuitResult.isVoltageProfileUpdated()) {
             printDvAtBussesPu();
+            printDIAtBranchPu();
             printFeedersPu();
         }
     }

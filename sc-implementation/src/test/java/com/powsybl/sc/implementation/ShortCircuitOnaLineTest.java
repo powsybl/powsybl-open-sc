@@ -53,12 +53,16 @@ public class ShortCircuitOnaLineTest {
         scbEngine.run();
         List<Double> val = new ArrayList<>();
         List<Double> coefPeakb = new ArrayList<>();
+        List<Double> coefPeakc = new ArrayList<>();
         List<Complex> zth = new ArrayList<>();
+        List<Double> rOverX = new ArrayList<>();
         LfNetwork lfn = scbEngine.resultsPerFault.get(sc1).getLfNetwork();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
             val.add(res.getValue().getIk().abs());
             coefPeakb.add(res.getValue().getPeakCoefb());
+            coefPeakc.add(res.getValue().getPeakCoefcDirect());
             zth.add(res.getValue().getZd());
+            rOverX.add(res.getValue().getMaxRoverX());
         }
 
         // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
@@ -71,6 +75,11 @@ public class ShortCircuitOnaLineTest {
         assertEquals(70.73492731970777, val.get(0) * coefPeakb.get(0) * Math.sqrt(2.), 0.00001); // FIXME: expected 81.36 kA but factor 1.15 not triggered: check R/X ratio of all lines
         assertEquals(69.04648240748665, val.get(1) * coefPeakb.get(1) * Math.sqrt(2.), 0.00001);
         assertEquals(11.922267036509417, val.get(2) * coefPeakb.get(2) * Math.sqrt(2.), 0.00001);
+
+        // Peak current method c
+        assertEquals(70.86099614556585, val.get(0) * coefPeakc.get(0) * Math.sqrt(2.), 0.00001); // FIXME: expected 81.36 kA but factor 1.15 not triggered: check R/X ratio of all lines
+        assertEquals(69.06786972125418, val.get(1) * coefPeakc.get(1) * Math.sqrt(2.), 0.00001);
+        assertEquals(10.367447265701943, val.get(2) * coefPeakc.get(2) * Math.sqrt(2.), 0.00001);
 
         // We try to reproduce a short circuit at 30% of line 4 close to bus 5
         // fault on line 4
@@ -117,6 +126,69 @@ public class ShortCircuitOnaLineTest {
         assertEquals(getZthLine(zthBus2, zthBus4, zl2, 0.).getReal(), zthBus2.getReal(), 0.00001);
         assertEquals(getZthLine(zthBus2, zthBus4, zl2, 30.).getReal(), zthBus25.getReal(), 0.0001);
         assertEquals(getZthLine(zthBus2, zthBus4, zl2, 100.).getReal(), zthBus4.getReal(), 0.00001);
+    }
+
+    @Test
+    void shortCircuitIec31NodePlusUnbalanced() {
+
+        // This test shows the possibility to compute the Thevenin impedance in the middle of a line, knowing Zth at each end of the line
+        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
+        loadFlowParameters.setTwtSplitShuntAdmittance(true);
+
+        Network network = ReferenceNetwork.createShortCircuitIec31NodePlus();
+
+        MatrixFactory matrixFactory = new DenseMatrixFactory();
+
+        List<ShortCircuitFault> faultList = new ArrayList<>();
+        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        faultList.add(sc1);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "F2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        faultList.add(sc2);
+        ShortCircuitFault sc3 = new ShortCircuitFault("B6", "F3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        faultList.add(sc3);
+        ShortCircuitFault sc4 = new ShortCircuitFault("B5", "F4", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        faultList.add(sc4);
+        ShortCircuitFault sc5 = new ShortCircuitFault("B55", "F5", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        faultList.add(sc5);
+        ShortCircuitFault sc6 = new ShortCircuitFault("B25", "F6", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        faultList.add(sc6);
+        ShortCircuitFault sc7 = new ShortCircuitFault("B2", "F7", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        faultList.add(sc7);
+
+        ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
+        ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec);
+        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+
+        scbEngine.run();
+        List<Double> val = new ArrayList<>();
+        List<Double> coefPeakb = new ArrayList<>();
+        List<Double> coefPeakc = new ArrayList<>();
+        List<Complex> zth = new ArrayList<>();
+        List<Double> rOverX = new ArrayList<>();
+        LfNetwork lfn = scbEngine.resultsPerFault.get(sc1).getLfNetwork();
+        for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
+            val.add(res.getValue().getIk().abs());
+            coefPeakb.add(res.getValue().getPeakCoefb());
+            coefPeakc.add(res.getValue().getPeakCoefc());
+            zth.add(res.getValue().getZd());
+            rOverX.add(res.getValue().getMaxRoverX());
+        }
+
+        // and I"k = 1/sqrt(3) * cmax * Un /(Zeq) and expected I"k = 35.64 kA with some approximations on the impedance values
+        assertEquals(35.704355482441656, val.get(0), 0.00001);
+        assertEquals(34.98241168878666, val.get(1), 0.00001);
+        assertEquals(4.8337057506726575, val.get(2), 0.00001);
+
+        // Peak current method b
+        assertEquals(72.94205586372965, val.get(0) * coefPeakb.get(0) * Math.sqrt(2.), 0.00001);
+        assertEquals(70.79940064409273, val.get(1) * coefPeakb.get(1) * Math.sqrt(2.), 0.00001);
+        assertEquals(8.297665898056362, val.get(2) * coefPeakb.get(2) * Math.sqrt(2.), 0.00001);
+
+        // Peak current method c
+        assertEquals(71.86772021431725, val.get(0) * coefPeakc.get(0) * Math.sqrt(2.), 0.00001); // use of general forumla to compute Kc
+        assertEquals(68.63980536534321, val.get(1) * coefPeakc.get(1) * Math.sqrt(2.), 0.00001);
+        assertEquals(7.284963377037304, val.get(2) * coefPeakc.get(2) * Math.sqrt(2.), 0.00001);
     }
 
     public Complex getZa(Complex zth1, Complex zth2, Complex zl) {

@@ -29,12 +29,16 @@ public class AdmittanceEquationTermX2 extends AbstractAdmittanceEquationTerm {
 
     private final double b2b21sum;
 
-    public AdmittanceEquationTermX2(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, AdmittanceEquationSystem.AdmittanceType admittanceType) {
-        super(branch, bus1, bus2, variableSet);
+    public AdmittanceEquationTermX2(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet,
+                                    AdmittanceEquationSystem.AdmittanceType admittanceType, AdmittanceEquationSystem.FrequencyType frequencyType) {
+        super(branch, bus1, bus2, variableSet, frequencyType);
         // Direct component:
         // I2x = -g21 * V1x + b21 * V1y + (g2 + g21)V2x - (b2 + b21)V2y
         if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
             HomopolarModel homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL);
+            if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
+                homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL_20HZ);
+            }
             if (branch.getBranchType() == LfBranch.BranchType.LINE) {
                 g21 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getZo().getReal() * cosA + homopolarModel.getZo().getImaginary() * sinA);
                 b21 = rho * homopolarModel.getZoInvSquare() * (homopolarModel.getZo().getReal() * sinA - homopolarModel.getZo().getImaginary() * cosA);

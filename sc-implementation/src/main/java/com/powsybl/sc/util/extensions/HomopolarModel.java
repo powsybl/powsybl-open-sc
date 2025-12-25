@@ -10,6 +10,7 @@ package com.powsybl.sc.util.extensions;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.network.LfBranch;
+import com.powsybl.sc.util.AdmittanceEquationSystem;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
 
@@ -72,16 +73,17 @@ public class HomopolarModel {
         return zo.abs() != 0 ? 1 / (zo.abs() * zo.abs()) : 0;
     }
 
-    public static HomopolarModel build(LfBranch branch) {
+    public static HomopolarModel build(LfBranch branch, AdmittanceEquationSystem.FrequencyType frequencyType) {
         Objects.requireNonNull(branch);
 
+        double freqCoef = 1.0;
+        if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
+            freqCoef = 20. / 50.;
+        }
+
         var piModel = branch.getPiModel();
-        double r = piModel.getR();
-        double x = piModel.getX();
-        Complex z = new Complex(r, x);
-        double gPi1 = piModel.getG1();
-        double bPi1 = piModel.getB1();
-        Complex yPi1 = new Complex(gPi1, bPi1);
+        Complex z = new Complex(piModel.getR(), piModel.getX());
+        Complex yPi1 = new Complex(piModel.getG1(), piModel.getB1());
 
         var homopolarExtension = new HomopolarModel(branch);
 
@@ -100,14 +102,14 @@ public class HomopolarModel {
                 double gCoeff = 1.;
                 double bCoeff = 1.;
                 if (Math.abs(zo.getImaginary()) > EPSILON) {
-                    bCoeff = x / zo.getImaginary();
+                    bCoeff = z.getImaginary() / zo.getImaginary();
                 }
                 if (Math.abs(zo.getReal()) > EPSILON) {
-                    gCoeff = r / zo.getReal();
+                    gCoeff = z.getReal() / zo.getReal();
                 }
 
                 homopolarExtension.zo = zo;
-                homopolarExtension.yom = new Complex(gPi1 * gCoeff, bPi1 * bCoeff);
+                homopolarExtension.yom = new Complex(yPi1.getReal() * gCoeff, yPi1.getImaginary() * bCoeff);
             }
         } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_2) {
             // branch is a 2 windings transformer and homopolar data available
@@ -127,14 +129,14 @@ public class HomopolarModel {
                 double gCoeff = 1.;
                 double bCoeff = 1.;
                 if (Math.abs(zo.getImaginary()) > EPSILON) {
-                    bCoeff = x / zo.getImaginary();
+                    bCoeff = z.getImaginary() / zo.getImaginary();
                 }
                 if (Math.abs(zo.getReal()) > EPSILON) {
-                    gCoeff = r / zo.getReal();
+                    gCoeff = z.getReal() / zo.getReal();
                 }
 
                 homopolarExtension.zo = zok.add(scTransfo.getZ1Ground().add(scTransfo.getZ2Ground()));
-                homopolarExtension.yom = new Complex(gPi1 * gCoeff / kT, bPi1 * bCoeff / kT);
+                homopolarExtension.yom = new Complex(yPi1.getReal() * gCoeff / kT, yPi1.getImaginary() * bCoeff / kT);
 
                 homopolarExtension.leg1ConnectionType = scTransfo.getLeg1ConnectionType();
                 homopolarExtension.leg2ConnectionType = scTransfo.getLeg2ConnectionType();
@@ -176,18 +178,23 @@ public class HomopolarModel {
                 double gCoeff = 1.;
                 double bCoeff = 1.;
                 if (Math.abs(zo.getImaginary()) > EPSILON) {
-                    bCoeff = x / zo.getImaginary();
+                    bCoeff = z.getImaginary() / zo.getImaginary();
                 }
                 if (Math.abs(zo.getReal()) > EPSILON) {
-                    gCoeff = r / zo.getReal();
+                    gCoeff = z.getReal() / zo.getReal();
                 }
 
                 homopolarExtension.zo = new Complex(zo.getReal() * kTro, zo.getImaginary() * kTxo);
-                homopolarExtension.yom = new Complex(gPi1 * gCoeff, bPi1 * bCoeff);
+                homopolarExtension.yom = new Complex(yPi1.getReal() * gCoeff, yPi1.getImaginary() * bCoeff);
             }
         } else {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has a not yet supported type");
         }
+
+        // update zo and yom if frequency is not 50Hz
+        homopolarExtension.zo = new Complex(homopolarExtension.zo.getReal(), homopolarExtension.zo.getImaginary() * freqCoef);
+        Complex zom = homopolarExtension.yom.reciprocal();
+        homopolarExtension.yom = new Complex(zom.getReal(), zom.getImaginary() * freqCoef).reciprocal();
 
         homopolarExtension.computeHomopolarAdmittanceMatrix();
 
@@ -267,7 +274,6 @@ public class HomopolarModel {
             if (freeFluxes) {
                 // we have Zm = infinity : yo22 = 1 / ( 3Zga(pu) + Zob(pu) + Zoa(pu) )
                 // and yo12 = yo11 = yo21 = 0.
-
                 yo22 = zgb.multiply(3.).add(zob).add(zoa).reciprocal();
             }
             mY.set(1, 1, yo22);

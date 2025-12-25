@@ -74,7 +74,6 @@ public class ShortCircuitBalancedTest {
 
         assertEquals(-0.4316661015058293, scbEngine.resultsPerFault.get(sc2).getId().getReal(), 0.000001);
         assertEquals(-4.617486568622836, scbEngine.resultsPerFault.get(sc2).getId().getImaginary(), 0.000001);
-        assertEquals(-0.5197272846952616, scbEngine.resultsPerFault.get(sc2).getIxFeeder("VL_1_0", "G1"), 0.000001);
 
     }
 

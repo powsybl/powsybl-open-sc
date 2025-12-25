@@ -64,6 +64,8 @@ public class ShortCircuitResult {
     private Complex zd; // equivalent direct impedance
     private Complex zi; // equivalent inverse impedance
     private Complex zh; // equivalent homopolar impedance
+    private Complex zd20hz;
+    private Complex zh20hz;
 
     private Complex eth;
 
@@ -72,6 +74,8 @@ public class ShortCircuitResult {
 
     private boolean isVoltageProfileUpdated;
     private List<FortescueValue> busNum2Dv;
+    private Map<LfBranch, FortescueValue> branchDi1;
+    private Map<LfBranch, FortescueValue> branchDi2;
 
     private FeedersAtNetwork eqSysFeedersDirect; // This contains the equivalent admittance of feeders's injectors, they are built when the AdmittanceEquationSystem is built and put in input of the sc result
     private FeedersAtNetwork eqSysFeedersHomopolar;
@@ -86,7 +90,7 @@ public class ShortCircuitResult {
 
     public ShortCircuitResult(ShortCircuitFault shortCircuitFault, LfBus lfBus,
                               Complex id, Complex zth, Complex eth, Complex dv,
-                              FeedersAtNetwork eqSysFeeders, ShortCircuitNorm norm) {
+                              FeedersAtNetwork eqSysFeeders, ShortCircuitNorm norm, Complex zth20hz) {
         // Called for a balanced short circuit calculation
         this.lfBus = lfBus;
         this.eqSysFeedersDirect = eqSysFeeders;
@@ -96,6 +100,8 @@ public class ShortCircuitResult {
         this.zd = zth;
         this.zi = new Complex(0., 0.);
         this.zh = new Complex(0., 0.);
+        this.zd20hz = zth20hz;
+        this.zh20hz = new Complex(0., 0.);
 
         this.eth = eth;
 
@@ -111,7 +117,7 @@ public class ShortCircuitResult {
                               Complex id, Complex io, Complex ii,
                               Complex zd, Complex zo, Complex zi,
                               Complex vdInit, Complex dv, Complex dvo, Complex dvi,
-                              FeedersAtNetwork eqSysFeedersDirect, FeedersAtNetwork eqSysFeedersHomopolar, ShortCircuitNorm norm) {
+                              FeedersAtNetwork eqSysFeedersDirect, FeedersAtNetwork eqSysFeedersHomopolar, ShortCircuitNorm norm, Complex zth20hz, Complex zoth20hz) {
         // Called for an unbalanced short circuit calculation with no common support
         this.lfBus = lfBus;
         this.eqSysFeedersDirect = eqSysFeedersDirect;
@@ -122,6 +128,8 @@ public class ShortCircuitResult {
         this.zd = zd;
         this.zi = zi;
         this.zh = zo;
+        this.zd20hz = zth20hz;
+        this.zh20hz = zoth20hz;
 
         this.eth = vdInit;
 
@@ -144,13 +152,13 @@ public class ShortCircuitResult {
                               FeedersAtNetwork eqSysFeedersDirect, FeedersAtNetwork eqSysFeedersHomopolar, ShortCircuitNorm norm,
                               Complex i2d, Complex i2o, Complex i2i,
                               Complex v2dinit, Complex dv2d, Complex dv2o, Complex dv2i,
-                              LfBus lfBus2) {
+                              LfBus lfBus2, Complex zth20hz, Complex zoth20hz) {
         // Called for an unbalanced short circuit calculation with a common support
         this(shortCircuitFault, lfBus,
                 id, io, ii,
                 zd, zo, zi,
                 vdInit, dvd, dvo, dvi,
-                eqSysFeedersDirect, eqSysFeedersHomopolar, norm);
+                eqSysFeedersDirect, eqSysFeedersHomopolar, norm, zth20hz, zoth20hz);
 
         this.commonSupportResult = new CommonSupportResult(lfBus2, v2dinit,
                 i2d, i2o, i2i, dv2d, dv2o, dv2i);
@@ -163,6 +171,18 @@ public class ShortCircuitResult {
 
     public Complex getEth() {
         return eth;
+    }
+
+    public Complex getZh() {
+        return zh;
+    }
+
+    public Complex getZd20hz() {
+        return zd20hz;
+    }
+
+    public Complex getZh20hz() {
+        return zh20hz;
     }
 
     public ComplexMatrix getDiFromDv(LfBranch branch, FortescueValue dv1Fort, FortescueValue dv2Fort, FortescueType fType) {
@@ -235,6 +255,9 @@ public class ShortCircuitResult {
         // which is equal to the current at bus injectors (Kirchhoff's law)
         // 5- Given the admittance of each feeder at bus, computed during building of AdmittanceEquationSystem,
         // we can then deduce the current contribution of each feeder, which is stored in feeder result
+        branchDi1 = new HashMap<>();
+        branchDi2 = new HashMap<>();
+
         for (LfBranch branch : lfNetwork.getBranches()) {
             LfBus bus1 = branch.getBus1();
             LfBus bus2 = branch.getBus2();
@@ -257,32 +280,40 @@ public class ShortCircuitResult {
                 resultDirectBus2Feeders.addItofeedersSum(di2);
 
                 if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+                    branchDi1.put(branch, new FortescueValue(di1.abs(), di1.getArgument()));
+                    branchDi2.put(branch, new FortescueValue(di2.abs(), di2.getArgument()));
                     continue;
                 }
 
                 // Homopolar
-                di = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.HOMOPOLAR);
-                di1 = di.get(0, 0);
-                di2 = di.get(1, 0);
+                ComplexMatrix dio = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.HOMOPOLAR);
+                Complex dio1 = dio.get(0, 0);
+                Complex dio2 = dio.get(1, 0);
 
                 FeedersAtBusResult resultHomopolarBus1Feeders = feedersResultsHomopolar.get(bus1); // TODO : homopolar
                 FeedersAtBusResult resultHomopolarBus2Feeders = feedersResultsHomopolar.get(bus2); // TODO : homopolar
                 // Feeders : compute the sum of currents from branches at each bus
                 // dI coming from branch to the bus are added to the actual sum of current at bus
-                resultHomopolarBus1Feeders.addItofeedersSum(di1);
-                resultHomopolarBus2Feeders.addItofeedersSum(di2);
+                resultHomopolarBus1Feeders.addItofeedersSum(dio1);
+                resultHomopolarBus2Feeders.addItofeedersSum(dio2);
 
                 // Inverse
-                di = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.INVERSE);
-                di1 = di.get(0, 0);
-                di2 = di.get(1, 0);
+                ComplexMatrix dii = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.INVERSE);
+                Complex dii1 = dii.get(0, 0);
+                Complex dii2 = dii.get(1, 0);
 
                 FeedersAtBusResult resultInverseBus1Feeders = feedersResultsInverse.get(bus1); // TODO : homopolar
                 FeedersAtBusResult resultInverseBus2Feeders = feedersResultsInverse.get(bus2); // TODO : homopolar
                 // Feeders : compute the sum of currents from branches at each bus
                 // dI coming from branch to the bus are added to the actual sum of current at bus
-                resultInverseBus1Feeders.addItofeedersSum(di1);
-                resultInverseBus2Feeders.addItofeedersSum(di2);
+                resultInverseBus1Feeders.addItofeedersSum(dii1);
+                resultInverseBus2Feeders.addItofeedersSum(dii2);
+
+                branchDi1.put(branch, new FortescueValue(di1.abs(), dio1.abs(), dii1.abs(),
+                        di1.getArgument(), dio1.getArgument(), dii1.getArgument()));
+                branchDi2.put(branch, new FortescueValue(di2.abs(), dio2.abs(), dii2.abs(),
+                        di2.getArgument(), dio2.getArgument(), dii2.getArgument()));
+
             }
         }
 
@@ -349,6 +380,14 @@ public class ShortCircuitResult {
         return busNum2Dv;
     }
 
+    public Map<LfBranch, FortescueValue> getBranchDi1() {
+        return branchDi1;
+    }
+
+    public Map<LfBranch, FortescueValue> getBranchDi2() {
+        return branchDi2;
+    }
+
     public boolean isVoltageProfileUpdated() {
         return isVoltageProfileUpdated;
     }
@@ -391,6 +430,33 @@ public class ShortCircuitResult {
             coef = Math.min(coef, 2.0);
         }
         return coef;
+    }
+
+    public double getPeakCoefcDirect() {
+        // this is the simplified formula only using direct 20Hz Thevenin impedance
+        double rc = zd20hz.getReal();
+        double xc = zd20hz.getImaginary();
+
+        if (xc == 0.) {
+            throw new IllegalArgumentException("Peak current could not be computed because Xth is zero = ");
+        }
+        return getPeakCoef(rc / xc * 20. / 50.);
+    }
+
+    public double getPeakCoefc() {
+        double rc = zd20hz.getReal();
+        double xc = zd20hz.getImaginary();
+        double roc = zh20hz.getReal();
+        double xoc = zh20hz.getImaginary();
+
+        if (xc == 0.) {
+            throw new IllegalArgumentException("Peak current could not be computed because Xth is zero = ");
+        }
+        return getPeakCoef((2. * rc + roc) / (2. * xc + xoc) * 20. / 50.);
+    }
+
+    public double getIpeakc() {
+        return getIk().abs() * getPeakCoefc() * Math.sqrt(2.);
     }
 
     public Complex getIk() {
@@ -484,10 +550,27 @@ public class ShortCircuitResult {
         return val.multiply(norm.getCmaxVoltageFactor(lfBus.getNominalV()) / 1000.);
     }
 
-    /*public double getPcc() {
-        //Pcc = |Eth|*Icc*sqrt(3)
-        return Math.sqrt(3) * getIcc().getKey() * lfBus.getV() * lfBus.getNominalV(); //TODO: check formula
-    }*/
+    public Complex getSk() {
+        //Sk" = |Unom|*Ik"*sqrt(3)
+        return getIk().multiply(Math.sqrt(3) * lfBus.getV() * lfBus.getNominalV());
+    }
+
+    public double getMaxRoverX() {
+        double ratio = 0.0;
+        double epsilon = 0.000001;
+        for (LfBranch branch : getLfNetwork().getBranches()) {
+            Complex zBranch = new Complex(branch.getPiModel().getR(), branch.getPiModel().getX());
+            FortescueValue di1 = getBranchDi1().get(branch);
+            FortescueValue di2 = getBranchDi2().get(branch);
+            if (zBranch.getImaginary() < epsilon) {
+                continue;
+            } else if (di1.getPositiveMagnitude() > epsilon || di2.getPositiveMagnitude() > epsilon) {
+                // we only look at ratio for branches with significant short circuit currents
+                ratio = Math.max(ratio, zBranch.getReal() / zBranch.getImaginary());
+            }
+        }
+        return ratio;
+    }
 
     public void setTrueVoltageProfileUpdate() {
         isVoltageProfileUpdated = true;
@@ -548,22 +631,4 @@ public class ShortCircuitResult {
         admittance.set(1, 1, y22);
         return admittance;
     }
-
-    // used for tests
-    public double getIxFeeder(String busId, String feederId) {
-        double ix = 0.;
-        for (LfBus bus : lfNetwork.getBuses()) {
-            if (bus.getId().equals(busId)) {
-                FeedersAtBusResult resultFeeder = feedersResultDirect.get(bus); // TODO : homopolar
-                List<FeederResult> busFeedersResults = resultFeeder.getBusFeedersResult();
-                for (FeederResult feederResult : busFeedersResults) {
-                    if (feederResult.getFeeder().getId().equals(feederId)) {
-                        ix = feederResult.getIContribution().getReal();
-                    }
-                }
-            }
-        }
-        return ix;
-    }
-
 }

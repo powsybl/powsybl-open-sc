@@ -84,8 +84,9 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                 // [Vk_i] = [Vk_i_init] - i_nf_r * [zknf_i] - i_nf_i * [zknf_Vr]
                 Complex zknf = linearResolutionResult.getZknf();
                 Complex dv = id.multiply(zknf).multiply(-1.);
+                Complex zth20hz = linearResolutionResult.getZthEq20Hz();
 
-                ShortCircuitResult res = new ShortCircuitResult(scf, bus, id, zth, vInit, dv, linearResolutionResult.getEqSysFeeders(), parameters.getNorm());
+                ShortCircuitResult res = new ShortCircuitResult(scf, bus, id, zth, vInit, dv, linearResolutionResult.getEqSysFeeders(), parameters.getNorm(), zth20hz);
                 if (parameters.isVoltageUpdate()) {
                     //we get the lfNetwork to process the results
                     res.setLfNetwork(lfNetwork);

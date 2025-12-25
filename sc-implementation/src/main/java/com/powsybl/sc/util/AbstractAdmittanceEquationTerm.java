@@ -59,7 +59,9 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
     protected double bPi2;
 
-    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet) {
+    protected double freqCoef;
+
+    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, AdmittanceEquationSystem.FrequencyType frequencyType) {
         super(branch);
         Objects.requireNonNull(bus1);
         Objects.requireNonNull(bus2);
@@ -71,6 +73,11 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         v2iVar = variableSet.getVariable(bus2.getNum(), VariableType.BUS_VI);
 
         variables = List.of(v1rVar, v2rVar, v1iVar, v2iVar);
+
+        freqCoef = 1.0;
+        if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
+            freqCoef = 20. / 50.;
+        }
 
         PiModel piModel = branch.getPiModel();
         if (piModel.getX() == 0) {
@@ -111,7 +118,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         }
 
         r = piModel.getR() * kTr;
-        x = piModel.getX() * kTx;
+        x = piModel.getX() * kTx * freqCoef;
 
         double zk = Math.sqrt(r * r + x * x);
 
