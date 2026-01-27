@@ -47,9 +47,9 @@ public class BiphasedShortCircuitCalculator extends AbstractShortCircuitCalculat
         // Given:  Vb = Vo + a² * Vd + a * Vi  and Vc = Vo + a * Vd + a² * Vi
         // replacing them in Vb = Zf * Ib + Vc we get :
         //
-        //               tM * [Vinit]                  j * sqrt(3) * tM * [Vinit]
-        // Ib = ----------------------------------- = -----------------------------
-        //       (a-a²)/3 * (Zif + Zdf) + Zf/(a²-a)         Zdf + Zif +Zf
+        //          j * sqrt(3) * tM * [Vinit]
+        // Ib =  -----------------------------
+        //              Zdf + Zif +Zf
         //
         // Where Zof and Zdf are complex impedance matrix elements :
         // Zof = tM * inv(Yo) * M   and Zdf = tM * inv(Yd) * M

@@ -48,7 +48,7 @@ class ShortCircuitBiphasedCommonSupportTest {
         LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
 
-        Network network = ReferenceNetwork.createShortCircuitIec31();
+        Network network = ReferenceNetwork.create6NodesIec9094();
 
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
@@ -78,7 +78,7 @@ class ShortCircuitBiphasedCommonSupportTest {
         LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
 
-        Network network = ReferenceNetwork.createShortCircuitIec31();
+        Network network = ReferenceNetwork.create6NodesIec9094();
 
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 

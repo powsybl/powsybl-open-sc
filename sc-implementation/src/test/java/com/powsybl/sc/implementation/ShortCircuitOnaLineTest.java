@@ -25,7 +25,7 @@ public class ShortCircuitOnaLineTest {
         LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
 
-        Network network = ReferenceNetwork.createShortCircuitIec31NodePlus();
+        Network network = ReferenceNetwork.create6NodeIec9094Plus();
 
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
@@ -135,7 +135,7 @@ public class ShortCircuitOnaLineTest {
         LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
 
-        Network network = ReferenceNetwork.createShortCircuitIec31NodePlus();
+        Network network = ReferenceNetwork.create6NodeIec9094Plus();
 
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 

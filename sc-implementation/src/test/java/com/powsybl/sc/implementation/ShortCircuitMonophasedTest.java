@@ -49,12 +49,12 @@ public class ShortCircuitMonophasedTest {
     }
 
     @Test
-    void shortCircuitIec31Mono() {
+    void shortCircuitMono6NodesIec9094() {
 
         LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
 
-        Network network = ReferenceNetwork.createShortCircuitIec31();
+        Network network = ReferenceNetwork.create6NodesIec9094();
 
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
@@ -75,19 +75,17 @@ public class ShortCircuitMonophasedTest {
 
         // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
         // and I"k = sqrt(3) * cmax * Un /(Zeq) and expected I"k = 35.64 kA with some approximations on the impedance values
-
-        //assertEquals(35.70435548244156, 3 * val.get(0) * 1.05 / 1000. / 0.4, 0.00001);
         assertEquals(35.70435548244156, val.get(0), 0.00001);
 
     }
 
     @Test
-    void shortCircuitIecTestNetworkMono() {
+    void shortCircuitMono8NodesIEC9094() {
 
         LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
 
-        Network network = ReferenceNetwork.createShortCircuitIec31testNetwork();
+        Network network = ReferenceNetwork.create8NodesIEC9094();
 
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
@@ -149,7 +147,7 @@ public class ShortCircuitMonophasedTest {
         LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
 
-        Network network = ReferenceNetwork.createShortCircuitIec31testNetwork();
+        Network network = ReferenceNetwork.create8NodesIEC9094();
 
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ComputationManager cm = LocalComputationManager.getDefault();
