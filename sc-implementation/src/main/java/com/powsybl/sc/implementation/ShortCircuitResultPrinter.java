@@ -12,6 +12,8 @@ import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.sc.util.FeederResult;
 import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.shortcircuit.FortescueValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.powsybl.sc.extensions.LoadShortCircuit.EPSILON;
 
@@ -20,6 +22,8 @@ import static com.powsybl.sc.extensions.LoadShortCircuit.EPSILON;
  */
 public class ShortCircuitResultPrinter {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitResultPrinter.class);
+
     private ShortCircuitResult shortCircuitResult;
 
     ShortCircuitResultPrinter(ShortCircuitResult scr) {
@@ -27,70 +31,68 @@ public class ShortCircuitResultPrinter {
     }
 
     public void printEquivalentDirectImpedancePu() {
-        System.out.println("Equivalent Direct Thevenin Impedance (Pu) : Zd = " + shortCircuitResult.getZd() + "  ");
+        LOGGER.info("Equivalent Direct Thevenin Impedance (Pu) : Zd = {}", shortCircuitResult.getZd());
     }
 
     public void printEquivalentDirectImpedance20hzPu() {
-        System.out.println("Equivalent Direct Thevenin Impedance at 20 Hz (Pu) : Zd = " + shortCircuitResult.getZd20hz() + "  ");
+        LOGGER.info("Equivalent Direct Thevenin Impedance at 20 Hz (Pu) : Zd = {}", shortCircuitResult.getZd20hz());
     }
 
     public void printTheveninVoltagePu() {
-        System.out.println("Thevenin Voltage : Eth  (Pu) = " + shortCircuitResult.getEth() + "  ");
+        LOGGER.info("Thevenin Voltage : Eth  (Pu) = {}", shortCircuitResult.getEth());
     }
 
     public void printEquivalentHomopolarImpedancePu() {
-        System.out.println("Equivalent Homopolar Thevenin Impedance (Pu) : Zo = " + shortCircuitResult.getZh() + "  ");
+        LOGGER.info("Equivalent Homopolar Thevenin Impedance (Pu) : Zo = {}", shortCircuitResult.getZh());
     }
 
     public void printEquivalentHomopolarImpedance20hzPu() {
-        System.out.println("Equivalent Homopolar Thevenin Impedance at 20 Hz (Pu) : Zo = " + shortCircuitResult.getZh20hz() + "  ");
+        LOGGER.info("Equivalent Homopolar Thevenin Impedance at 20 Hz (Pu) : Zo = {}", shortCircuitResult.getZh20hz());
     }
 
     public void printIk() {
-        System.out.println("Ik (kA) = " + shortCircuitResult.getIk() + "   => |Ik| (kA) = " + shortCircuitResult.getIk().abs());
+        LOGGER.info("Ik (kA) = {}   => |Ik| (kA) = {}", shortCircuitResult.getIk(), shortCircuitResult.getIk().abs());
     }
 
     public void printSk() {
-        System.out.println("Sk (MVA) = " + shortCircuitResult.getSk() + "   => |Sk| (MVA) = " + shortCircuitResult.getSk().abs());
+        LOGGER.info("Sk (MVA) = {}   => |Sk| (MVA) = {}", shortCircuitResult.getSk(), shortCircuitResult.getSk().abs());
     }
 
     public void printIpeakc() {
-        System.out.println("Ipeak(c) (kA) = " + shortCircuitResult.getIpeakc());
+        LOGGER.info("Ipeak(c) (kA) = {}", shortCircuitResult.getIpeakc());
     }
 
     public void printIfortescuePu() {
-        System.out.println("Short Circuit Current at Bus (Pu) = " + shortCircuitResult.getLfBus().getId() + " : I = " + getStringFortescueValue(shortCircuitResult.getiFortescue()) + "  ");
+        LOGGER.info("Short Circuit Current at Bus (Pu) = {} : I = {}", shortCircuitResult.getLfBus().getId(), getStringFortescueValue(shortCircuitResult.getiFortescue()));
     }
 
     public void printVfortescuePu() {
-        System.out.println("Short Circuit Voltage at Bus (Pu) = " + shortCircuitResult.getLfBus().getId() + " : V = " + getStringFortescueValue(shortCircuitResult.getvFortescue()) + "  ");
+        LOGGER.info("Short Circuit Voltage at Bus (Pu) = {} : V = {}", shortCircuitResult.getLfBus().getId(), getStringFortescueValue(shortCircuitResult.getvFortescue()));
     }
 
     public void printDvAtBussesPu() {
-        System.out.println("---Bus voltage deltas :  ");
+        LOGGER.info("---Bus voltage deltas :  ");
         for (LfBus bus : shortCircuitResult.getLfNetwork().getBuses()) {
             int busNum = bus.getNum();
-            System.out.println("  -> dV(" + bus.getId() + ") = " + getStringFortescueValue(shortCircuitResult.getBusNum2Dv().get(busNum)) + " (Pu) ");
+            LOGGER.info("  -> dV({}) = {} (Pu) ", bus.getId(), getStringFortescueValue(shortCircuitResult.getBusNum2Dv().get(busNum)));
         }
     }
 
     public void printDIAtBranchPu() {
-        System.out.println("---Branch currents :  ");
+        LOGGER.info("---Branch currents :  ");
         for (LfBranch branch : shortCircuitResult.getLfNetwork().getBranches()) {
-            //int busNum = bus.getNum();
-            System.out.println("  -> dI1(" + branch.getId() + ") = " + getStringFortescueValue(shortCircuitResult.getBranchDi1().get(branch)) + " (Pu) ");
-            System.out.println("  -> dI2(" + branch.getId() + ") = " + getStringFortescueValue(shortCircuitResult.getBranchDi2().get(branch)) + " (Pu) ");
-            System.out.println(" ");
+            LOGGER.info("  -> dI1({}) = {} (Pu) ", branch.getId(), getStringFortescueValue(shortCircuitResult.getBranchDi1().get(branch)));
+            LOGGER.info("  -> dI2({}) = {} (Pu) ", branch.getId(), getStringFortescueValue(shortCircuitResult.getBranchDi2().get(branch)));
         }
     }
 
     public void printFeedersPu() {
-        System.out.println("---Feeders : ");
+        LOGGER.info("---Feeders : ");
         for (LfBus bus : shortCircuitResult.getLfNetwork().getBuses()) {
             FeedersAtBusResult feedBus = shortCircuitResult.getFeedersResultDirect().get(bus);
             for (FeederResult fr : feedBus.getBusFeedersResult()) {
                 if (fr.getIContribution().abs() > EPSILON) {
-                    System.out.println("  -> Direct Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
+                    LOGGER.info("  -> Direct Feeder {} : {} has I (Pu) contribution  =  {}", fr.getFeeder().getFeederType(), fr.getFeeder().getId(), fr.getIContribution());
                 }
             }
 
@@ -99,27 +101,25 @@ public class ShortCircuitResultPrinter {
             }
 
             feedBus = shortCircuitResult.getFeedersResultsHomopolar().get(bus);
-            //System.out.println("---Feeders Homopolar at bus :  " + bus.getId());
             for (FeederResult fr : feedBus.getBusFeedersResult()) {
                 if (fr.getIContribution().abs() > EPSILON) {
-                    System.out.println("  -> Homopolar Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
+                    LOGGER.info("  -> Homopolar Feeder {} : {} has I (Pu) contribution  =  {}", fr.getFeeder().getFeederType(), fr.getFeeder().getId(), fr.getIContribution());
                 }
             }
 
             feedBus = shortCircuitResult.getFeedersResultsInverse().get(bus);
-            //System.out.println("---Feeders Inverse at bus :  " + bus.getId());
             for (FeederResult fr : feedBus.getBusFeedersResult()) {
                 if (fr.getIContribution().abs() > EPSILON) {
-                    System.out.println("  -> Inverse Feeder " + fr.getFeeder().getFeederType() + " : " + fr.getFeeder().getId() + " has I (Pu) contribution  =  " + fr.getIContribution());
+                    LOGGER.info("  -> Inverse Feeder {} : {} has I (Pu) contribution  =  {}", fr.getFeeder().getFeederType(), fr.getFeeder().getId(), fr.getIContribution());
                 }
             }
-            System.out.println("  ---- ");
+            LOGGER.info("  ---- ");
         }
     }
 
     public void printShortCircuitResult() {
-        System.out.println("--------------- " + shortCircuitResult.getShortCircuitFault().getFaultId() + " --------------- ");
-        System.out.println("Short Circuit at Bus = " + shortCircuitResult.getLfBus().getId());
+        LOGGER.info("--------------- {} --------------- ", shortCircuitResult.getShortCircuitFault().getFaultId());
+        LOGGER.info("Short Circuit at Bus = {}", shortCircuitResult.getLfBus().getId());
         printEquivalentDirectImpedancePu();
         printEquivalentHomopolarImpedancePu();
         printEquivalentDirectImpedance20hzPu();

@@ -488,7 +488,7 @@ public class ShortCircuitResult {
     public Complex getIkpp() {
         // for a Triphased fault, by definition Ik"(A) = c * Un / (sqrt(3) * Zk)
         double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
-        Complex id = ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle()); // id(pu) = Eth(pu) / Zk(pu) // TODo: check if radians
+        Complex id = ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle()); // id(pu) = Eth(pu) / Zk(pu) // TODO: check if radians
         // Ik"(kA) = c * id(pu) * I(base) / (sqrt(3) * 1000) : the 1000 factor is to move from A to kA
         return id.multiply(c).divide(Math.sqrt(3.) * 1000.).multiply(getIbase());
     }
@@ -496,7 +496,7 @@ public class ShortCircuitResult {
     public Complex getIk1pp() {
         // for a Monphased fault, by definition Ik"1(A) = c * Un * sqrt(3) / Zk
         double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
-        Complex id = ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle()); // id(pu) = Eth(pu) / Zk(pu) // TODo: check if radians
+        Complex id = ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle()); // id(pu) = Eth(pu) / Zk(pu) // TODO: check if radians
         // Ik"1(kA) = c * id(pu) * sqrt(3) * I(base) / 1000 : the 1000 factor is to move from A to kA
         return id.multiply(c).divide(1000.).multiply(Math.sqrt(3.) * getIbase());
     }
