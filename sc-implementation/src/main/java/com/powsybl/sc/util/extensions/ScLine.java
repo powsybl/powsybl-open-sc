@@ -7,24 +7,20 @@
  */
 package com.powsybl.sc.util.extensions;
 
+import org.apache.commons.math3.complex.Complex;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class ScLine {
 
-    private final double xo; // Xo : value of the homopolar admittance (in pu, same base as X) expressed at the leg2 side
-    private final double ro; // Ro : value of the homopolar resistance (in pu, same base as R) expressed at the leg2 side
+    private final Complex zo; // Zo : value of the homopolar impedance (in pu, same base as Z) expressed at the leg2 side
 
-    ScLine(double ro, double xo) {
-        this.ro = ro;
-        this.xo = xo;
+    ScLine(Complex zo) {
+        this.zo = zo;
     }
 
-    public double getRo() {
-        return ro;
-    }
-
-    public double getXo() {
-        return xo;
+    public Complex getZo() {
+        return zo;
     }
 }

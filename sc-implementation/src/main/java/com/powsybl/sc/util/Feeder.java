@@ -7,16 +7,17 @@
  */
 package com.powsybl.sc.util;
 
+import org.apache.commons.math3.complex.Complex;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class Feeder {
 
     //Feeder class is used to post process the results of a short circuit computation to get the feeder contribution in short-circuit current
-    public Feeder(double b, double g, String id, Feeder.FeederType feederType) {
+    public Feeder(Complex zFeeder, String id, Feeder.FeederType feederType) {
 
-        this.b = b;
-        this.g = g;
+        this.z = zFeeder;
         this.id = id;
         this.feederType = feederType;
 
@@ -29,20 +30,14 @@ public class Feeder {
         LOAD;
     }
 
-    private double b;
-
-    private double g;
+    private Complex z;
 
     private String id; // id in LfNetwork
 
     private Feeder.FeederType feederType;
 
-    public double getB() {
-        return b;
-    }
-
-    public double getG() {
-        return g;
+    public Complex getZ() {
+        return z;
     }
 
     public String getId() {

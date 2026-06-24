@@ -17,7 +17,8 @@ import com.powsybl.sc.util.extensions.ScGenerator;
 import com.powsybl.sc.util.extensions.ScLoad;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
 import net.jafama.FastMath;
-import org.apache.commons.math3.util.Pair;
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.complex.ComplexUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,20 +41,20 @@ public final class AdmittanceEquationSystem {
 
     //Equations are created based on the branches connections
     private static void createImpedantBranch(VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
-                                             LfBranch branch, LfBus bus1, LfBus bus2, AdmittanceType admittanceType) {
+                                             LfBranch branch, LfBus bus1, LfBus bus2, AdmittanceType admittanceType, FrequencyType frequencyType) {
         if (bus1 != null && bus2 != null) {
             // Equation system Y*V = I (expressed in cartesian coordinates x,y)
             equationSystem.createEquation(bus1.getNum(), EquationType.BUS_YR)
-                    .addTerm(new AdmittanceEquationTermX1(branch, bus1, bus2, variableSet, admittanceType));
+                    .addTerm(new AdmittanceEquationTermX1(branch, bus1, bus2, variableSet, admittanceType, frequencyType));
 
             equationSystem.createEquation(bus1.getNum(), EquationType.BUS_YI)
-                    .addTerm(new AdmittanceEquationTermY1(branch, bus1, bus2, variableSet, admittanceType));
+                    .addTerm(new AdmittanceEquationTermY1(branch, bus1, bus2, variableSet, admittanceType, frequencyType));
 
             equationSystem.createEquation(bus2.getNum(), EquationType.BUS_YR)
-                    .addTerm(new AdmittanceEquationTermX2(branch, bus1, bus2, variableSet, admittanceType));
+                    .addTerm(new AdmittanceEquationTermX2(branch, bus1, bus2, variableSet, admittanceType, frequencyType));
 
             equationSystem.createEquation(bus2.getNum(), EquationType.BUS_YI)
-                    .addTerm(new AdmittanceEquationTermY2(branch, bus1, bus2, variableSet, admittanceType));
+                    .addTerm(new AdmittanceEquationTermY2(branch, bus1, bus2, variableSet, admittanceType, frequencyType));
         }
     }
 
@@ -76,7 +77,12 @@ public final class AdmittanceEquationSystem {
         ADM_STEADY_STATE,
     }
 
-    private static void createBranches(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem, AdmittanceType admittanceType) {
+    public enum FrequencyType {
+        FREQ_20_HZ,
+        FREQ_50_HZ
+    }
+
+    private static void createBranches(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem, AdmittanceType admittanceType, FrequencyType frequencyType) {
         for (LfBranch branch : network.getBranches()) {
             LfBus bus1 = branch.getBus1();
             LfBus bus2 = branch.getBus2();
@@ -87,29 +93,29 @@ public final class AdmittanceEquationSystem {
                             branch.getId());
                 }
             } else {
-                createImpedantBranch(variableSet, equationSystem, branch, bus1, bus2, admittanceType);
+                createImpedantBranch(variableSet, equationSystem, branch, bus1, bus2, admittanceType, frequencyType);
             }
         }
     }
 
     private static double getBfromShunt(LfBus bus) {
         List<Feeder> feederList = new ArrayList<>();
-        return getBfromShunt(bus, feederList);
+        return getBfromShuntAndUpdateFeederList(bus, feederList);
     }
 
-    private static double getBfromShunt(LfBus bus, List<Feeder> feederList) {
+    private static double getBfromShuntAndUpdateFeederList(LfBus bus, List<Feeder> feederList) {
         LfShunt shunt = bus.getShunt().orElse(null);
         double tmpB = 0.;
         if (shunt != null) {
             tmpB += shunt.getB();
-            Feeder shuntFeeder = new Feeder(shunt.getB(), 0., shunt.getId(), Feeder.FeederType.SHUNT);
+            Feeder shuntFeeder = new Feeder(new Complex(0., shunt.getB()), shunt.getId(), Feeder.FeederType.SHUNT);
             feederList.add(shuntFeeder);
             //check if g will be implemented
         }
         LfShunt controllerShunt = bus.getControllerShunt().orElse(null);
         if (controllerShunt != null) {
             tmpB += controllerShunt.getB();
-            Feeder shuntFeeder = new Feeder(controllerShunt.getB(), 0., controllerShunt.getId(), Feeder.FeederType.CONTROLLED_SHUNT);
+            Feeder shuntFeeder = new Feeder(new Complex(0., controllerShunt.getB()), controllerShunt.getId(), Feeder.FeederType.CONTROLLED_SHUNT);
             feederList.add(shuntFeeder);
             //check if g will be implemented
         }
@@ -117,93 +123,75 @@ public final class AdmittanceEquationSystem {
         return tmpB;
     }
 
-    private static Pair<Double, Double> getYtransfromRdXd(LfBus bus, AdmittancePeriodType admittancePeriodType, List<Feeder> feederList, AdmittanceType admittanceType) {
+    private static Complex getYtransfromRdXdAndUpdateFeederList(LfBus bus, AdmittancePeriodType admittancePeriodType, List<Feeder> feederList, AdmittanceType admittanceType) {
         double vnomVl = bus.getNominalV();
 
-        double tmpG = 0.;
-        double tmpB = 0.;
+        Complex tmpY = new Complex(0.);
         for (LfGenerator lfgen : bus.getGenerators()) { //compute R'd or R"d from generators at bus
             ScGenerator scGen = (ScGenerator) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
             double kG = (Double) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
-            double r = (scGen.getTransRd() + scGen.getStepUpTfoR()) * kG;
-            double x = (scGen.getTransXd() + scGen.getStepUpTfoX()) * kG;
+            Complex z = scGen.getTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
             if (admittancePeriodType == AdmittancePeriodType.ADM_SUB_TRANSIENT) {
-                x = (scGen.getSubTransXd() + scGen.getStepUpTfoX()) * kG;
-                r = (scGen.getSubTransRd() + scGen.getStepUpTfoR()) * kG;
+                z = scGen.getSubTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
             }
 
             if (admittanceType == AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
                 // For now, xo and ro are fixed independently of x'd and x"d:
                 // further improvement might be needed if xo and ro are different for transient and subTransient short circuit analysis
-                r = 0.;
-                x = 0.;
+                z = new Complex(0.);
                 if (scGen.isGrounded()) {
-                    r = scGen.getRo();
-                    x = scGen.getXo();
+                    z = scGen.getZo();
                 }
             }
 
             double epsilon = 0.0000001;
-            if (Math.abs(r) > epsilon || Math.abs(x) > epsilon) {
-                double gGen = (vnomVl * vnomVl / SB) * r / (r * r + x * x);
-                double bGen = -(vnomVl * vnomVl / SB) * x / (r * r + x * x);
-                tmpG = tmpG + gGen;
-                tmpB = tmpB + bGen; // TODO: check: for now X'd = 0 not allowed
-                Feeder shuntFeeder = new Feeder(bGen, gGen, lfgen.getId(), Feeder.FeederType.GENERATOR);
+            if (z.abs() > epsilon) {
+                Complex yGen = z.reciprocal().multiply(vnomVl * vnomVl / SB);
+                tmpY = tmpY.add(yGen);
+                Feeder shuntFeeder = new Feeder(yGen, lfgen.getId(), Feeder.FeederType.GENERATOR);
                 feederList.add(shuntFeeder);
             }
         }
 
-        return Pair.create(tmpG, tmpB);
+        return tmpY;
     }
 
     private static void createShunts(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem, AdmittanceType admittanceType,
                                      AdmittanceVoltageProfileType admittanceVoltageProfileType, AdmittancePeriodType admittancePeriodType,
-                                     boolean isShuntsIgnore, FeedersAtNetwork feeders) {
+                                     boolean isShuntsIgnore, FeedersAtNetwork feeders, FrequencyType frequencyType) {
         for (LfBus bus : network.getBuses()) {
 
-            //total shunt at bus to be integrated in the admittance matrix
-            double g = 0.;
-            double b = 0.;
+            Complex y = new Complex(0.); //total shunt at bus to be integrated in the admittance matrix
+            Complex yLoadEq = new Complex(0.); //shunts created to represent the equivalence of loads and to be integrated in the total admittance matrix shunt at bus
+            Complex yGenEq = new Complex(0.); //shunts created to represent the equivalence of generating units sand to be integrated in the total admittance matrix shunt at bus
 
-            //shunts created to represent the equivalence of loads and to be integrated in the total admittance matrix shunt at bus
-            double gLoadEq = 0.;
-            double bLoadEq = 0.;
-
-            //shunts created to represent the equivalence of generating units sand to be integrated in the total admittance matrix shunt at bus
-            double gGenEq = 0.;
-            double bGenEq = 0.;
-
-            //choice of vbase to be used to transform power injections into equivalent shunts
-            double vr = bus.getV() * Math.cos(bus.getAngle());
-            double vi = bus.getV() * Math.sin(bus.getAngle());
+            Complex v = ComplexUtils.polar2Complex(bus.getV(), Math.toRadians(bus.getAngle())); //choice of vbase to be used to transform power injections into equivalent shunts
             if (admittanceVoltageProfileType == AdmittanceVoltageProfileType.NOMINAL) {
-                vr = 1.0;
-                vi = 0.;
+                v = new Complex(1.);
             }
             boolean isBusPv = bus.isVoltageControlled();
 
             if (admittanceType == AdmittanceType.ADM_SHUNT) {
                 if (!isShuntsIgnore) {
-                    b = getBfromShunt(bus); // Handling shunts that physically exist
+                    y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
                 }
             } else if (admittanceType == AdmittanceType.ADM_ADMIT) {
                 if (!isShuntsIgnore) {
-                    b = getBfromShunt(bus); // Handling shunts that physically exist
+                    y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
                 }
 
                 ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-                gLoadEq = scLoad.getGdEquivalent() / (vr * vr + vi * vi);
-                bLoadEq = scLoad.getBdEquivalent() / (vr * vr + vi * vi);
+                yLoadEq = scLoad.getYdEquivalent().divide(v.abs() * v.abs());
 
                 // Handling transformation of generators into equivalent shunts
                 // Warning !!! : evaluation of power injections mandatory
-                gGenEq = -bus.getP().eval() / (vr * vr + vi * vi) - gLoadEq; // full nodal P injection without the load
+                double gGenEq = -bus.getP().eval() / (v.abs() * v.abs()) - yLoadEq.getReal(); // full nodal P injection without the load
 
                 if (isBusPv) {
-                    bGenEq = bus.getQ().eval() / (vr * vr + vi * vi) + bLoadEq; // full nodal Q injection without the load
+                    // full nodal Q injection without the load
+                    yGenEq = new Complex(gGenEq, bus.getQ().eval() / (v.abs() * v.abs()) + yLoadEq.getImaginary());
                 } else {
-                    bGenEq = bus.getGenerationTargetQ() / (vr * vr + vi * vi);
+                    yGenEq = new Complex(gGenEq, bus.getGenerationTargetQ() / (v.abs() * v.abs()));
                 }
             } else if (admittanceType == AdmittanceType.ADM_THEVENIN) {
 
@@ -211,19 +199,18 @@ public final class AdmittanceEquationSystem {
 
                 if (!isShuntsIgnore) {
                     // Handling shunts that physically exist
-                    b = getBfromShunt(bus, feederList); // ! updates feederList
+                    y = new Complex(0., getBfromShuntAndUpdateFeederList(bus, feederList)); // ! updates feederList
                 }
 
                 ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-                gLoadEq = scLoad.getGdEquivalent() / (vr * vr + vi * vi);
-                bLoadEq = scLoad.getBdEquivalent() / (vr * vr + vi * vi);
 
-                Feeder shuntFeeder = new Feeder(bLoadEq, gLoadEq, bus.getId(), Feeder.FeederType.LOAD);
+                yLoadEq = scLoad.getYdEquivalent().divide(v.abs() * v.abs());
+
+                Feeder shuntFeeder = new Feeder(yLoadEq, bus.getId(), Feeder.FeederType.LOAD);
                 feederList.add(shuntFeeder);
 
-                Pair<Double, Double> bAndG = getYtransfromRdXd(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList
-                bGenEq = bAndG.getValue(); //TODO : check how to verify that the generators are operating
-                gGenEq = bAndG.getKey();
+                yGenEq = getYtransfromRdXdAndUpdateFeederList(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList
+                // TODO : check how to verify that the generators are operating
 
                 FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
                 feeders.busToFeeders.put(bus, shortCircuitEquationSystemBusFeeders);
@@ -232,27 +219,37 @@ public final class AdmittanceEquationSystem {
 
                 List<Feeder> feederList = new ArrayList<>(); // not used yet in homopolar
 
-                Pair<Double, Double> bAndG = getYtransfromRdXd(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList
-                bGenEq = bAndG.getValue(); //TODO : check how to verify that the generators are operating
-                gGenEq = bAndG.getKey();
+                y = getYtransfromRdXdAndUpdateFeederList(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList
+                //TODO : check how to verify that the generators are operating
 
+                FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
+                feeders.busToFeeders.put(bus, shortCircuitEquationSystemBusFeeders);
             }
 
-            g = g + gLoadEq + gGenEq;
-            b = b + bLoadEq + bGenEq;
+            y = y.add(yLoadEq).add(yGenEq);
 
-            if (Math.abs(g) > EPSILON || Math.abs(b) > EPSILON) {
+            // coef to adapt reactance if freq is not 50Hz
+            double freqCoef = 1.0;
+            if (frequencyType == FrequencyType.FREQ_20_HZ) {
+                freqCoef = 20. / 50.;
+            }
+
+            Complex z = y.reciprocal();
+            z = new Complex(z.getReal(), z.getImaginary() * freqCoef);
+            y = z.reciprocal();
+
+            if (y.abs() > EPSILON) {
                 equationSystem.createEquation(bus.getNum(), EquationType.BUS_YR)
-                        .addTerm(new AdmittanceEquationTermShunt(g, b, bus, variableSet, true));
+                        .addTerm(new AdmittanceEquationTermShunt(y.getReal(), y.getImaginary(), bus, variableSet, true));
                 equationSystem.createEquation(bus.getNum(), EquationType.BUS_YI)
-                        .addTerm(new AdmittanceEquationTermShunt(g, b, bus, variableSet, false));
+                        .addTerm(new AdmittanceEquationTermShunt(y.getReal(), y.getImaginary(), bus, variableSet, false));
             }
         }
     }
 
     public static EquationSystem<VariableType, EquationType> create(LfNetwork network, VariableSet<VariableType> variableSet,
                                                                     AdmittanceType admittanceType, AdmittanceVoltageProfileType admittanceVoltageProfileType,
-                                                                    AcLoadFlowParameters acLoadFlowParameters) {
+                                                                    AcLoadFlowParameters acLoadFlowParameters, FrequencyType frequencyType) {
 
         // Following data Not needed for reduction methods
         AdmittanceEquationSystem.AdmittancePeriodType admittancePeriodType = AdmittanceEquationSystem.AdmittancePeriodType.ADM_TRANSIENT;
@@ -261,13 +258,13 @@ public final class AdmittanceEquationSystem {
 
         return create(network, variableSet,
                 admittanceType, admittanceVoltageProfileType, admittancePeriodType, isShuntsIgnore,
-                equationsSystemFeeders, acLoadFlowParameters);
+                equationsSystemFeeders, acLoadFlowParameters, frequencyType);
     }
 
     public static EquationSystem<VariableType, EquationType> create(LfNetwork network, VariableSet<VariableType> variableSet,
                                                                     AdmittanceType admittanceType, AdmittanceVoltageProfileType admittanceVoltageProfileType,
                                                                     AdmittancePeriodType admittancePeriodType, boolean isShuntsIgnore, FeedersAtNetwork feeders,
-                                                                    AcLoadFlowParameters acLoadFlowParameters) {
+                                                                    AcLoadFlowParameters acLoadFlowParameters, FrequencyType frequencyType) {
 
         EquationSystem<VariableType, EquationType> equationSystem = new EquationSystem<>();
 
@@ -278,9 +275,9 @@ public final class AdmittanceEquationSystem {
             }
         }
 
-        createBranches(network, variableSet, equationSystem, admittanceType);
+        createBranches(network, variableSet, equationSystem, admittanceType, frequencyType);
         if (admittanceType != AdmittanceType.ADM_INJ) { //shunts created in the admittance matrix are only those that really exist in the network
-            createShunts(network, variableSet, equationSystem, admittanceType, admittanceVoltageProfileType, admittancePeriodType, isShuntsIgnore, feeders);
+            createShunts(network, variableSet, equationSystem, admittanceType, admittanceVoltageProfileType, admittancePeriodType, isShuntsIgnore, feeders, frequencyType);
         }
 
         return equationSystem;

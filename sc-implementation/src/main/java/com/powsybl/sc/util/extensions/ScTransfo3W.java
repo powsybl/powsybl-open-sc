@@ -8,6 +8,7 @@
 package com.powsybl.sc.util.extensions;
 
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
+import org.apache.commons.math3.complex.Complex;
 
 import java.util.Objects;
 
@@ -20,22 +21,19 @@ public class ScTransfo3W {
 
         private WindingConnectionType legConnectionType;
 
-        private final double ro; // only used for now for 3 windings transformers
-        private final double xo;
+        private final Complex zo; // only used for now for 3 windings transformers
 
         private final boolean freeFluxes; // only used for now for 3 windings transformers
 
-        private final double rGround = 0;
-        private final double xGround = 0;
+        private final Complex zGround = new Complex(0.);
 
         /*public Leg(LegConnectionType legConnectionType) {
             this(legConnectionType, 0, 0, 1., 1., 1., 1., false);
         }*/
 
-        public Leg(WindingConnectionType legConnectionType, double ro, double xo, boolean freeFluxes) {
+        public Leg(WindingConnectionType legConnectionType, Complex zo, boolean freeFluxes) {
             this.legConnectionType = legConnectionType;
-            this.ro = ro;
-            this.xo = xo;
+            this.zo = zo;
             this.freeFluxes = freeFluxes;
         }
 
@@ -47,26 +45,17 @@ public class ScTransfo3W {
             this.legConnectionType = Objects.requireNonNull(legConnectionType);
         }
 
-        public double getRo() {
-            return ro;
-        }
-
-        public double getXo() {
-            return xo;
+        public Complex getZo() {
+            return zo;
         }
 
         public boolean isFreeFluxes() {
             return freeFluxes;
         }
 
-        public double getrGround() {
-            return rGround;
+        public Complex getzGround() {
+            return zGround;
         }
-
-        public double getxGround() {
-            return xGround;
-        }
-
     }
 
     private final Leg leg1;

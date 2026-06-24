@@ -14,18 +14,16 @@ import com.powsybl.sc.util.CalculationLocation;
  */
 public class ShortCircuitFault extends CalculationLocation {
 
-    public ShortCircuitFault(String busLocation, String faultId, double zfr, double zfi, ShortCircuitType type) {
+    public ShortCircuitFault(String busLocation, String faultId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
         super(busLocation);
-        this.zfr = zfr;
-        this.zfi = zfi;
+        this.zf = zf;
         this.type = type;
         this.faultId = faultId;
     }
 
-    public ShortCircuitFault(String busLocation, String busLocationBiPhased, String faultId, double zfr, double zfi, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
+    public ShortCircuitFault(String busLocation, String busLocationBiPhased, String faultId, ShortCircuitFaultImpedance zf, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
         super(busLocation, busLocationBiPhased);
-        this.zfr = zfr;
-        this.zfi = zfi;
+        this.zf = zf;
         this.type = type;
         this.faultId = faultId;
         this.biphasedType = biphasedType;
@@ -48,8 +46,7 @@ public class ShortCircuitFault extends CalculationLocation {
 
     private String faultId;
 
-    private double zfr; //real part of the short circuit impedance Zf
-    private double zfi; //imaginary part of the short circuit impedance Zf
+    private ShortCircuitFaultImpedance zf; // the short circuit impedance Zf
 
     private ShortCircuitType type;
 
@@ -59,12 +56,8 @@ public class ShortCircuitFault extends CalculationLocation {
         return type;
     }
 
-    public double getZfr() {
-        return zfr;
-    }
-
-    public double getZfi() {
-        return zfi;
+    public ShortCircuitFaultImpedance getZf() {
+        return zf;
     }
 
     public ShortCircuitBiphasedType getBiphasedType() {

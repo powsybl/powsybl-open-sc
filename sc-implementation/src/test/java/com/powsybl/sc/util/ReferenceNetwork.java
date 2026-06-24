@@ -434,8 +434,9 @@ public final class ReferenceNetwork {
         return network;
     }
 
-    public static Network createShortCircuitIec31() {
+    public static Network create6NodesIec9094() {
         Network network = Network.create("ShortCircuit_IEC_3.1", "IEC_3.1");
+        // This is a reference grid composed of 6 nodes with 20 kV and 400V nominal voltages
 
         double bus1Vnom = 20.; // 20 kV
         double bus2Vnom = 0.4; // 400 V
@@ -475,8 +476,13 @@ public final class ReferenceNetwork {
         double coeffXoL4 = 3.;
 
         // we model the feeder through a load: TODO : check if relevant for all IEC examples
-        double pEquivalentFeeder = 31.286;  //Impedance to be applied at feeder : Zfeeder = 0.126115 +j1.26353 ohms
-        double qEquivalentFeeder = 313.451; //using formula P(MW) = Re(Z) * |V|Â² / |Z|Â² and Q(MVA) = Im(Z) * |V|Â² / |Z|Â²
+        // Given the formula: |Zfeeder| = c.Un/(sqrt(3).Ik".rho²) at Vnom = 0.41 kV
+        // Then Xfeeder = |Zfeeder| * 0.995 and Rfeeder = 0.1 * Xfeeder
+        // Impedance to be applied at feeder : Zfeeder = 0.126115 +j1.26353 ohms at 20 kV (or Zfeeder = 0.053 +j0.531 mohms at 0.41kV as given in the example with rho)
+
+        //using formula P(MW) = Re(Z) * |V|² / |Z|² and Q(MVA) = Im(Z) * |V|² / |Z|² we transform the feeder into a load
+        double pEquivalentFeeder = 31.286;
+        double qEquivalentFeeder = 313.451;
 
         Substation substation123 = network.newSubstation()
                 .setId("S123")
@@ -705,7 +711,8 @@ public final class ReferenceNetwork {
         return network;
     }
 
-    public static Network createShortCircuitIec31testNetwork() {
+    public static Network create8NodesIEC9094() {
+        //This example grid represents the high-voltage testnetwork 380kV / 110kV / 30 kV / 10 kV with 8 bus bars
         Network network = Network.create("ShortCircuit_IEC_3.1", "IEC_3.1");
 
         double vEhv = 380.; // Vnom at bus 1 is 380 kV
@@ -1345,5 +1352,362 @@ public final class ReferenceNetwork {
 
         return network;
     }
+
+    public static Network create6NodeIec9094Plus() {
+        // This is the same grid as the 6 nodes but with additional nodes created
+        // to split lines L2 (Bus 2 and Bus 4) and L4 (Bus 5 and Bus 6) into 2 pieces
+        // to show feasability of short circuits in the middle of a line
+        Network network = Network.create("ShortCircuit_IEC_3.1", "IEC_3.1");
+
+        double bus1Vnom = 20.; // 20 kV
+        double bus2Vnom = 0.4; // 400 V
+
+        double ratedV2 = 0.41; // 410 V
+
+        double kT1 = 0.975;
+        double xT1 = 0.010312 * kT1;
+        double rT1 = 0.002753 * kT1;
+        double coeffRoT1 = 1.;
+        double coeffXoT1 = 0.95;
+
+        double kT2 = 0.975;
+        double xT2 = 0.016100 * kT2;
+        double rT2 = 0.004833 * kT2;
+        double coeffRoT2 = 1.;
+        double coeffXoT2 = 0.95;
+
+        double xL2 = 0.000136;
+        double rL2 = 0.000416;
+        double coeffRoL2 = 4.23;
+        double coeffXoL2 = 1.21;
+
+        double xL1 = 0.000395;
+        double rL1 = 0.000385;
+        double coeffRoL1 = 3.7;
+        double coeffXoL1 = 1.81;
+
+        double xL3 = 0.001740;
+        double rL3 = 0.005420;
+        double coeffRoL3 = 3.;
+        double coeffXoL3 = 4.46;
+
+        double xL4 = 0.01485;
+        double rL4 = 0.01850;
+        double coeffRoL4 = 2.;
+        double coeffXoL4 = 3.;
+
+        // we model the feeder through a load: TODO : check if relevant for all IEC examples
+        // Given the formula: |Zfeeder| = c.Un/(sqrt(3).Ik".rho²) at Vnom = 0.41 kV
+        // Then Xfeeder = |Zfeeder| * 0.995 and Rfeeder = 0.1 * Xfeeder
+        // Impedance to be applied at feeder : Zfeeder = 0.126115 +j1.26353 ohms at 20 kV (or Zfeeder = 0.053 +j0.531 mohms at 0.41kV as given in the example with rho)
+
+        //using formula P(MW) = Re(Z) * |V|² / |Z|² and Q(MVA) = Im(Z) * |V|² / |Z|² we transform the feeder into a load
+        double pEquivalentFeeder = 31.286;
+        double qEquivalentFeeder = 313.451;
+
+        Substation substation123 = network.newSubstation()
+                .setId("S123")
+                .setCountry(Country.FR)
+                .add();
+        VoltageLevel vl1 = substation123.newVoltageLevel()
+                .setId("VL_1")
+                .setNominalV(bus1Vnom)
+                .setLowVoltageLimit(0)
+                .setHighVoltageLimit(2 * bus1Vnom)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        Bus bus1 = vl1.getBusBreakerView().newBus()
+                .setId("B1")
+                .add();
+        bus1.setV(bus1Vnom).setAngle(0.);
+
+        VoltageLevel vl2 = substation123.newVoltageLevel()
+                .setId("VL_2")
+                .setNominalV(bus2Vnom)
+                .setLowVoltageLimit(0)
+                .setHighVoltageLimit(2 * bus2Vnom)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        Bus bus2 = vl2.getBusBreakerView().newBus()
+                .setId("B2")
+                .add();
+        bus2.setV(bus2Vnom).setAngle(0.);
+
+        VoltageLevel vl3 = substation123.newVoltageLevel()
+                .setId("VL_3")
+                .setNominalV(bus2Vnom)
+                .setLowVoltageLimit(0)
+                .setHighVoltageLimit(2 * bus2Vnom)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        Bus bus3 = vl3.getBusBreakerView().newBus()
+                .setId("B3")
+                .add();
+        bus3.setV(bus2Vnom).setAngle(0.);
+
+        Substation substation4 = network.newSubstation()
+                .setId("S4")
+                .setCountry(Country.FR)
+                .add();
+        VoltageLevel vl4 = substation4.newVoltageLevel()
+                .setId("VL_4")
+                .setNominalV(bus2Vnom)
+                .setLowVoltageLimit(0)
+                .setHighVoltageLimit(2 * bus2Vnom)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        Bus bus4 = vl4.getBusBreakerView().newBus()
+                .setId("B4")
+                .add();
+        bus4.setV(bus2Vnom).setAngle(0.);
+
+        Substation substation25 = network.newSubstation()
+                .setId("S25")
+                .setCountry(Country.FR)
+                .add();
+        VoltageLevel vl25 = substation25.newVoltageLevel()
+                .setId("VL_25")
+                .setNominalV(bus2Vnom)
+                .setLowVoltageLimit(0)
+                .setHighVoltageLimit(2 * bus2Vnom)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        Bus bus25 = vl25.getBusBreakerView().newBus()
+                .setId("B25")
+                .add();
+        bus25.setV(bus2Vnom).setAngle(0.);
+
+        Substation substation5 = network.newSubstation()
+                .setId("S5")
+                .setCountry(Country.FR)
+                .add();
+        VoltageLevel vl5 = substation5.newVoltageLevel()
+                .setId("VL_5")
+                .setNominalV(bus2Vnom)
+                .setLowVoltageLimit(0)
+                .setHighVoltageLimit(2 * bus2Vnom)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        Bus bus5 = vl5.getBusBreakerView().newBus()
+                .setId("B5")
+                .add();
+        bus5.setV(bus2Vnom).setAngle(0.);
+
+        // we create a node in between to verify formula of short circuit in the middle of a line
+        Substation substation55 = network.newSubstation()
+                .setId("S55")
+                .setCountry(Country.FR)
+                .add();
+        VoltageLevel vl55 = substation55.newVoltageLevel()
+                .setId("VL_55")
+                .setNominalV(bus2Vnom)
+                .setLowVoltageLimit(0)
+                .setHighVoltageLimit(2 * bus2Vnom)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        Bus bus55 = vl55.getBusBreakerView().newBus()
+                .setId("B55")
+                .add();
+        bus55.setV(bus2Vnom).setAngle(0.);
+
+        Substation substation6 = network.newSubstation()
+                .setId("S6")
+                .setCountry(Country.FR)
+                .add();
+        VoltageLevel vl6 = substation6.newVoltageLevel()
+                .setId("VL_6")
+                .setNominalV(bus2Vnom)
+                .setLowVoltageLimit(0)
+                .setHighVoltageLimit(2 * bus2Vnom)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        Bus bus6 = vl6.getBusBreakerView().newBus()
+                .setId("B6")
+                .add();
+        bus6.setV(bus2Vnom).setAngle(0.);
+
+        vl1.newLoad()
+                .setId("LOAD_FEEDER") // we try to model the feeder through a load that will be transformed into an impedance
+                .setBus(bus1.getId())
+                .setP0(pEquivalentFeeder)
+                .setQ0(qEquivalentFeeder)
+                .add();
+
+        var t1 = substation123.newTwoWindingsTransformer()
+                .setId("T1")
+                .setVoltageLevel1(vl1.getId())
+                .setBus1(bus1.getId())
+                .setConnectableBus1(bus1.getId())
+                .setRatedU1(bus1Vnom)
+                .setVoltageLevel2(vl3.getId())
+                .setBus2(bus3.getId())
+                .setConnectableBus2(bus3.getId())
+                .setRatedU2(ratedV2)
+                .setR(rT1)
+                .setX(xT1)
+                .setG(0.0D)
+                .setB(0.0D)
+                .setRatedS(630.)
+                .add();
+        var t2 = substation123.newTwoWindingsTransformer()
+                .setId("T2")
+                .setVoltageLevel1(vl1.getId())
+                .setBus1(bus1.getId())
+                .setConnectableBus1(bus1.getId())
+                .setRatedU1(bus1Vnom)
+                .setVoltageLevel2(vl2.getId())
+                .setBus2(bus2.getId())
+                .setConnectableBus2(bus2.getId())
+                .setRatedU2(ratedV2)
+                .setR(rT2)
+                .setX(xT2)
+                .setG(0.0D)
+                .setB(0.0D)
+                .setRatedS(400.)
+                .add();
+
+        Line l25 = network.newLine()
+                .setId("L2_B2_B25")
+                .setVoltageLevel1(vl2.getId())
+                .setBus1(bus2.getId())
+                .setConnectableBus1(bus2.getId())
+                .setVoltageLevel2(vl25.getId())
+                .setBus2(bus25.getId())
+                .setConnectableBus2(bus25.getId())
+                .setR(rL2 * 0.3)
+                .setX(xL2 * 0.3)
+                .setG1(0.0)
+                .setB1(0.0)
+                .setG2(0.0)
+                .setB2(0.0)
+                .add();
+
+        Line l54 = network.newLine()
+                .setId("L2_B25_B4")
+                .setVoltageLevel1(vl25.getId())
+                .setBus1(bus25.getId())
+                .setConnectableBus1(bus25.getId())
+                .setVoltageLevel2(vl4.getId())
+                .setBus2(bus4.getId())
+                .setConnectableBus2(bus4.getId())
+                .setR(rL2 * 0.7)
+                .setX(xL2 * 0.7)
+                .setG1(0.0)
+                .setB1(0.0)
+                .setG2(0.0)
+                .setB2(0.0)
+                .add();
+
+        Line l1 = network.newLine()
+                .setId("L1_B3_B4")
+                .setVoltageLevel1(vl3.getId())
+                .setBus1(bus3.getId())
+                .setConnectableBus1(bus3.getId())
+                .setVoltageLevel2(vl4.getId())
+                .setBus2(bus4.getId())
+                .setConnectableBus2(bus4.getId())
+                .setR(rL1)
+                .setX(xL1)
+                .setG1(0.0)
+                .setB1(0.0)
+                .setG2(0.0)
+                .setB2(0.0)
+                .add();
+
+        Line l3 = network.newLine()
+                .setId("L3_B4_B5")
+                .setVoltageLevel1(vl4.getId())
+                .setBus1(bus4.getId())
+                .setConnectableBus1(bus4.getId())
+                .setVoltageLevel2(vl5.getId())
+                .setBus2(bus5.getId())
+                .setConnectableBus2(bus5.getId())
+                .setR(rL3)
+                .setX(xL3)
+                .setG1(0.0)
+                .setB1(0.0)
+                .setG2(0.0)
+                .setB2(0.0)
+                .add();
+
+        Line l455 = network.newLine()
+                .setId("L455_B5_B55")
+                .setVoltageLevel1(vl5.getId())
+                .setBus1(bus5.getId())
+                .setConnectableBus1(bus5.getId())
+                .setVoltageLevel2(vl55.getId())
+                .setBus2(bus55.getId())
+                .setConnectableBus2(bus55.getId())
+                .setR(rL4 * 0.3)
+                .setX(xL4 * 0.3)
+                .setG1(0.0)
+                .setB1(0.0)
+                .setG2(0.0)
+                .setB2(0.0)
+                .add();
+
+        Line l456 = network.newLine()
+                .setId("L4_B55_B6")
+                .setVoltageLevel1(vl55.getId())
+                .setBus1(bus55.getId())
+                .setConnectableBus1(bus55.getId())
+                .setVoltageLevel2(vl6.getId())
+                .setBus2(bus6.getId())
+                .setConnectableBus2(bus6.getId())
+                .setR(rL4 * 0.7)
+                .setX(xL4 * 0.7)
+                .setG1(0.0)
+                .setB1(0.0)
+                .setG2(0.0)
+                .setB2(0.0)
+                .add();
+
+        //additional data
+
+        l1.newExtension(LineFortescueAdder.class)
+                .withRz(coeffRoL1 * rL1)
+                .withXz(coeffXoL1 * xL1)
+                .add();
+        l25.newExtension(LineFortescueAdder.class)
+                .withRz(coeffRoL2 * rL2 * 0.3)
+                .withXz(coeffXoL2 * xL2 * 0.3)
+                .add();
+        l54.newExtension(LineFortescueAdder.class)
+                .withRz(coeffRoL2 * rL2 * 0.7)
+                .withXz(coeffXoL2 * xL2 * 0.7)
+                .add();
+        l3.newExtension(LineFortescueAdder.class)
+                .withRz(coeffRoL3 * rL3)
+                .withXz(coeffXoL3 * xL3)
+                .add();
+        /*l4.newExtension(LineFortescueAdder.class)
+                .withRz(coeffRoL4 * rL4)
+                .withXz(coeffXoL4 * xL4)
+                .add();*/
+        l455.newExtension(LineFortescueAdder.class)
+                .withRz(coeffRoL4 * rL4 * 0.3)
+                .withXz(coeffXoL4 * xL4 * 0.3)
+                .add();
+        l456.newExtension(LineFortescueAdder.class)
+                .withRz(coeffRoL4 * rL4 * 0.7)
+                .withXz(coeffXoL4 * xL4 * 0.7)
+                .add();
+
+        t1.newExtension(TwoWindingsTransformerFortescueAdder.class)
+                .withRz(coeffRoT1 * rT1)
+                .withXz(coeffXoT1 * xT1)
+                .withConnectionType1(WindingConnectionType.DELTA)
+                .withConnectionType2(WindingConnectionType.Y_GROUNDED)
+                .add();
+        t2.newExtension(TwoWindingsTransformerFortescueAdder.class)
+                .withRz(coeffRoT2 * rT2)
+                .withXz(coeffXoT2 * xT2)
+                .withConnectionType1(WindingConnectionType.DELTA)
+                .withConnectionType2(WindingConnectionType.Y_GROUNDED)
+                .add();
+
+        return network;
+    }
+
 }
 
