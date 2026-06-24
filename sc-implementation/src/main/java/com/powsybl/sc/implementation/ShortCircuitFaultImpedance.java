@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022, Jean-Baptiste Heyberger & Geoffroy Jamgotchian
+ * Copyright (c) 2026, Jean-Baptiste Heyberger
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -14,11 +14,11 @@ import org.apache.commons.math3.complex.Complex;
  */
 public class ShortCircuitFaultImpedance {
 
-    private Complex zg; // Fault impedance to the ground
+    private final Complex zg; // Fault impedance to the ground
 
-    private Complex zb; // Fault impedance linked to the second phase
+    private final Complex zb; // Fault impedance linked to the second phase
 
-    private Complex zc; // Fault impedance linked to the third phase
+    private final Complex zc; // Fault impedance linked to the third phase
 
     public ShortCircuitFaultImpedance(Complex zg, Complex zb, Complex zc) {
         this.zg = zg;

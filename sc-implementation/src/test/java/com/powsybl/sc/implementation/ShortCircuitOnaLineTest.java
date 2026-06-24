@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2026, Jean-Baptiste Heyberger
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * SPDX-License-Identifier: MPL-2.0
+ */
 package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.Network;
@@ -16,6 +23,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
+ */
 public class ShortCircuitOnaLineTest {
 
     @Test
@@ -191,7 +201,7 @@ public class ShortCircuitOnaLineTest {
         assertEquals(7.284963377037304, val.get(2) * coefPeakc.get(2) * Math.sqrt(2.), 0.00001);
     }
 
-    public Complex getZa(Complex zth1, Complex zth2, Complex zl) {
+    public static Complex getZa(Complex zth1, Complex zth2, Complex zl) {
         Complex denomA = zth2.subtract(zth1).add(zl).multiply(2.);
         Complex deltaA = zl.multiply(zl).add(zth1.multiply(zth2).multiply(4.)).sqrt();
         Complex tmp1A = zth1.multiply(2.).subtract(zl);
@@ -201,11 +211,11 @@ public class ShortCircuitOnaLineTest {
         return za1;
     }
 
-    public Complex getZb(Complex zth1, Complex zth2, Complex zl) {
+    public static Complex getZb(Complex zth1, Complex zth2, Complex zl) {
         return getZa(zth2, zth1, zl);
     }
 
-    public Complex getZthLine(Complex zth1, Complex zth2, Complex zl, double percentage) {
+    public static Complex getZthLine(Complex zth1, Complex zth2, Complex zl, double percentage) {
         Complex za = getZa(zth1, zth2, zl);
         Complex zb = getZb(zth1, zth2, zl);
         // Zth = (percent * Zl + Za) // ((1-percent) * Zl + Zb)

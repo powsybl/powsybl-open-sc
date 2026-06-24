@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2025, Jean-Baptiste Heyberger & Geoffroy Jamgotchian
+ * Copyright (c) 2026, Jean-Baptiste Heyberger
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -15,6 +15,8 @@ import com.powsybl.shortcircuit.FortescueValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+
 import static com.powsybl.sc.extensions.LoadShortCircuit.EPSILON;
 
 /**
@@ -24,10 +26,10 @@ public class ShortCircuitResultPrinter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitResultPrinter.class);
 
-    private ShortCircuitResult shortCircuitResult;
+    private final ShortCircuitResult shortCircuitResult;
 
-    ShortCircuitResultPrinter(ShortCircuitResult scr) {
-        shortCircuitResult = scr;
+    ShortCircuitResultPrinter(ShortCircuitResult shortCircuitResult) {
+        this.shortCircuitResult = Objects.requireNonNull(shortCircuitResult);
     }
 
     public void printEquivalentDirectImpedancePu() {

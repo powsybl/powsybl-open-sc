@@ -344,9 +344,8 @@ public class ImpedanceLinearResolution {
         //  - En_y_k is the vector t[ 0 0 ... 0 0 0 1 0 0 ... 0 0 ] where 1 corresponds to the line/column of the bus k where the imaginary part of Z matrix is modelled
 
         // Step 1 : build the extraction vectors
-        try (AdmittanceMatrix yd = new AdmittanceMatrix(equationSystem, parameters.getMatrixFactory(), network)) {
-
-            AdmittanceMatrix yd20hz = new AdmittanceMatrix(equationSystem20hz, parameters.getMatrixFactory(), network);
+        try (AdmittanceMatrix yd = new AdmittanceMatrix(equationSystem, parameters.getMatrixFactory(), network);
+             AdmittanceMatrix yd20hz = new AdmittanceMatrix(equationSystem20hz, parameters.getMatrixFactory(), network)) {
 
             DenseMatrix en = new DenseMatrix(yd.getRowCount(), 2 * inputBusses.size());
             DenseMatrix en20hz = new DenseMatrix(yd.getRowCount(), 2 * inputBusses.size());
