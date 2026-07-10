@@ -10,10 +10,7 @@ package com.powsybl.sc.util;
 import com.powsybl.openloadflow.equations.AbstractElementEquationTerm;
 import com.powsybl.openloadflow.equations.Variable;
 import com.powsybl.openloadflow.equations.VariableSet;
-import com.powsybl.openloadflow.network.ElementType;
-import com.powsybl.openloadflow.network.LfBranch;
-import com.powsybl.openloadflow.network.LfBus;
-import com.powsybl.openloadflow.network.PiModel;
+import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.util.extensions.ScTransfo3wKt;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
 
@@ -61,7 +58,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
     protected double freqCoef;
 
-    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, AdmittanceEquationSystem.FrequencyType frequencyType) {
+    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
         super(branch);
         Objects.requireNonNull(bus1);
         Objects.requireNonNull(bus2);
@@ -83,7 +80,14 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         if (piModel.getX() == 0) {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has reactance equal to zero");
         }
-        rho = piModel.getR1();
+        // Take the rho of the neutral position (model(0)) of tapChanger if isWithNeutralPosition set to True
+        if (isWithNeutralPosition
+                && branch.getBranchType() == LfBranch.BranchType.TRANSFO_2 //TODO: TRANSFO_3
+                && piModel instanceof PiModelArray piModelArray) {
+            rho = piModelArray.getModel(0).getR1();
+        } else {
+            rho = piModel.getR1();
+        }
         if (piModel.getZ() == 0) {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
         }

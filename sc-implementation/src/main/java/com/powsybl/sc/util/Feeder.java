@@ -7,6 +7,7 @@
  */
 package com.powsybl.sc.util;
 
+import com.powsybl.iidm.network.ThreeSides;
 import org.apache.commons.math3.complex.Complex;
 
 /**
@@ -15,26 +16,36 @@ import org.apache.commons.math3.complex.Complex;
 public class Feeder {
 
     //Feeder class is used to post process the results of a short circuit computation to get the feeder contribution in short-circuit current
-    public Feeder(Complex zFeeder, String id, Feeder.FeederType feederType) {
-
+    public Feeder(Complex zFeeder, String id, Feeder.FeederType feederType, ThreeSides side) {
         this.z = zFeeder;
         this.id = id;
         this.feederType = feederType;
+        this.side = side;
+    }
 
+    public Feeder(Complex zFeeder, String id, Feeder.FeederType feederType) {
+        this(zFeeder, id, feederType, null);
     }
 
     public enum FeederType {
         GENERATOR,
         SHUNT,
         CONTROLLED_SHUNT,
-        LOAD;
+        LOAD,
+        BRANCH
     }
 
-    private Complex z;
+    private final Complex z;
 
-    private String id; // id in LfNetwork
+    private final String id; // id in LfNetwork
 
-    private Feeder.FeederType feederType;
+    private final Feeder.FeederType feederType;
+
+    private final ThreeSides side;
+
+    public ThreeSides getSide() {
+        return side;
+    }
 
     public Complex getZ() {
         return z;

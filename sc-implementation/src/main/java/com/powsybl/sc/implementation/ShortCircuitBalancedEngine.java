@@ -30,6 +30,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
     @Override
     public void run() { //can handle both selective and systematic analysis with one single matrix inversion
         LfNetwork lfNetwork = lfNetworks.get(0);
+        fillInitialVoltages();
 
         // building a contingency list with all voltage levels
         if (parameters.getAnalysisType() == ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC) {
@@ -39,8 +40,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         solverFaultList = buildFaultListsFromInputs().getKey();
 
         ImpedanceLinearResolutionParameters linearResolutionParameters = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
-                parameters.getMatrixFactory(), solverFaultList, parameters.isVoltageUpdate(), getAdmittanceVoltageProfileTypeFromParam(),
-                getAdmittancePeriodTypeFromParam(), AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN, parameters.isIgnoreShunts());
+                parameters.getMatrixFactory(), solverFaultList, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN, initialVoltages);
 
         ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(lfNetwork, linearResolutionParameters);
 

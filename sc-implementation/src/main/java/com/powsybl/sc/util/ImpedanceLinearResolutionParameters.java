@@ -9,6 +9,8 @@ package com.powsybl.sc.util;
 
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
+import com.powsybl.sc.implementation.ShortCircuitEngineParameters;
+import org.apache.commons.math3.complex.Complex;
 
 import java.util.List;
 import java.util.Objects;
@@ -17,17 +19,6 @@ import java.util.Objects;
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class ImpedanceLinearResolutionParameters {
-
-    /*public enum AdmittanceLinearVoltageProfileType {
-        CALCULATED, // use the computed values at nodes to compute Zth and Eth
-        NOMINAL; // use the nominal voltage values at nodes to get Zth and Eth
-    }
-
-    public enum AdmittanceLinearPeriodType {
-        ADM_SUB_TRANSIENT, //uses subTransient parameters x"d
-        ADM_TRANSIENT,     //uses transient parameters x'd
-        ADM_STEADY_STATE;
-    }*/
 
     public static final double XSUBTRANSIENT = 0.2; //default value if data not available
 
@@ -43,31 +34,44 @@ public class ImpedanceLinearResolutionParameters {
 
     private final boolean ignoreShunts;
 
-    private final AdmittanceEquationSystem.AdmittanceVoltageProfileType voltageProfileType;
-
     private final AdmittanceEquationSystem.AdmittancePeriodType periodType;
 
     private final AdmittanceEquationSystem.AdmittanceType admittanceType;
 
-    public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> calculationLocations, boolean voltageUpdate,
-                                               AdmittanceEquationSystem.AdmittanceVoltageProfileType theveninVoltageProfileType, AdmittanceEquationSystem.AdmittancePeriodType theveninPeriodType, AdmittanceEquationSystem.AdmittanceType admittanceType,
-                                               boolean theveninIgnoreShunts) {
+    private final List<Complex> initialVoltages;
+
+    private final boolean isWithNeutralPosition;
+
+    public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> calculationLocations, ShortCircuitEngineParameters scParameters,
+                                               AdmittanceEquationSystem.AdmittanceType admittanceType, List<Complex> initialVoltages) {
         this.acLoadFlowParameters = Objects.requireNonNull(acLoadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.calculationLocations = Objects.requireNonNull(calculationLocations);
-        this.voltageUpdate = voltageUpdate;
-        this.ignoreShunts = theveninIgnoreShunts;
-        this.voltageProfileType = theveninVoltageProfileType;
-        this.periodType = theveninPeriodType;
+        this.voltageUpdate = scParameters.isVoltageUpdate();
+        this.ignoreShunts = scParameters.isIgnoreShunts();
+        this.periodType = getAdmittancePeriodTypeFromParam(scParameters);
         this.admittanceType = admittanceType;
+        this.initialVoltages = initialVoltages;
+        this.isWithNeutralPosition = scParameters.isWithNeutralPosition();
     }
 
-    public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> calculationLocations, boolean voltageUpdate,
-                                               AdmittanceEquationSystem.AdmittanceVoltageProfileType theveninVoltageProfileType, AdmittanceEquationSystem.AdmittancePeriodType theveninPeriodType, AdmittanceEquationSystem.AdmittanceType admittanceType,
-                                               boolean theveninIgnoreShunts, List<CalculationLocation> biphasedVoltageLevelLocation) {
-        this(acLoadFlowParameters, matrixFactory, calculationLocations, voltageUpdate, theveninVoltageProfileType, theveninPeriodType, admittanceType, theveninIgnoreShunts);
+    public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> calculationLocations, ShortCircuitEngineParameters scParameters,
+                                               AdmittanceEquationSystem.AdmittanceType admittanceType, List<CalculationLocation> biphasedVoltageLevelLocation, List<Complex> initialVoltages) {
+        this(acLoadFlowParameters, matrixFactory, calculationLocations, scParameters, admittanceType, initialVoltages);
         this.biphasedCalculationLocations = biphasedVoltageLevelLocation;
+    }
 
+    public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> calculationLocations, TheveninEquivalentParameters thParameters,
+                                               AdmittanceEquationSystem.AdmittanceType admittanceType, List<Complex> initialVoltages) {
+        this.acLoadFlowParameters = Objects.requireNonNull(acLoadFlowParameters);
+        this.matrixFactory = Objects.requireNonNull(matrixFactory);
+        this.calculationLocations = Objects.requireNonNull(calculationLocations);
+        this.voltageUpdate = thParameters.isVoltageUpdate();
+        this.ignoreShunts = thParameters.isTheveninIgnoreShunts();
+        this.periodType = getAdmittancePeriodTypeFromParamThevenin(thParameters);
+        this.admittanceType = admittanceType;
+        this.initialVoltages = initialVoltages;
+        this.isWithNeutralPosition = false;
     }
 
     public AcLoadFlowParameters getAcLoadFlowParameters() {
@@ -90,10 +94,6 @@ public class ImpedanceLinearResolutionParameters {
         return ignoreShunts;
     }
 
-    public AdmittanceEquationSystem.AdmittanceVoltageProfileType getTheveninVoltageProfileType() {
-        return voltageProfileType;
-    }
-
     public List<CalculationLocation> getBiphasedCalculationLocations() {
         return biphasedCalculationLocations;
     }
@@ -104,5 +104,29 @@ public class ImpedanceLinearResolutionParameters {
 
     public AdmittanceEquationSystem.AdmittanceType getAdmittanceType() {
         return admittanceType;
+    }
+
+    public Complex getInitialVoltage(int num) {
+        return initialVoltages.get(num);
+    }
+
+    public boolean isWithNeutralPosition() {
+        return isWithNeutralPosition;
+    }
+
+    private AdmittanceEquationSystem.AdmittancePeriodType getAdmittancePeriodTypeFromParam(ShortCircuitEngineParameters scParameters) {
+        return switch (scParameters.getPeriodType()) {
+            case STEADY_STATE -> AdmittanceEquationSystem.AdmittancePeriodType.ADM_STEADY_STATE;
+            case SUB_TRANSIENT -> AdmittanceEquationSystem.AdmittancePeriodType.ADM_SUB_TRANSIENT;
+            case TRANSIENT -> AdmittanceEquationSystem.AdmittancePeriodType.ADM_TRANSIENT;
+        };
+    }
+
+    private AdmittanceEquationSystem.AdmittancePeriodType getAdmittancePeriodTypeFromParamThevenin(TheveninEquivalentParameters theParameters) {
+        return switch (theParameters.getTheveninPeriodType()) {
+            case THEVENIN_STEADY_STATE -> AdmittanceEquationSystem.AdmittancePeriodType.ADM_STEADY_STATE;
+            case THEVENIN_SUB_TRANSIENT -> AdmittanceEquationSystem.AdmittancePeriodType.ADM_SUB_TRANSIENT;
+            case THEVENIN_TRANSIENT -> AdmittanceEquationSystem.AdmittancePeriodType.ADM_TRANSIENT;
+        };
     }
 }
