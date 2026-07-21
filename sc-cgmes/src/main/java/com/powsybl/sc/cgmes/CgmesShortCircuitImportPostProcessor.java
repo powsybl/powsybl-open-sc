@@ -9,6 +9,7 @@ package com.powsybl.sc.cgmes;
 
 import com.google.auto.service.AutoService;
 import com.powsybl.cgmes.conversion.CgmesImportPostProcessor;
+import com.powsybl.cgmes.model.CgmesModel;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.*;
@@ -208,7 +209,7 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
                         .withXz(x0)
                         .add();
             } else {
-                DanglingLine danglingLine = network.getDanglingLine(id);
+                BoundaryLine danglingLine = network.getBoundaryLine(id);
                 if (danglingLine != null) {
                     // FIXME LineShortCircuitAdder should be compatible with dangling lines
                     // TODO
@@ -375,14 +376,14 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
     }
 
     @Override
-    public void process(Network network, TripleStore tripleStore) {
+    public void process(Network network, CgmesModel cgmesModel) {
         LOGGER.info("Loading CGMES short circuit data...");
-        processSynchronousMachines(network, tripleStore);
-        processAsynchronousMachines(network, tripleStore);
-        processAcLineSegments(network, tripleStore);
+        processSynchronousMachines(network, cgmesModel.tripleStore());
+        processAsynchronousMachines(network, cgmesModel.tripleStore());
+        processAcLineSegments(network, cgmesModel.tripleStore());
         Map<TwoWindingsTransformerFortescue, Pair<Double, Double>> tmpExtensionToRoXo = new HashMap<>();
-        processPowerTransformerEnds(network, tripleStore, tmpExtensionToRoXo);
-        processPowerTransformers(network, tripleStore, tmpExtensionToRoXo);
-        processExternalNetworkInjection(network, tripleStore);
+        processPowerTransformerEnds(network, cgmesModel.tripleStore(), tmpExtensionToRoXo);
+        processPowerTransformers(network, cgmesModel.tripleStore(), tmpExtensionToRoXo);
+        processExternalNetworkInjection(network, cgmesModel.tripleStore());
     }
 }

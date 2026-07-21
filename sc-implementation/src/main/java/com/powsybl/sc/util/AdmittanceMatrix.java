@@ -63,7 +63,7 @@ public class AdmittanceMatrix implements AutoCloseable {
             if (isSubAdmittance) {
                 int nbRow = 0;
                 int nbCol = 0;
-                for (var eq : equationSystem.getIndex().getSortedEquationsToSolve()) {
+                for (var eq : equationSystem.getIndex().getSortedSingleEquationsToSolve()) {
                     int numBusEq = eq.getElementNum();
                     if (numRowBusses.contains(numBusEq)) {
                         eqToRowNum.put(eq, nbRow++);
@@ -136,7 +136,7 @@ public class AdmittanceMatrix implements AutoCloseable {
     }
 
     public int getRowCount() {
-        int rowCount = equationSystem.getIndex().getSortedEquationsToSolve().size();
+        int rowCount = equationSystem.getIndex().getSortedSingleEquationsToSolve().size();
         if (admSys.isSubAdmittance) {
             rowCount = admSys.eqToRowNum.size();
         }
@@ -182,7 +182,7 @@ public class AdmittanceMatrix implements AutoCloseable {
         int estimatedNonZeroValueCount = rowCount * 3;
         matrix = matrixFactory.create(columnCount, rowCount, estimatedNonZeroValueCount); //matrix is the transposed of the standard admittance matrix
 
-        for (var eq : equationSystem.getIndex().getSortedEquationsToSolve()) {
+        for (var eq : equationSystem.getIndex().getSortedSingleEquationsToSolve()) {
             int yRow = eq.getColumn(); // equations are the rows of Y (and the columns of "matrix", the transposed of Y)
             if (admSys.isSubAdmittance && admSys.eqToRowNum.containsKey(eq)) {
                 yRow = admSys.eqToRowNum.get(eq); // the matrix is the transposed of the admittance matrix as equations represent the columns and the vars represent the rows

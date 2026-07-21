@@ -20,7 +20,7 @@ import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.sc.util.FeedersAtBusResult;
-import com.powsybl.security.LimitViolation;
+import com.powsybl.contingency.violations.LimitViolation;
 import com.powsybl.shortcircuit.*;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;

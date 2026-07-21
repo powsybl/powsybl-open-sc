@@ -249,24 +249,10 @@ public final class AdmittanceEquationSystem {
 
     public static EquationSystem<VariableType, EquationType> create(LfNetwork network, VariableSet<VariableType> variableSet,
                                                                     AdmittanceType admittanceType, AdmittanceVoltageProfileType admittanceVoltageProfileType,
-                                                                    AcLoadFlowParameters acLoadFlowParameters, FrequencyType frequencyType) {
-
-        // Following data Not needed for reduction methods
-        AdmittanceEquationSystem.AdmittancePeriodType admittancePeriodType = AdmittanceEquationSystem.AdmittancePeriodType.ADM_TRANSIENT;
-        FeedersAtNetwork equationsSystemFeeders = new FeedersAtNetwork();
-        boolean isShuntsIgnore = false;
-
-        return create(network, variableSet,
-                admittanceType, admittanceVoltageProfileType, admittancePeriodType, isShuntsIgnore,
-                equationsSystemFeeders, acLoadFlowParameters, frequencyType);
-    }
-
-    public static EquationSystem<VariableType, EquationType> create(LfNetwork network, VariableSet<VariableType> variableSet,
-                                                                    AdmittanceType admittanceType, AdmittanceVoltageProfileType admittanceVoltageProfileType,
                                                                     AdmittancePeriodType admittancePeriodType, boolean isShuntsIgnore, FeedersAtNetwork feeders,
                                                                     AcLoadFlowParameters acLoadFlowParameters, FrequencyType frequencyType) {
 
-        EquationSystem<VariableType, EquationType> equationSystem = new EquationSystem<>();
+        EquationSystem<VariableType, EquationType> equationSystem = new EquationSystem<>(EquationType.class, network, variableSet);
 
         if (admittanceType == AdmittanceType.ADM_ADMIT) {
             try (AcLoadFlowContext context = new AcLoadFlowContext(network, acLoadFlowParameters)) {

@@ -73,7 +73,7 @@ public final class ShortCircuitExtensions {
                         addTransfo3Extension(network, lfBranch, shortCircuitNormExtensions);
                         break;
 
-                    case DANGLING_LINE:
+                    case BOUNDARY_LINE:
                         // FIXME something to do?
                         break;
 
