@@ -18,6 +18,7 @@ import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,19 +41,19 @@ public class ShortCircuitOnaLineTest {
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", "B3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "F2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "F2", "B4", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault("B6", "F3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc3 = new ShortCircuitFault("B6", "F3", "B6", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault("B5", "F4", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc4 = new ShortCircuitFault("B5", "F4", "B5", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc4);
-        ShortCircuitFault sc5 = new ShortCircuitFault("B55", "F5", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc5 = new ShortCircuitFault("B55", "F5", "B55", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc5);
-        ShortCircuitFault sc6 = new ShortCircuitFault("B25", "F6", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc6 = new ShortCircuitFault("B25", "F6", "B25", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc6);
-        ShortCircuitFault sc7 = new ShortCircuitFault("B2", "F7", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc7 = new ShortCircuitFault("B2", "F7", "B2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc7);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
@@ -150,19 +151,19 @@ public class ShortCircuitOnaLineTest {
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", "B3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "F2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "F2", "B4", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault("B6", "F3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc3 = new ShortCircuitFault("B6", "F3", "B6", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault("B5", "F4", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc4 = new ShortCircuitFault("B5", "F4", "B5", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc4);
-        ShortCircuitFault sc5 = new ShortCircuitFault("B55", "F5", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc5 = new ShortCircuitFault("B55", "F5", "B55", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc5);
-        ShortCircuitFault sc6 = new ShortCircuitFault("B25", "F6", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc6 = new ShortCircuitFault("B25", "F6", "B25", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc6);
-        ShortCircuitFault sc7 = new ShortCircuitFault("B2", "F7", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc7 = new ShortCircuitFault("B2", "F7", "B2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc7);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
@@ -171,34 +172,35 @@ public class ShortCircuitOnaLineTest {
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
-        List<Double> val = new ArrayList<>();
-        List<Double> coefPeakb = new ArrayList<>();
-        List<Double> coefPeakc = new ArrayList<>();
-        List<Complex> zth = new ArrayList<>();
-        List<Double> rOverX = new ArrayList<>();
+        Map<ShortCircuitFault, Double> val = new HashMap<>();
+        Map<ShortCircuitFault, Double> coefPeakb = new HashMap<>();
+        Map<ShortCircuitFault, Double> coefPeakc = new HashMap<>();
+        Map<ShortCircuitFault, Complex> zth = new HashMap<>();
+        Map<ShortCircuitFault, Double> rOverX = new HashMap<>();
         LfNetwork lfn = scbEngine.resultsPerFault.get(sc1).getLfNetwork();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            val.add(res.getValue().getIk().abs());
-            coefPeakb.add(res.getValue().getPeakCoefb());
-            coefPeakc.add(res.getValue().getPeakCoefc());
-            zth.add(res.getValue().getZd());
-            rOverX.add(res.getValue().getMaxRoverX());
+            ShortCircuitFault shortCircuitFault = res.getKey();
+            val.put(shortCircuitFault, res.getValue().getIk().abs());
+            coefPeakb.put(shortCircuitFault, res.getValue().getPeakCoefb());
+            coefPeakc.put(shortCircuitFault, res.getValue().getPeakCoefc());
+            zth.put(shortCircuitFault, res.getValue().getZd());
+            rOverX.put(shortCircuitFault, res.getValue().getMaxRoverX());
         }
 
         // and I"k = 1/sqrt(3) * cmax * Un /(Zeq) and expected I"k = 35.64 kA with some approximations on the impedance values
-        assertEquals(35.704355482441656, val.get(0), 0.00001);
-        assertEquals(34.98241168878666, val.get(1), 0.00001);
-        assertEquals(4.8337057506726575, val.get(2), 0.00001);
+        assertEquals(35.704355482441656, val.get(sc1), 0.00001);
+        assertEquals(34.98241168878666, val.get(sc2), 0.00001);
+        assertEquals(4.8337057506726575, val.get(sc3), 0.00001);
 
         // Peak current method b
-        assertEquals(72.94205586372965, val.get(0) * coefPeakb.get(0) * Math.sqrt(2.), 0.00001);
-        assertEquals(70.79940064409273, val.get(1) * coefPeakb.get(1) * Math.sqrt(2.), 0.00001);
-        assertEquals(8.297665898056362, val.get(2) * coefPeakb.get(2) * Math.sqrt(2.), 0.00001);
+        assertEquals(72.94205586372965, val.get(sc1) * coefPeakb.get(sc1) * Math.sqrt(2.), 0.00001);
+        assertEquals(70.79940064409273, val.get(sc2) * coefPeakb.get(sc2) * Math.sqrt(2.), 0.00001);
+        assertEquals(8.297665898056362, val.get(sc3) * coefPeakb.get(sc3) * Math.sqrt(2.), 0.00001);
 
         // Peak current method c
-        assertEquals(71.86772021431725, val.get(0) * coefPeakc.get(0) * Math.sqrt(2.), 0.00001); // use of general forumla to compute Kc
-        assertEquals(68.63980536534321, val.get(1) * coefPeakc.get(1) * Math.sqrt(2.), 0.00001);
-        assertEquals(7.284963377037304, val.get(2) * coefPeakc.get(2) * Math.sqrt(2.), 0.00001);
+        assertEquals(71.86772021431725, val.get(sc1) * coefPeakc.get(sc1) * Math.sqrt(2.), 0.00001); // use of general forumla to compute Kc
+        assertEquals(68.63980536534321, val.get(sc2) * coefPeakc.get(sc2) * Math.sqrt(2.), 0.00001);
+        assertEquals(7.284963377037304, val.get(sc3) * coefPeakc.get(sc3) * Math.sqrt(2.), 0.00001);
     }
 
     public static Complex getZa(Complex zth1, Complex zth2, Complex zl) {

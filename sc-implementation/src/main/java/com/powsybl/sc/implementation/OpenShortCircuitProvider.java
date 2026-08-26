@@ -11,6 +11,7 @@ import com.google.auto.service.AutoService;
 import com.google.common.base.Stopwatch;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.Bus;
+import com.powsybl.iidm.network.Line;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
@@ -178,10 +179,6 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         for (Fault fault : faults) {
             ShortCircuitFault.ShortCircuitType scType = ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND; // Default type
-            if (fault.getType() == Fault.Type.BRANCH) {
-                LOGGER.warn("Short circuit of type BRANCH not yet supported, fault: {} is ignored", fault.getId());
-                continue;
-            }
 
             if (fault.getFaultType() == Fault.FaultType.SINGLE_PHASE) {
                 existUnbalancedFaults = true;
@@ -200,18 +197,28 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             }
 
             // TODO : see how to get lfBus from iidm Bus
-            String elementId = fault.getElementId();
 
             Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
             ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
-            Bus bus = network.getBusBreakerView().getBus(elementId);
-            String busId = bus.getId();
-            ShortCircuitFault sc = new ShortCircuitFault(busId, busId, scz, scType);
+
+            ShortCircuitFault sc;
+            String elementId = fault.getElementId();
+
+            if (fault instanceof BranchFault branchFault) {
+                Line line = network.getLine(elementId);
+
+                String bus1Id = line.getTerminal1().getBusBreakerView().getBus().getId();
+                String bus2Id = line.getTerminal2().getBusBreakerView().getBus().getId();
+
+                sc = new ShortCircuitFault(bus1Id, bus2Id, branchFault.getProportionalLocation(), branchFault.getId(), elementId, scz, scType);
+            } else {
+                Bus bus = network.getBusBreakerView().getBus(elementId);
+
+                sc = new ShortCircuitFault(bus.getId(), fault.getId(), elementId, scz, scType);
+            }
+
             balancedFaultsList.add(sc);
-
-            // TODO improve:
             scFaultToFault.put(sc, fault);
-
         }
         return new Pair<>(existBalancedFaults, existUnbalancedFaults);
     }
