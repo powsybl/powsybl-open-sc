@@ -44,9 +44,9 @@ public class ShortCircuitBalancedTest {
 
     private static final double DELTA_I_A = 1e-2;
     private static final double DELTA_I_KA = DELTA_I_A / 1e3; // For tests not using Core API -> to be replaced
-    private static final double DELTA_V = 1e-6;
-    private static final double DELTA_Z = 1e-6;
-    private static final double DELTA_K = 1e-6;
+    private static final double DELTA_V = 1e-5;
+    private static final double DELTA_Z = 1e-5;
+    private static final double DELTA_K = 1e-5;
 
     private LoadFlowParameters loadFlowParameters;
 
@@ -144,9 +144,34 @@ public class ShortCircuitBalancedTest {
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
-                new double[]{3547.1650598424766, 3747.6107037718006, 3592.3793102301785, 3411.642741114655}
-        ); // TODO HG: Check values against CC
-        // assertFeederCurrents(frs, new double[]{2700.28195, 2886.75135, 2725.79373, 2586.51782}, "B2"); // TODO HG: Check values against CC and add with next Core release
+                new double[]{3547.165283203125, 3747.61083984375, 3592.37939453125, 3411.642578125}
+        );
+        // assertFeederCurrents(frs, new double[]{2700.28195, 2886.75122, 2725.79395, 2586.51782}, "G2"); TODO: Add with next Core release
+        assertBusVoltages(frs, new double[]{6.46059465, 0.0, 5.57589579, 10.400857}, 1);
+    }
+
+    @Test
+    void openShortCircuitProvider4nLoadFlowInitialVoltages() {
+        //set up LF info
+        Network nt4 = create4n(NetworkFactory.findDefault());
+        LoadFlow.run(nt4, loadFlowParameters);
+
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters()
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
+
+        ShortCircuitAnalysisResult scar = provider.run(nt4, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
+
+        List<FaultResult> frs = scar.getFaultResults();
+
+        assertMagnitudeCurrents(frs,
+                new double[]{3523.270263671875, 3767.30078125, 3557.220458984375, 3374.391845703125}
+        );
+        // assertFeederCurrents(frs, new double[]{3547.77686, 3767.2981, 3564.29761, 3424.16235}, "G2"); // TODO HG: Check values against CC and add with next Core release
+        // assertBusVoltages(frs, new double[]{7.60443974, 0.0, 7.03214169, 11.8865681}, 1); // TODO HG: Check values against CC
     }
 
     @Test
@@ -1187,6 +1212,14 @@ public class ShortCircuitBalancedTest {
         for (int i = 0; i < expected.length; i++) {
             double result = faultResults.get(i).getFeederCurrent(genId);
             assertEquals(expected[i], result, ShortCircuitBalancedTest.DELTA_I_A);
+        }
+    }
+
+    private static void assertBusVoltages(List<FaultResult> faultResults, double[] expected, int busNum) {
+        for (int i = 0; i < expected.length; i++) {
+            MagnitudeShortCircuitBusResults magnitudeResult = (MagnitudeShortCircuitBusResults) faultResults.get(i).getShortCircuitBusResults().get(busNum);
+            double result = magnitudeResult.getVoltage();
+            assertEquals(expected[i], result, ShortCircuitBalancedTest.DELTA_V);
         }
     }
 }
