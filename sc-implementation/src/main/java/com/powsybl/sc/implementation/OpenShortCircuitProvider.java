@@ -31,6 +31,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.powsybl.openloadflow.util.PerUnit.SB;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -193,18 +195,26 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 continue;
             }
 
-            // TODO : transform parallel input into a series input
-            if (fault.getConnectionType() == Fault.ConnectionType.PARALLEL) {
-                LOGGER.warn("Short circuit connection of type PARALLEL not yet supported, fault: {} is ignored", fault.getId());
-                continue;
+            double rFault = fault.getRToGround();
+            double xFault = fault.getXToGround();
+            Complex zFaultToGround;
+            if (fault.getConnectionType() == Fault.ConnectionType.SERIES) {
+                // Zf = r + jx
+                zFaultToGround = new Complex(rFault, xFault);
+            } else {
+                // Zf = (r*jx)(r+jx) for ConnectionType.PARALLEL
+                zFaultToGround = new Complex(rFault, 0)
+                        .multiply(new Complex(0, xFault))
+                        .divide(new Complex(rFault, xFault));
             }
-
             // TODO : see how to get lfBus from iidm Bus
             String elementId = fault.getElementId();
-
-            Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
-            ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
             Bus bus = network.getBusBreakerView().getBus(elementId);
+            double vnomVl = bus.getVoltageLevel().getNominalV();
+
+            // Convert fault impedance from Ohm into PerUnit
+            Complex zFaultToGroundPerUnit = zFaultToGround.divide(new Complex(vnomVl * vnomVl / SB, 0));
+            ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGroundPerUnit);
             String busId = bus.getId();
             ShortCircuitFault sc = new ShortCircuitFault(busId, busId, scz, scType);
             balancedFaultsList.add(sc);

@@ -22,6 +22,7 @@ import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.sc.util.extensions.ThreeWindingsTransformerNorm;
 import com.powsybl.shortcircuit.*;
 import org.apache.commons.math3.complex.Complex;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -421,7 +422,44 @@ public class ShortCircuitBalancedTest {
 
     }
 
-    public static Network create2n(NetworkFactory networkFactory) {
+    /**
+     * Verifies short-circuit current calculations on a 2-node network for
+     * bus faults with fault impedance modeled using both series and parallel
+     * connection types.
+     */
+    @Test
+    void openShortCircuitProvider2nWithFaultImpedance() {
+
+        //set up LF info
+        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
+        loadFlowParameters.setTwtSplitShuntAdmittance(true);
+        Network nt2 = create2n(NetworkFactory.findDefault());
+        LoadFlow.run(nt2, loadFlowParameters);
+
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters();
+
+        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
+        List<Fault> faults = new ArrayList<>();
+        BusFault bf1 = new BusFault("F1", "B1", 0.5, 1, Fault.ConnectionType.SERIES, Fault.FaultType.THREE_PHASE);
+        BusFault bf2 = new BusFault("F2", "B2", 5, 10, Fault.ConnectionType.PARALLEL, Fault.FaultType.THREE_PHASE);
+        faults.add(bf1);
+        faults.add(bf2);
+
+        ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
+
+        List<FaultResult> frs = scar.getFaultResults();
+
+        MagnitudeFaultResult m0 = (MagnitudeFaultResult) frs.getFirst();
+        MagnitudeFaultResult m1 = (MagnitudeFaultResult) frs.get(1);
+
+        assertEquals(2.80005127, m0.getCurrent(), 0.00001);
+        assertEquals(2.41203491, m1.getCurrent(), 0.00001);
+    }
+
+    public static @NonNull Network create2n(NetworkFactory networkFactory) {
         Objects.requireNonNull(networkFactory);
 
         double p0l2 = 10;
