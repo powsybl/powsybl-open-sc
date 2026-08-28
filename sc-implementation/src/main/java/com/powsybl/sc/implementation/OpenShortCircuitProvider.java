@@ -209,11 +209,12 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             }
             // TODO : see how to get lfBus from iidm Bus
             String elementId = fault.getElementId();
+            // TODO Nay: if element is a branch, take nominalV of bus1
             Bus bus = network.getBusBreakerView().getBus(elementId);
-            double vnomVl = bus.getVoltageLevel().getNominalV();
+            double vNomVl = bus.getVoltageLevel().getNominalV();
 
             // Convert fault impedance from Ohm into PerUnit
-            Complex zFaultToGroundPerUnit = zFaultToGround.divide(new Complex(vnomVl * vnomVl / SB, 0));
+            Complex zFaultToGroundPerUnit = zFaultToGround.divide(new Complex(vNomVl * vNomVl / SB, 0));
             ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGroundPerUnit);
             String busId = bus.getId();
             ShortCircuitFault sc = new ShortCircuitFault(busId, busId, scz, scType);
