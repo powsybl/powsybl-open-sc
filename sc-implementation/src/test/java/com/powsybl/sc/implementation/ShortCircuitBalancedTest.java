@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -91,11 +92,12 @@ public class ShortCircuitBalancedTest {
         ShortCircuitParameters scp = new ShortCircuitParameters();
 
         //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
-        List<Fault> faults = new ArrayList<>();
         BusFault bf1 = new BusFault("F1", "B1");
         BusFault bf2 = new BusFault("F2", "B2");
-        faults.add(bf1);
-        faults.add(bf2);
+        BusFault bf3 = new BusFault("F3", "G1"); // ElementId of a Generator
+        BusFault bf4 = new BusFault("F4", "LOAD_2"); // ElementId of a Load
+
+        List<Fault> faults = List.of(bf1, bf2, bf3, bf4);
 
         ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
 
@@ -104,16 +106,66 @@ public class ShortCircuitBalancedTest {
 
         MagnitudeFaultResult m0 = (MagnitudeFaultResult) scar.getFaultResult("F1");
         MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F2");
+        MagnitudeFaultResult m2 = (MagnitudeFaultResult) scar.getFaultResult("F3");
+        MagnitudeFaultResult m3 = (MagnitudeFaultResult) scar.getFaultResult("F4");
 
-        assertEquals(2.68267577453832, m1.getCurrent(), 0.00001); // expressed in kA and not A
         assertEquals(2.945047378902121, m0.getCurrent(), 0.00001);
+        assertEquals(2.68267577453832, m1.getCurrent(), 0.00001); // expressed in kA and not A
+        assertEquals(2.945047378902121, m2.getCurrent(), 0.00001);
+        assertEquals(2.68267577453832, m3.getCurrent(), 0.00001); // expressed in kA and not A
         assertEquals("OpenShortCircuit", providerName);
         assertEquals("0.1", providerVersion);
 
     }
 
+    /**
+     * Verifies handling of:
+     * - unknown elements
+     * - bus faults on a branch element
+     * - branch faults on non-branch element
+     */
     @Test
-    void openShortCircuitProviderBranchFaults2n() {
+    void openShortCircuitProvider2nInvalidElementId() {
+
+        //set up LF info
+        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
+        loadFlowParameters.setTwtSplitShuntAdmittance(true);
+        Network nt2 = create2n(NetworkFactory.findDefault());
+        LoadFlow.run(nt2, loadFlowParameters);
+
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters();
+
+        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
+        BusFault bf1 = new BusFault("F1", "B1");
+        BusFault bf2 = new BusFault("F2", "UNKNOWN_BUS");
+        BusFault bf3 = new BusFault("F3", "B1_B2");
+        BranchFault bf4 = new BranchFault("F4", "B1_B2", 10);
+        BranchFault bf5 = new BranchFault("F5", "UNKNOWN_BRANCH", 10);
+        BranchFault bf6 = new BranchFault("F6", "B1", 10);
+
+        List<Fault> faults = List.of(bf1, bf2, bf3, bf4, bf5, bf6);
+
+        ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
+
+        assertEquals(2, scar.getFaultResults().size());
+        assertNull(scar.getFaultResult("F2"));
+        assertNull(scar.getFaultResult("F3"));
+        assertNull(scar.getFaultResult("F5"));
+        assertNull(scar.getFaultResult("F6"));
+
+        MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F1");
+        MagnitudeFaultResult m4 = (MagnitudeFaultResult) scar.getFaultResult("F4");
+
+        assertEquals(2.945047378902121, m1.getCurrent(), 0.00001);
+        assertEquals(2.916471923828125, m4.getCurrent(), 0.00001);
+
+    }
+
+    @Test
+    void openShortCircuitProvider2nFaultsOnLine() {
         //set up LF info
         LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
@@ -138,6 +190,35 @@ public class ShortCircuitBalancedTest {
 
         assertEquals(2.916471923828125, m0.getCurrent(), 0.00001);
         assertEquals(2.75623681640625, m1.getCurrent(), 0.00001);
+    }
+
+    @Test
+    void openShortCircuitProvider2nFaultsOnTransformer() {
+
+        //set up LF info
+        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
+        loadFlowParameters.setTwtSplitShuntAdmittance(true);
+        Network nt2 = create2nTfo(NetworkFactory.findDefault());
+        LoadFlow.run(nt2, loadFlowParameters);
+
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters();
+
+        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
+        BranchFault bf1 = new BranchFault("F1", "B1_B2", 10);
+        BranchFault bf2 = new BranchFault("F2", "B1_B2", 70);
+
+        List<Fault> faults = List.of(bf1, bf2);
+
+        ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
+
+        MagnitudeFaultResult m0 = (MagnitudeFaultResult) scar.getFaultResult("F1");
+        MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F2");
+
+        assertEquals(2.932280029296875, m0.getCurrent(), 0.00001);
+        assertEquals(2.85796875, m1.getCurrent(), 0.00001);
     }
 
     @Test

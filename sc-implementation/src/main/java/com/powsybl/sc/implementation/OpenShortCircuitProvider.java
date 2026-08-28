@@ -10,9 +10,7 @@ package com.powsybl.sc.implementation;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Stopwatch;
 import com.powsybl.computation.ComputationManager;
-import com.powsybl.iidm.network.Bus;
-import com.powsybl.iidm.network.Line;
-import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.*;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
@@ -204,22 +202,92 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             ShortCircuitFault sc;
             String elementId = fault.getElementId();
 
-            if (fault instanceof BranchFault branchFault) {
-                Line line = network.getLine(elementId);
+            if (fault instanceof BranchFault branchFault) { // Branch fault
+                Pair<String, String> branchBusIds = getBranchBusIdsFromElementId(elementId, fault.getId(), network);
 
-                String bus1Id = line.getTerminal1().getBusBreakerView().getBus().getId();
-                String bus2Id = line.getTerminal2().getBusBreakerView().getBus().getId();
+                if (branchBusIds == null) {
+                    continue;
+                }
 
-                sc = new ShortCircuitFault(bus1Id, bus2Id, branchFault.getProportionalLocation(), branchFault.getId(), elementId, scz, scType);
-            } else {
-                Bus bus = network.getBusBreakerView().getBus(elementId);
+                sc = new ShortCircuitFault(branchBusIds.getKey(), branchBusIds.getValue(), branchFault.getProportionalLocation(), branchFault.getId(), elementId, scz, scType);
+            } else { //Bus fault
+                String busId = getBusIdFromElementId(elementId, fault.getId(), network);
 
-                sc = new ShortCircuitFault(bus.getId(), fault.getId(), elementId, scz, scType);
+                if (busId == null) {
+                    continue;
+                }
+
+                sc = new ShortCircuitFault(busId, fault.getId(), elementId, scz, scType);
             }
 
             balancedFaultsList.add(sc);
             scFaultToFault.put(sc, fault);
         }
         return new Pair<>(existBalancedFaults, existUnbalancedFaults);
+    }
+
+    private static Pair<String, String> getBranchBusIdsFromElementId(String elementId, String faultId, Network network) {
+        Identifiable<?> element = network.getIdentifiable(elementId);
+
+        if (element == null) {
+            LOGGER.warn("Element '{}' not found in the network. Fault '{}' is ignored.", elementId, faultId);
+            return null;
+        }
+
+        if (!(element instanceof Branch<?> branch)) {
+            LOGGER.warn("Element '{}' is not a branch. Fault '{}' is ignored.", elementId, faultId);
+            return null;
+        }
+
+        Bus bus1 = branch.getTerminal1().getBusBreakerView().getBus();
+        Bus bus2 = branch.getTerminal2().getBusBreakerView().getBus();
+
+        if (bus1 == null) {
+            LOGGER.warn(
+                    "Terminal1 of branch '{}' is not connected to a bus. Fault '{}' is ignored.",
+                    elementId, faultId);
+            return null;
+        }
+
+        if (bus2 == null) {
+            LOGGER.warn(
+                    "Terminal2 of branch '{}' is not connected to a bus. Fault '{}' is ignored.",
+                    elementId, faultId);
+            return null;
+        }
+
+        return new Pair<>(bus1.getId(), bus2.getId());
+    }
+
+    private static String getBusIdFromElementId(String elementId, String faultId, Network network) {
+        Identifiable<?> element = network.getIdentifiable(elementId);
+
+        if (element == null) {
+            LOGGER.warn("Element '{}' not found in network. Fault '{}' is ignored.", elementId, faultId);
+            return null;
+        }
+
+        if (element instanceof Bus bus) {
+            return bus.getId();
+        }
+
+        if (!(element instanceof Injection<?> injection)) {
+            LOGGER.warn(
+                    "Bus fault can only be applied to a bus or an element connected to a single terminal. "
+                            + "Element '{}' is not supported. Fault '{}' is ignored.",
+                    elementId, faultId);
+            return null;
+        }
+
+        Bus bus = injection.getTerminal()
+                .getBusBreakerView()
+                .getBus();
+
+        if (bus == null) {
+            LOGGER.warn("No bus found for element '{}'. Fault '{}' is ignored.", elementId, faultId);
+            return null;
+        }
+
+        return bus.getId();
     }
 }
