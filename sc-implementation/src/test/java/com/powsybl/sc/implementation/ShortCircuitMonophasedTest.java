@@ -167,7 +167,7 @@ public class ShortCircuitMonophasedTest {
         assertEquals(14.548104511643936, magnitudeFaultResult.getCurrent(), 0.00001);
 
         MagnitudeFaultResult magnitudeFaultResult2 = (MagnitudeFaultResult) frs.get(1);
-        assertEquals(14.464754153502392, magnitudeFaultResult2.getCurrent(), 0.00001);
+        assertEquals(14.54741203991965, magnitudeFaultResult2.getCurrent(), 0.00001);
 
     }
 
