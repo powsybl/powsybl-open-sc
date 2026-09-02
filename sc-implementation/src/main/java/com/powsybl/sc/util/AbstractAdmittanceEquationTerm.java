@@ -129,10 +129,10 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         zInvSquare = 1 / (zk * zk);
 
         double alpha = piModel.getA1();
-        cosA = Math.cos(Math.toRadians(alpha));
-        sinA = Math.sin(Math.toRadians(alpha));
-        cos2A = Math.cos(Math.toRadians(2 * alpha));
-        sin2A = Math.sin(Math.toRadians(2 * alpha));
+        cosA = Math.cos(alpha);
+        sinA = Math.sin(alpha);
+        cos2A = Math.cos(2 * alpha);
+        sin2A = Math.sin(2 * alpha);
 
         gPi1 = piModel.getG1() / kTr;
         bPi1 = piModel.getB1() / kTx;

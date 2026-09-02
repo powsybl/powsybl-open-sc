@@ -146,7 +146,7 @@ public class TheveninEquivalent {
             }
             case CALCULATED -> {
                 for (LfBus lfBus : lfNetwork.getBuses()) {
-                    initialVoltages.add(ComplexUtils.polar2Complex(lfBus.getV(), Math.toRadians(lfBus.getAngle())));
+                    initialVoltages.add(ComplexUtils.polar2Complex(lfBus.getV(), lfBus.getAngle()));
                 }
             }
         }

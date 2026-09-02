@@ -201,7 +201,7 @@ public abstract class AbstractShortCircuitEngine {
 
     private Complex computeBusInitialVoltage(LfBus bus) {
         return switch (parameters.getVoltageProfileType()) {
-            case CALCULATED -> ComplexUtils.polar2Complex(bus.getV(), Math.toRadians(bus.getAngle()));
+            case CALCULATED -> ComplexUtils.polar2Complex(bus.getV(), bus.getAngle());
             case CONFIGURED -> computeVoltageUsingRanges(bus);
             case NOMINAL -> new Complex(1.);
         };

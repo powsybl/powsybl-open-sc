@@ -617,7 +617,7 @@ public class ShortCircuitResult {
         Complex z = new Complex(piModel.getR(), piModel.getX());
         Complex y1 = new Complex(piModel.getG1(), piModel.getB1());
         Complex y2 = new Complex(piModel.getG2(), piModel.getB1());
-        Complex rho = ComplexUtils.polar2Complex(piModel.getR1(), Math.toRadians(piModel.getA1()));
+        Complex rho = ComplexUtils.polar2Complex(piModel.getR1(), piModel.getA1());
 
         double admCoef = 1.;
         if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {

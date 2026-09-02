@@ -171,7 +171,7 @@ public class ShortCircuitBalancedTest {
                 new double[]{3523.270263671875, 3767.30078125, 3557.220458984375, 3374.391845703125}
         );
         // assertFeederCurrents(frs, new double[]{3547.77686, 3767.2981, 3564.29761, 3424.16235}, "G2"); // TODO HG: Check values against CC and add with next Core release
-        // assertBusVoltages(frs, new double[]{7.60443974, 0.0, 7.03214169, 11.8865681}, 1); // TODO HG: Check values against CC
+        assertBusVoltages(frs, new double[]{7.60443974, 0.0, 7.03214169, 11.8865681}, 1);
     }
 
     @Test
