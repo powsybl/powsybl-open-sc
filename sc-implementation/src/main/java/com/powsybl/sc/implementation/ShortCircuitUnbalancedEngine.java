@@ -30,6 +30,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
     @Override
     public void run() {
         LfNetwork lfNetwork = lfNetworks.get(0);
+        fillInitialVoltages();
 
         if (parameters.getAnalysisType() == ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC) {
             buildSystematicList(ShortCircuitFault.ShortCircuitType.MONOPHASED); // TODO : by default it is monophased, could be changed to choose type of systematic default
@@ -45,14 +46,12 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         solverBiphasedFaultList = faultLists.getValue();
 
         ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersHomopolar = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
-                parameters.getMatrixFactory(), solverFaultList, parameters.isVoltageUpdate(),
-                getAdmittanceVoltageProfileTypeFromParam(), getAdmittancePeriodTypeFromParam(), AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR,
-                parameters.isIgnoreShunts(), solverBiphasedFaultList);
+                parameters.getMatrixFactory(), solverFaultList, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR,
+                solverBiphasedFaultList, initialVoltages);
 
         ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersDirect = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
-                parameters.getMatrixFactory(), solverFaultList, parameters.isVoltageUpdate(),
-                getAdmittanceVoltageProfileTypeFromParam(), getAdmittancePeriodTypeFromParam(), AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN,
-                parameters.isIgnoreShunts(), solverBiphasedFaultList);
+                parameters.getMatrixFactory(), solverFaultList, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN,
+                solverBiphasedFaultList, initialVoltages);
 
         ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(lfNetwork, admittanceLinearResolutionParametersDirect);
         ImpedanceLinearResolution homopolarResolution = new ImpedanceLinearResolution(lfNetwork, admittanceLinearResolutionParametersHomopolar);

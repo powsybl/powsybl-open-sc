@@ -151,7 +151,7 @@ public class ShortCircuitMonophasedTest {
 
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters();
+        ShortCircuitParameters scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
 
         List<Fault> faults = new ArrayList<>();
         BusFault bf1 = new BusFault("F1", "B2", 0., 0., Fault.ConnectionType.SERIES, Fault.FaultType.SINGLE_PHASE);
@@ -164,10 +164,10 @@ public class ShortCircuitMonophasedTest {
 
         List<FaultResult> frs = scar.getFaultResults();
         MagnitudeFaultResult magnitudeFaultResult = (MagnitudeFaultResult) frs.get(0);
-        assertEquals(14.548104511643936, magnitudeFaultResult.getCurrent(), 0.00001);
+        assertEquals(14548.104511643936, magnitudeFaultResult.getCurrent(), 0.01);
 
         MagnitudeFaultResult magnitudeFaultResult2 = (MagnitudeFaultResult) frs.get(1);
-        assertEquals(14.464754153502392, magnitudeFaultResult2.getCurrent(), 0.00001);
+        assertEquals(14464.754153502392, magnitudeFaultResult2.getCurrent(), 0.01);
 
     }
 

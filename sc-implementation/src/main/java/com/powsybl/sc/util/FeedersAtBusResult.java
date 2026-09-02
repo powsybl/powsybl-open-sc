@@ -45,11 +45,17 @@ public class FeedersAtBusResult {
         Complex zSum = new Complex(0.);
 
         for (FeederResult feederResult : busFeedersResult) {
+            if (feederResult.getFeeder().getFeederType() == Feeder.FeederType.BRANCH) {
+                continue; // Skip branch feeders as their contributions have already been computed
+            }
             zSum = zSum.add(feederResult.getFeeder().getZ());
         }
 
         if (zSum.abs() > EPSILON) {
             for (FeederResult feederResult : busFeedersResult) {
+                if (feederResult.getFeeder().getFeederType() == Feeder.FeederType.BRANCH) {
+                    continue; // Skip branch feeders as their contributions have already been computed
+                }
                 Complex zk = feederResult.getFeeder().getZ();
                 // ik = zk / zsum * iFeederSum
                 Complex ik = zk.multiply(iFeedersSum).divide(zSum);

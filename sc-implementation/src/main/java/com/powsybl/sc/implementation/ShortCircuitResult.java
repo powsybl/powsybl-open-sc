@@ -7,6 +7,7 @@
  */
 package com.powsybl.sc.implementation;
 
+import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
@@ -214,7 +215,6 @@ public class ShortCircuitResult {
         di.set(1, 0, di2);
 
         return di;
-
     }
 
     public void updateFeedersResult() {
@@ -244,7 +244,6 @@ public class ShortCircuitResult {
             FeedersAtBus busFeedersInverse = eqSysFeedersDirect.busToFeeders.get(bus); // for now we use direct feeder impedance to compute inverse current
             FeedersAtBusResult feedersAtBusResultInverse = new FeedersAtBusResult(busFeedersInverse);
             feedersResultsInverse.put(bus, feedersAtBusResultInverse);
-
         }
 
         // For each branch, we build the sum of currents at busses from branches
@@ -255,6 +254,10 @@ public class ShortCircuitResult {
         // which is equal to the current at bus injectors (Kirchhoff's law)
         // 5- Given the admittance of each feeder at bus, computed during building of AdmittanceEquationSystem,
         // we can then deduce the current contribution of each feeder, which is stored in feeder result
+
+        // Start with the fault bus contribution
+        feedersResultDirect.get(lfBus).addItofeedersSum(ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle()));
+
         branchDi1 = new HashMap<>();
         branchDi2 = new HashMap<>();
 
@@ -282,6 +285,9 @@ public class ShortCircuitResult {
                 if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
                     branchDi1.put(branch, new FortescueValue(di1.abs(), di1.getArgument()));
                     branchDi2.put(branch, new FortescueValue(di2.abs(), di2.getArgument()));
+                    Complex zBranch = new Complex(branch.getPiModel().getR(), branch.getPiModel().getX());
+                    resultDirectBus1Feeders.getBusFeedersResult().add(new FeederResult(new Feeder(zBranch, branch.getId(), Feeder.FeederType.BRANCH, ThreeSides.ONE), di1));
+                    resultDirectBus2Feeders.getBusFeedersResult().add(new FeederResult(new Feeder(zBranch, branch.getId(), Feeder.FeederType.BRANCH, ThreeSides.TWO), di2));
                     continue;
                 }
 
@@ -332,7 +338,6 @@ public class ShortCircuitResult {
 
             FeedersAtBusResult busFeedersInverse = feedersResultsInverse.get(bus);
             busFeedersInverse.updateContributions();
-
         }
     }
 
@@ -612,7 +617,7 @@ public class ShortCircuitResult {
         Complex z = new Complex(piModel.getR(), piModel.getX());
         Complex y1 = new Complex(piModel.getG1(), piModel.getB1());
         Complex y2 = new Complex(piModel.getG2(), piModel.getB1());
-        Complex rho = ComplexUtils.polar2Complex(piModel.getR1(), Math.toRadians(piModel.getA1()));
+        Complex rho = ComplexUtils.polar2Complex(piModel.getR1(), piModel.getA1());
 
         double admCoef = 1.;
         if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {

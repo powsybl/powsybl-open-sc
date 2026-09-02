@@ -14,13 +14,15 @@ import com.powsybl.iidm.network.ThreeWindingsTransformer;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
 import com.powsybl.openloadflow.graph.EvenShiloachGraphDecrementalConnectivityFactory;
+import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.openloadflow.network.LfNetworkParameters;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
-import com.powsybl.sc.util.AdmittanceEquationSystem;
 import com.powsybl.sc.util.CalculationLocation;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
+import com.powsybl.shortcircuit.VoltageRange;
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +50,8 @@ public abstract class AbstractShortCircuitEngine {
 
     protected final AcLoadFlowParameters acLoadFlowParameters;
 
+    protected List<Complex> initialVoltages; // list of initial voltages indexed by bus num
+
     protected AbstractShortCircuitEngine(Network network, ShortCircuitEngineParameters parameters) {
         this.network = Objects.requireNonNull(network);
         this.parameters = Objects.requireNonNull(parameters);
@@ -60,24 +64,6 @@ public abstract class AbstractShortCircuitEngine {
     protected AcLoadFlowParameters getAcLoadFlowParametersFromParam() {
         OpenLoadFlowParameters loadflowParametersExt = OpenLoadFlowParameters.get(parameters.getLoadFlowParameters());
         return OpenLoadFlowParameters.createAcParameters(parameters.getLoadFlowParameters(), loadflowParametersExt, parameters.getMatrixFactory(), new EvenShiloachGraphDecrementalConnectivityFactory<>(), false, false);
-    }
-
-    protected AdmittanceEquationSystem.AdmittancePeriodType getAdmittancePeriodTypeFromParam() {
-        AdmittanceEquationSystem.AdmittancePeriodType admittancePeriodType = AdmittanceEquationSystem.AdmittancePeriodType.ADM_TRANSIENT;
-        if (parameters.getPeriodType() == ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT) {
-            admittancePeriodType = AdmittanceEquationSystem.AdmittancePeriodType.ADM_SUB_TRANSIENT;
-        } else if (parameters.getPeriodType() == ShortCircuitEngineParameters.PeriodType.STEADY_STATE) {
-            admittancePeriodType = AdmittanceEquationSystem.AdmittancePeriodType.ADM_STEADY_STATE;
-        }
-        return admittancePeriodType;
-    }
-
-    protected AdmittanceEquationSystem.AdmittanceVoltageProfileType getAdmittanceVoltageProfileTypeFromParam() {
-        AdmittanceEquationSystem.AdmittanceVoltageProfileType admittanceVoltageProfileType = AdmittanceEquationSystem.AdmittanceVoltageProfileType.NOMINAL;
-        if (parameters.getVoltageProfileType() == ShortCircuitEngineParameters.VoltageProfileType.CALCULATED) {
-            admittanceVoltageProfileType = AdmittanceEquationSystem.AdmittanceVoltageProfileType.CALCULATED;
-        }
-        return admittanceVoltageProfileType;
     }
 
     protected void buildSystematicList(ShortCircuitFault.ShortCircuitType type) {
@@ -205,8 +191,47 @@ public abstract class AbstractShortCircuitEngine {
         return new Pair<>(branchId, legNum);
     }
 
+    protected void fillInitialVoltages() {
+        List<Complex> initialVoltages = new ArrayList<>(lfNetworks.getFirst().getBuses().size());
+        for (LfBus lfBus : lfNetworks.getFirst().getBuses()) {
+            initialVoltages.add(lfBus.getNum(), computeBusInitialVoltage(lfBus));
+        }
+        this.initialVoltages = initialVoltages;
+    }
+
+    private Complex computeBusInitialVoltage(LfBus bus) {
+        return switch (parameters.getVoltageProfileType()) {
+            case CALCULATED -> ComplexUtils.polar2Complex(bus.getV(), bus.getAngle());
+            case CONFIGURED -> computeVoltageUsingRanges(bus);
+            case NOMINAL -> new Complex(1.);
+        };
+    }
+
+    private Complex computeVoltageUsingRanges(LfBus bus) {
+        Complex v = new Complex(1.); // If bus nominal voltage is outside every range, it takes default value 1 pu
+
+        double nominalV = bus.getNominalV();
+        for (VoltageRange range : parameters.getConfiguredVoltageRanges()) {
+            if (bus.getNominalV() >= range.getMinimumNominalVoltage() && bus.getNominalV() <= range.getMaximumNominalVoltage()) {
+                double voltage = Double.isNaN(range.getVoltage()) ? 1.0 : range.getVoltage() / nominalV;
+                voltage *= Double.isNaN(range.getRangeCoefficient()) ? 1.0 : range.getRangeCoefficient();
+                return new Complex(voltage);
+            }
+        }
+
+        return v;
+    }
+
     public Map<ShortCircuitFault, ShortCircuitResult> getResultsPerFault() {
         return resultsPerFault;
+    }
+
+    public LfNetwork getFirstLfNetwork() {
+        return lfNetworks.getFirst();
+    }
+
+    public List<Complex> getInitialVoltages() {
+        return initialVoltages;
     }
 
     public abstract void run();

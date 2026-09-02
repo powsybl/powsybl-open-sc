@@ -16,9 +16,9 @@ import java.util.List;
  */
 public class FeedersAtBus {
 
-    private List<Feeder> feeders;
+    private final List<Feeder> feeders;
 
-    private LfBus feedersBus;
+    private final LfBus feedersBus;
 
     public FeedersAtBus(List<Feeder> feeders, LfBus bus) {
         this.feeders = feeders;

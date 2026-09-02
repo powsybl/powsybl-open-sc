@@ -15,7 +15,7 @@ import org.apache.commons.math3.complex.Complex;
  */
 public class FeederResult {
 
-    private Feeder feeder;
+    private final Feeder feeder;
 
     private Complex iContribution;
 
@@ -30,7 +30,7 @@ public class FeederResult {
 
     public void printContributions(LfBus bus) {
         System.out.println(" ix(" + feeder.getId() + ", " + feeder.getFeederType() + ") = " + iContribution.getReal() + " + j(" + iContribution.getImaginary() + ")  Module I = "
-                + 1000. * 100. / bus.getNominalV() * Math.sqrt(3.) * iContribution.abs()); //TODO : issue with a 3x factor
+                + 1000. * 100. / bus.getNominalV() / Math.sqrt(3.) * iContribution.abs());
     }
 
     public Complex getIContribution() {

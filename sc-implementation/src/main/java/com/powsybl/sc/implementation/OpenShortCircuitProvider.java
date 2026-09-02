@@ -19,6 +19,7 @@ import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.openloadflow.network.LfBus;
+import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.contingency.violations.LimitViolation;
 import com.powsybl.shortcircuit.*;
@@ -27,9 +28,12 @@ import org.apache.commons.math3.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+
+import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -79,20 +83,13 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         boolean existBalancedFaults = faultTypes.getKey();
         boolean existUnbalancedFaults = faultTypes.getValue();
 
-        //Parameters that could be added in the short circuit provider API later:
-        // Voltage Profile
-        ShortCircuitEngineParameters.VoltageProfileType voltageProfile = ShortCircuitEngineParameters.VoltageProfileType.NOMINAL;
-
         // Selective or Systematic short circuit analysis
         ShortCircuitEngineParameters.AnalysisType at = ShortCircuitEngineParameters.AnalysisType.SELECTIVE;
-
-        // selection of the period of analysis
-        ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
 
         LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, at, faultsList, true, voltageProfile, false, periodType, shortCircuitNorm);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, at, faultsList, parameters, shortCircuitNorm);
 
         // lists to store the results
         List<FaultResult> faultResults = new ArrayList<>();
@@ -119,13 +116,15 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> scResult : scuEngine.resultsPerFault.entrySet()) {
             ShortCircuitFault scFault = scResult.getKey();
 
-            double iccMagnitude = scResult.getValue().getIk().abs();
+            double iccMagnitude = scResult.getValue().getIk().abs() * 1000.; // kA to A conversion
+            double voltage = scResult.getValue().getVd().abs();
 
             Fault fault = scFaultToFault.get(scFault);
 
             List<FeederResult> feederResults = new ArrayList<>();
             List<LimitViolation> limitViolations = new ArrayList<>();
-            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults, limitViolations, iccMagnitude, FaultResult.Status.SUCCESS);
+            List<ShortCircuitBusResults> busResults = new ArrayList<>();
+            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }
@@ -139,37 +138,61 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> scFaultResult : scbEngine.resultsPerFault.entrySet()) {
             ShortCircuitFault scFault = scFaultResult.getKey();
             ShortCircuitResult scResult = scFaultResult.getValue();
-
-            double iccMagnitude = scResult.getIk().abs();
-
             Fault fault = scFaultToFault.get(scFault);
+
+            double iccMagnitude = scResult.getIk().abs() * 1000.; // kA to A conversion
+            double voltage = scResult.getVd().abs() * scResult.getLfBus().getNominalV();
 
             List<FeederResult> feederResultsProvider = new ArrayList<>();
             fillFeederResults(feederResultsProvider, scResult);
 
             List<LimitViolation> limitViolations = new ArrayList<>();
 
-            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider, limitViolations, iccMagnitude, FaultResult.Status.SUCCESS);
+            List<ShortCircuitBusResults> busResults = new ArrayList<>();
+            if (scbParameters.isVoltageUpdate()) {
+                fillBusResults(scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(), scbParameters.getMinVoltageDropPercent());
+            }
+            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }
 
-    public void fillFeederResults(List<FeederResult> feederResultsProvider, ShortCircuitResult scResult) {
+    private void fillFeederResults(List<FeederResult> feederResultsProvider, ShortCircuitResult scResult) {
         for (Map.Entry<LfBus, FeedersAtBusResult> busAndFeedersAtBusResult : scResult.getFeedersResultDirect().entrySet()) {
             LfBus lfBus = busAndFeedersAtBusResult.getKey();
             FeedersAtBusResult feedersAtBusResult = busAndFeedersAtBusResult.getValue();
             for (com.powsybl.sc.util.FeederResult feederResult : feedersAtBusResult.getBusFeedersResult()) {
                 Complex iCont = feederResult.getIContribution();
 
-                double magnitude = Math.sqrt(3.) * iCont.abs() * 100. / lfBus.getNominalV(); // same dimension as Ik3
+                double magnitude = iCont.abs() * 1e5 / Math.sqrt(3.) / lfBus.getNominalV(); // same dimension as Ik3
 
-                String feederId = lfBus.getId() + "_" + feederResult.getFeeder().getId();
+                String feederId = feederResult.getFeeder().getId();
 
-                MagnitudeFeederResult magnitudeFeederResult = new MagnitudeFeederResult(feederId, magnitude);
+                MagnitudeFeederResult magnitudeFeederResult = new MagnitudeFeederResult(feederId, magnitude, feederResult.getFeeder().getSide());
                 feederResultsProvider.add(magnitudeFeederResult);
             }
         }
+    }
 
+    private void fillBusResults(LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult, List<Complex> initialVoltages, double minVoltDropPercent) {
+        List<FortescueValue> dVoltages = scResult.getBusNum2Dv();
+        for (LfBus lfBus : lfNetwork.getBuses()) {
+            int num = lfBus.getNum();
+            Complex initialVpu = initialVoltages.get(num);
+            Complex dVpu = polar2Complex(dVoltages.get(num).getPositiveMagnitude(), dVoltages.get(num).getPositiveAngle());
+            double dropPercent = dVpu.abs() / initialVpu.abs();
+            Complex finalVpu = initialVpu.add(dVpu);
+
+            if (dropPercent >= minVoltDropPercent) {
+                String voltLevelId = lfBus.getVoltageLevelId();
+                String busId = lfBus.getId();
+                double nominalV = lfBus.getNominalV();
+                double initialV = nominalV * initialVpu.abs();
+                double finalV = nominalV * finalVpu.abs();
+                MagnitudeShortCircuitBusResults result = new MagnitudeShortCircuitBusResults(voltLevelId, busId, initialV, finalV, dropPercent);
+                busResults.add(result);
+            }
+        }
     }
 
     public Pair<Boolean, Boolean> buildFaultLists(Network network, List<Fault> faults, List<ShortCircuitFault> balancedFaultsList, Map<ShortCircuitFault, Fault> scFaultToFault) {
