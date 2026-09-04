@@ -17,10 +17,7 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.Pair;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -41,7 +38,7 @@ public class ImpedanceLinearResolution {
 
     private final ImpedanceLinearResolutionParameters parameters;
 
-    public final List<ImpedanceLinearResolutionResult> results = new ArrayList<>();
+    public final HashMap<LfBus, ImpedanceLinearResolutionResult> results = new HashMap<>();
 
     public ImpedanceLinearResolution(LfNetwork network, ImpedanceLinearResolutionParameters parameters) {
         this.network = Objects.requireNonNull(network);
@@ -289,6 +286,15 @@ public class ImpedanceLinearResolution {
                 inputBusses.add(bus);
                 faultBranchLocationInfo.setLfBusInfo(bus.getId());
             }
+            if (faultBranchLocationInfo.getLocationType() == CalculationLocation.LocationType.LINE) {
+                String iidmBranchId2 = faultBranchLocationInfo.getIidmBus2Info().getKey();
+                int branchSide2 = faultBranchLocationInfo.getIidmBus2Info().getValue();
+                LfBus bus2 = getLfBusFromIidmBranch(iidmBranchId2, branchSide2, network);
+                if (bus2 != null) {
+                    inputBusses.add(bus2);
+                    faultBranchLocationInfo.setLfBus2Info(bus2.getId());
+                }
+            }
         }
 
         // case it is a biphased common support input, supposing that the number of such input contingencies is low
@@ -496,7 +502,7 @@ public class ImpedanceLinearResolution {
 
                 //res.printResult();
 
-                this.results.add(res);
+                this.results.put(lfBus, res);
                 numBusFault++;
             }
         }

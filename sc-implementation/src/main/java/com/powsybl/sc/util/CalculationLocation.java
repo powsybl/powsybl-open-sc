@@ -20,6 +20,10 @@ public class CalculationLocation {
 
     private final String bus2Location; // used in case computations need 2 busses in input: for example in biphased common support short circuit computations
 
+    private final double proportionalLocationOnLine;
+
+    private final LocationType locationType;
+
     private Pair<String, Integer > iidmBusInfo; // additional iidm info to make the correspondence between iidm info and lfNetwork info
 
     private Pair<String, Integer > iidmBus2Info; // additional iidm info to make the correspondence between iidm info and lfNetwork info in case of a biphased common support fault
@@ -28,6 +32,11 @@ public class CalculationLocation {
 
     private String lfBus2Info; // additional info to have the correspondence between iidm and lfNetwork for bus 2
 
+    public enum LocationType {
+        BUS,
+        LINE,
+    }
+
     public CalculationLocation(String busLocation) {
         this(busLocation, "");
     }
@@ -35,6 +44,21 @@ public class CalculationLocation {
     public CalculationLocation(String busLocation, String busLocationBiPhased) {
         this.busLocation = Objects.requireNonNull(busLocation);
         this.bus2Location = Objects.requireNonNull(busLocationBiPhased);
+        this.proportionalLocationOnLine = 0.0;
+        this.locationType = LocationType.BUS;
+    }
+
+    public CalculationLocation(String busLocation, String bus2Location, double proportionalLocationOnLine) {
+        this.busLocation = Objects.requireNonNull(busLocation);
+        this.bus2Location = Objects.requireNonNull(bus2Location);
+
+        if (proportionalLocationOnLine < 0.0 || proportionalLocationOnLine > 100.0) {
+            throw new IllegalArgumentException(
+                    "percentageFromBus1 must be between 0 and 100 inclusive"
+            );
+        }
+        this.proportionalLocationOnLine = proportionalLocationOnLine;
+        this.locationType = LocationType.LINE;
     }
 
     public String getBusLocation() {
@@ -75,6 +99,14 @@ public class CalculationLocation {
 
     public String getLfBus2Info() {
         return lfBus2Info;
+    }
+
+    public double getProportionalLocationOnLine() {
+        return proportionalLocationOnLine;
+    }
+
+    public LocationType getLocationType() {
+        return locationType;
     }
 
 }

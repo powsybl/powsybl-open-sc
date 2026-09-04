@@ -15,7 +15,6 @@ import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.LineFortescueAdder;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
@@ -59,7 +58,7 @@ public class ShortCircuitMonophasedTest {
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", "B3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc1);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
@@ -75,7 +74,7 @@ public class ShortCircuitMonophasedTest {
 
         // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
         // and I"k = sqrt(3) * cmax * Un /(Zeq) and expected I"k = 35.64 kA with some approximations on the impedance values
-        assertEquals(35.70435548244156, val.get(0), 0.00001);
+        assertEquals(35.70435548244156, val.getFirst(), 0.00001);
 
     }
 
@@ -92,27 +91,27 @@ public class ShortCircuitMonophasedTest {
         Complex zFault = new Complex(0.);
         ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFault);
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "sc1", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "sc1", "B2", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B3", "sc2", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B3", "sc2", "B3", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault("B4", "sc3", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc3 = new ShortCircuitFault("B4", "sc3", "B4", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault("B5", "sc4", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc4 = new ShortCircuitFault("B5", "sc4", "B5", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc4);
 
         // additional faults
-        ShortCircuitFault sc5 = new ShortCircuitFault("B2", "sc5", scz, ShortCircuitFault.ShortCircuitType.BIPHASED);
+        ShortCircuitFault sc5 = new ShortCircuitFault("B2", "sc5", "B2", scz, ShortCircuitFault.ShortCircuitType.BIPHASED);
         faultList.add(sc5);
-        ShortCircuitFault sc6 = new ShortCircuitFault("B3", "sc6", scz, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
+        ShortCircuitFault sc6 = new ShortCircuitFault("B3", "sc6", "B3", scz, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
         faultList.add(sc6);
 
         // additional faults with fault impedance
         Complex zFault2 = new Complex(0.0004, 0.0001);
         ShortCircuitFaultImpedance scz2 = new ShortCircuitFaultImpedance(zFault2, zFault2.multiply(3.), zFault2.multiply(4.));
-        ShortCircuitFault sc7 = new ShortCircuitFault("B2", "sc5z", scz2, ShortCircuitFault.ShortCircuitType.BIPHASED);
+        ShortCircuitFault sc7 = new ShortCircuitFault("B2", "sc5z", "B2", scz2, ShortCircuitFault.ShortCircuitType.BIPHASED);
         faultList.add(sc7);
-        ShortCircuitFault sc8 = new ShortCircuitFault("B3", "sc6z", scz2, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
+        ShortCircuitFault sc8 = new ShortCircuitFault("B3", "sc6z", "B3", scz2, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
         faultList.add(sc8);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.TRANSIENT;
@@ -175,7 +174,7 @@ public class ShortCircuitMonophasedTest {
     void computeIoTestNew() {
         Network network = createGiard(NetworkFactory.findDefault());
 
-        LoadFlowResult resultntg = loadFlowRunner.run(network, parameters);
+        loadFlowRunner.run(network, parameters);
 
         network.getGenerator("GB").newExtension(GeneratorFortescueAdder.class)
                 .withGrounded(true)
@@ -189,7 +188,7 @@ public class ShortCircuitMonophasedTest {
                 .add();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("BP", "sc1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc1 = new ShortCircuitFault("BP", "sc1", "BP", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
 
         faultList.add(sc1);
 

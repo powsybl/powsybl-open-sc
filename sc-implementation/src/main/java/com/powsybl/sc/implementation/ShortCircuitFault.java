@@ -12,43 +12,65 @@ import com.powsybl.sc.util.CalculationLocation;
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
-public class ShortCircuitFault extends CalculationLocation {
+public class ShortCircuitFault {
 
-    public ShortCircuitFault(String busLocation, String faultId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
-        super(busLocation);
+    public ShortCircuitFault(String busLocation, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
+        this.location = new CalculationLocation(busLocation);
         this.zf = zf;
         this.type = type;
         this.faultId = faultId;
+        this.elementId = elementId;
+        this.shortCircuitFaultType = ShortCircuitFaultType.BUS;
     }
 
-    public ShortCircuitFault(String busLocation, String busLocationBiPhased, String faultId, ShortCircuitFaultImpedance zf, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
-        super(busLocation, busLocationBiPhased);
+    public ShortCircuitFault(String busLocation, String busLocationBiPhased, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
+        this.location = new CalculationLocation(busLocation, busLocationBiPhased);
         this.zf = zf;
         this.type = type;
         this.faultId = faultId;
+        this.elementId = elementId;
         this.biphasedType = biphasedType;
+        this.shortCircuitFaultType = ShortCircuitFaultType.BUS;
     }
 
+    public ShortCircuitFault(String busLocation, String bus2Location, double proportionalLocationOnLine, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
+        this.location = new CalculationLocation(busLocation, bus2Location, proportionalLocationOnLine);
+        this.zf = zf;
+        this.type = type;
+        this.faultId = faultId;
+        this.elementId = elementId;
+        this.shortCircuitFaultType = ShortCircuitFaultType.BRANCH;
+    }
+
+    public enum ShortCircuitFaultType {
+        BUS,
+        BRANCH
+    }
 
     public enum ShortCircuitType {
         TRIPHASED_GROUND,
         BIPHASED,
         BIPHASED_GROUND,
         BIPHASED_COMMON_SUPPORT,
-        MONOPHASED;
+        MONOPHASED
     }
 
     public enum ShortCircuitBiphasedType {
         C1_C2,
         C1_B2,
-        C1_A2;
+        C1_A2
     }
+    private final CalculationLocation location;
 
-    private String faultId;
+    private final String faultId;
 
-    private ShortCircuitFaultImpedance zf; // the short circuit impedance Zf
+    private final String elementId;
 
-    private ShortCircuitType type;
+    private final ShortCircuitFaultImpedance zf; // the short circuit impedance Zf
+
+    private final ShortCircuitType type;
+
+    private final ShortCircuitFaultType shortCircuitFaultType;
 
     private ShortCircuitBiphasedType biphasedType;
 
@@ -66,5 +88,17 @@ public class ShortCircuitFault extends CalculationLocation {
 
     public String getFaultId() {
         return faultId;
+    }
+
+    public ShortCircuitFaultType getShortCircuitFaultType() {
+        return shortCircuitFaultType;
+    }
+
+    public CalculationLocation getCalculationLocation() {
+        return location;
+    }
+
+    public String getElementId() {
+        return elementId;
     }
 }

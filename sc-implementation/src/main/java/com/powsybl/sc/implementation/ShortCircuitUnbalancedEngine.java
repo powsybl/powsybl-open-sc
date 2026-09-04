@@ -29,7 +29,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
     @Override
     public void run() {
-        LfNetwork lfNetwork = lfNetworks.get(0);
+        LfNetwork lfNetwork = lfNetworks.getFirst();
 
         if (parameters.getAnalysisType() == ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC) {
             buildSystematicList(ShortCircuitFault.ShortCircuitType.MONOPHASED); // TODO : by default it is monophased, could be changed to choose type of systematic default
@@ -39,20 +39,22 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         // We handle a pre-treatement of faults given in input:
         // - filtering of some inconsistencies on the bus identification
         // - addition of info in each fault to ease the identification in LfNetwork of iidm info
-        Pair<List<CalculationLocation>, List<CalculationLocation>> faultLists = buildFaultListsFromInputs();
+        Pair<List<ShortCircuitFault>, List<ShortCircuitFault>> faultLists = buildFaultListsFromInputs();
 
         solverFaultList = faultLists.getKey();
+        List<CalculationLocation> solverLocationList = solverFaultList.stream().map(ShortCircuitFault::getCalculationLocation).toList();
         solverBiphasedFaultList = faultLists.getValue();
+        List<CalculationLocation> solverBiphasedLocationList = solverBiphasedFaultList.stream().map(ShortCircuitFault::getCalculationLocation).toList();
 
         ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersHomopolar = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
-                parameters.getMatrixFactory(), solverFaultList, parameters.isVoltageUpdate(),
+                parameters.getMatrixFactory(), solverLocationList, parameters.isVoltageUpdate(),
                 getAdmittanceVoltageProfileTypeFromParam(), getAdmittancePeriodTypeFromParam(), AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR,
-                parameters.isIgnoreShunts(), solverBiphasedFaultList);
+                parameters.isIgnoreShunts(), solverBiphasedLocationList);
 
         ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersDirect = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
-                parameters.getMatrixFactory(), solverFaultList, parameters.isVoltageUpdate(),
+                parameters.getMatrixFactory(), solverLocationList, parameters.isVoltageUpdate(),
                 getAdmittanceVoltageProfileTypeFromParam(), getAdmittancePeriodTypeFromParam(), AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN,
-                parameters.isIgnoreShunts(), solverBiphasedFaultList);
+                parameters.isIgnoreShunts(), solverBiphasedLocationList);
 
         ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(lfNetwork, admittanceLinearResolutionParametersDirect);
         ImpedanceLinearResolution homopolarResolution = new ImpedanceLinearResolution(lfNetwork, admittanceLinearResolutionParametersHomopolar);
@@ -70,12 +72,14 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
     public void processAdmittanceLinearResolutionResults(LfNetwork lfNetwork, ImpedanceLinearResolution directResolution, ImpedanceLinearResolution homopolarResolution, ShortCircuitFault.ShortCircuitType shortCircuitType) {
 
-        int numResult = 0;
-        for (ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult : directResolution.results) {
+        for (Map.Entry<LfBus, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> entry
+                : directResolution.results.entrySet()) {
 
-            ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult = homopolarResolution.results.get(numResult);
-            numResult++;
+            LfBus lfBus = entry.getKey();
+            ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult = entry.getValue();
 
+            ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult =
+                    homopolarResolution.results.get(lfBus);
             LfBus lfBus1 = directResult.getBus();
 
             List<ShortCircuitFault> matchingFaultsAtBus1 = new ArrayList<>(); //We build a list of all faults with bus1 matching with bus1 of ImpedanceLinearResolutionResult
@@ -83,18 +87,16 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
             if (shortCircuitType == ShortCircuitFault.ShortCircuitType.MONOPHASED
                     || shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED
                     || shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND) {
-                for (CalculationLocation calculationLocation : solverFaultList) {
-                    ShortCircuitFault scfe = (ShortCircuitFault) calculationLocation;
-                    if (lfBus1.getId().equals(scfe.getLfBusInfo()) && scfe.getType() == shortCircuitType) {
+                for (ShortCircuitFault scfe : solverFaultList) {
+                    if (lfBus1.getId().equals(scfe.getCalculationLocation().getLfBusInfo()) && scfe.getType() == shortCircuitType) {
                         matchingFaultsAtBus1.add(scfe);
                     }
                 }
             }
 
             if (shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
-                for (CalculationLocation calculationLocation : solverBiphasedFaultList) {
-                    ShortCircuitFault scfe = (ShortCircuitFault) calculationLocation;
-                    if (lfBus1.getId().equals(scfe.getLfBusInfo()) && scfe.getType() == shortCircuitType) {
+                for (ShortCircuitFault scfe : solverBiphasedFaultList) {
+                    if (lfBus1.getId().equals(scfe.getCalculationLocation().getLfBusInfo()) && scfe.getType() == shortCircuitType) {
                         matchingFaultsAtBus1.add(scfe);
                     }
                 }
@@ -155,7 +157,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                         numBiphasedResult++;
 
                         LfBus lfBus2 = biphasedDirectResult.getBus2();
-                        if (lfBus2.getId().equals(scf.getLfBus2Info())) {
+                        if (lfBus2.getId().equals(scf.getCalculationLocation().getLfBus2Info())) {
 
                             Complex zo12 = biphasedHomopolarResult.getZ12();
                             Complex zo22 = biphasedHomopolarResult.getZ22();
