@@ -211,7 +211,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
                 sc = new ShortCircuitFault(branchBusIds.getKey(), branchBusIds.getValue(), branchFault.getProportionalLocation(), branchFault.getId(), elementId, scz, scType);
             } else { //Bus fault
-                String busId = getBusIdFromElementId(elementId, fault.getId(), network);
+                String busId = getBusId(elementId, fault.getId(), network);
 
                 if (busId == null) {
                     continue;
@@ -259,7 +259,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         return new Pair<>(bus1.getId(), bus2.getId());
     }
 
-    private static String getBusIdFromElementId(String elementId, String faultId, Network network) {
+    private static String getBusId(String elementId, String faultId, Network network) {
         Identifiable<?> element = network.getIdentifiable(elementId);
 
         if (element == null) {
@@ -271,23 +271,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             return bus.getId();
         }
 
-        if (!(element instanceof Injection<?> injection)) {
-            LOGGER.warn(
-                    "Bus fault can only be applied to a bus or an element connected to a single terminal. "
-                            + "Element '{}' is not supported. Fault '{}' is ignored.",
-                    elementId, faultId);
-            return null;
-        }
-
-        Bus bus = injection.getTerminal()
-                .getBusBreakerView()
-                .getBus();
-
-        if (bus == null) {
-            LOGGER.warn("No bus found for element '{}'. Fault '{}' is ignored.", elementId, faultId);
-            return null;
-        }
-
-        return bus.getId();
+        LOGGER.warn("'{}' is not the id of a bus. Fault '{}' is ignored.", elementId, faultId);
+        return null;
     }
 }

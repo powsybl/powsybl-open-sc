@@ -94,8 +94,8 @@ public class ShortCircuitBalancedTest {
         //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
         BusFault bf1 = new BusFault("F1", "B1");
         BusFault bf2 = new BusFault("F2", "B2");
-        BusFault bf3 = new BusFault("F3", "G1"); // ElementId of a Generator
-        BusFault bf4 = new BusFault("F4", "LOAD_2"); // ElementId of a Load
+        BusFault bf3 = new BusFault("F3", "G1"); // ElementId of a Generator - faut ignored
+        BusFault bf4 = new BusFault("F4", "LOAD_2"); // ElementId of a Load - faut ignored
 
         List<Fault> faults = List.of(bf1, bf2, bf3, bf4);
 
@@ -104,15 +104,13 @@ public class ShortCircuitBalancedTest {
         String providerName = provider.getName();
         String providerVersion = provider.getVersion();
 
+        assertEquals(2, scar.getFaultResults().size());
+
         MagnitudeFaultResult m0 = (MagnitudeFaultResult) scar.getFaultResult("F1");
         MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F2");
-        MagnitudeFaultResult m2 = (MagnitudeFaultResult) scar.getFaultResult("F3");
-        MagnitudeFaultResult m3 = (MagnitudeFaultResult) scar.getFaultResult("F4");
 
         assertEquals(2.945047378902121, m0.getCurrent(), 0.00001);
         assertEquals(2.68267577453832, m1.getCurrent(), 0.00001); // expressed in kA and not A
-        assertEquals(2.945047378902121, m2.getCurrent(), 0.00001);
-        assertEquals(2.68267577453832, m3.getCurrent(), 0.00001); // expressed in kA and not A
         assertEquals("OpenShortCircuit", providerName);
         assertEquals("0.1", providerVersion);
 
