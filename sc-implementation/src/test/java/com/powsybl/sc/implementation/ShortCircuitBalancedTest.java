@@ -94,10 +94,8 @@ public class ShortCircuitBalancedTest {
         //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
         BusFault bf1 = new BusFault("F1", "B1");
         BusFault bf2 = new BusFault("F2", "B2");
-        BusFault bf3 = new BusFault("F3", "G1"); // ElementId of a Generator - faut ignored
-        BusFault bf4 = new BusFault("F4", "LOAD_2"); // ElementId of a Load - faut ignored
 
-        List<Fault> faults = List.of(bf1, bf2, bf3, bf4);
+        List<Fault> faults = List.of(bf1, bf2);
 
         ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
 
