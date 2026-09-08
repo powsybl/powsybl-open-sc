@@ -194,12 +194,11 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 continue;
             }
 
-            // TODO : see how to get lfBus from iidm Bus
-
             Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
             ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
 
             ShortCircuitFault sc;
+            // TODO : see how to get lfBus from iidm Bus
             String elementId = fault.getElementId();
 
             if (fault instanceof BranchFault branchFault) { // Branch fault
@@ -209,7 +208,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                     continue;
                 }
 
-                sc = new ShortCircuitFault(branchBusIds.getKey(), branchBusIds.getValue(), branchFault.getProportionalLocation(), branchFault.getId(), elementId, scz, scType);
+                sc = new ShortCircuitFault(branchBusIds.getKey(), branchBusIds.getValue(), elementId, branchFault.getProportionalLocation(), branchFault.getId(), elementId, scz, scType);
             } else { //Bus fault
                 String busId = getBusId(elementId, fault.getId(), network);
 

@@ -99,50 +99,62 @@ public abstract class AbstractShortCircuitEngine {
         Map<String, Pair<String, Integer >> tmpListBus1 = new HashMap<>();
         for (ShortCircuitFault scfe : parameters.getShortCircuitFaults()) {
             if (scfe.getShortCircuitFaultType() == ShortCircuitFault.ShortCircuitFaultType.BUS) {
-                String busName = scfe.getCalculationLocation().getBusLocation();
-                String bus2Name = scfe.getCalculationLocation().getBus2Location();
-
-                if (bus2Name.isEmpty()) {
-                    if (scfe.getType() == ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
-                        throw new IllegalArgumentException(" short circuit fault : " + busName + " must have a second voltage level defined because it is a common support fault");
-                    }
-                    Pair<String, Integer> branchFaultInfo = buildFaultBranchFromBusId(busName, network); // creates additional info for fault, identifying location through iidm branches instead of iidm busses to easily get lf busses
-                    scfe.getCalculationLocation().setIidmBusInfo(branchFaultInfo); // the short circuit fault info is now enriched with the couple iidmBranchId + iidmBranchSide and not only the iidm bus name in order to be able to identify the busses in the LfNetwork
-                    faultList.add(scfe);
-
-                } else {
-                    if (scfe.getType() != ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
-                        throw new IllegalArgumentException(" short circuit fault : " + busName + " has a second bus defined : " + bus2Name + " but is not a common support fault");
-                    }
-
-                    // Step 1 : get info at bus 1 initialization of bus 2 list
-                    tmpListBus1.computeIfAbsent(busName, k -> buildFaultBranchFromBusId(busName, network));
-
-                    // step 2 : get info at bus 2
-                    Pair<String, Integer > branchBus2FaultInfo = buildFaultBranchFromBusId(bus2Name, network);
-                    Pair<String, Integer > branchBus1FaultInfo = tmpListBus1.get(busName);
-
-                    scfe.getCalculationLocation().setIidmBusInfo(branchBus1FaultInfo);
-                    scfe.getCalculationLocation().setIidmBus2Info(branchBus2FaultInfo);
-                    biphasedFaultList.add(scfe);
-                }
-            } else { //Brach faults
-                String bus1Name = scfe.getCalculationLocation().getBusLocation();
-                String bus2Name = scfe.getCalculationLocation().getBus2Location();
-                Pair<String, Integer> branchFaultInfo1 = buildFaultBranchFromBusId(bus1Name, network); // creates additional info for fault, identifying location through iidm branches instead of iidm busses to easily get lf busses
-                scfe.getCalculationLocation().setIidmBusInfo(branchFaultInfo1);
-                Pair<String, Integer> branchFaultInfo2 = buildFaultBranchFromBusId(bus2Name, network); // creates additional info for fault, identifying location through iidm branches instead of iidm busses to easily get lf busses
-                scfe.getCalculationLocation().setIidmBus2Info(branchFaultInfo2);
-                faultList.add(scfe);
+                buildBusFaultFromInputs(scfe, faultList, biphasedFaultList, tmpListBus1);
+            } else { //Branch faults
+                buildBranchFaultFromInputs(scfe, faultList);
             }
         }
 
         return new Pair<>(faultList, biphasedFaultList);
     }
 
+    private void buildBusFaultFromInputs(ShortCircuitFault scfe, List<ShortCircuitFault> faultList, List<ShortCircuitFault> biphasedFaultList, Map<String, Pair<String, Integer >> tmpListBus1) {
+        String busName = scfe.getCalculationLocation().getBusLocation();
+        String bus2Name = scfe.getCalculationLocation().getBus2Location();
+
+        if (bus2Name.isEmpty()) {
+            if (scfe.getType() == ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
+                throw new IllegalArgumentException(" short circuit fault : " + busName + " must have a second voltage level defined because it is a common support fault");
+            }
+            Pair<String, Integer> branchFaultInfo = buildFaultBranchFromBusId(busName, network); // creates additional info for fault, identifying location through iidm branches instead of iidm busses to easily get lf busses
+            scfe.getCalculationLocation().setIidmBusInfo(branchFaultInfo); // the short circuit fault info is now enriched with the couple iidmBranchId + iidmBranchSide and not only the iidm bus name in order to be able to identify the busses in the LfNetwork
+            faultList.add(scfe);
+
+        } else {
+            if (scfe.getType() != ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
+                throw new IllegalArgumentException(" short circuit fault : " + busName + " has a second bus defined : " + bus2Name + " but is not a common support fault");
+            }
+
+            // Step 1 : get info at bus 1 initialization of bus 2 list
+            tmpListBus1.computeIfAbsent(busName, k -> buildFaultBranchFromBusId(busName, network));
+
+            // step 2 : get info at bus 2
+            Pair<String, Integer> branchBus2FaultInfo = buildFaultBranchFromBusId(bus2Name, network);
+            Pair<String, Integer> branchBus1FaultInfo = tmpListBus1.get(busName);
+
+            scfe.getCalculationLocation().setIidmBusInfo(branchBus1FaultInfo);
+            scfe.getCalculationLocation().setIidmBus2Info(branchBus2FaultInfo);
+            biphasedFaultList.add(scfe);
+        }
+    }
+
+    private void buildBranchFaultFromInputs(ShortCircuitFault scfe, List<ShortCircuitFault> faultList) {
+        String bus1Name = scfe.getCalculationLocation().getBusLocation();
+        String branchName = scfe.getCalculationLocation().getBranchLocation();
+        Branch<?> branch = network.getBranch(branchName);
+        int bus1TerminalNum = Objects.equals(bus1Name, branch.getTerminal1().getBusBreakerView().getBus().getId()) ? 1 : 2;
+        int bus2TerminalNum = Objects.equals(bus1Name, branch.getTerminal1().getBusBreakerView().getBus().getId()) ? 2 : 1;
+
+        Pair<String, Integer> branchFaultInfo1 = new Pair<>(branchName, bus1TerminalNum);
+        scfe.getCalculationLocation().setIidmBusInfo(branchFaultInfo1);
+        Pair<String, Integer> branchFaultInfo2 = new Pair<>(branchName, bus2TerminalNum);
+        scfe.getCalculationLocation().setIidmBus2Info(branchFaultInfo2);
+        faultList.add(scfe);
+    }
+
     protected static Pair<String, Integer > buildFaultBranchFromBusId(String busId, Network tmpNetwork) {
         Pair<String, Integer > branchFaultInfo = buildFaultDipoleFromBusId(busId, tmpNetwork);
-        if (branchFaultInfo.getKey().equals("")) {
+        if (branchFaultInfo.getKey().isEmpty()) {
             // Bus not found in branches, try three windings transformers
             branchFaultInfo = buildFaultT3WbranchFromBusId(busId, tmpNetwork);
         }

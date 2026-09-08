@@ -497,7 +497,6 @@ public class ShortCircuitBalancedTest {
         Generator g1 = network.getGenerator("G1");
         double kg = shortCircuitNormIec.getKg(g1);
         assertEquals(1.0015680959819921, kg, 0.000001);
-
     }
 
     @Test
@@ -577,7 +576,6 @@ public class ShortCircuitBalancedTest {
         // in the documentation, expected Idocumentation ~ 35.656 kA
         assertEquals(35.69309945355154, val.get(sc1) * 18.064 * 0.277 * Math.sqrt(3) / 15., 0.00001);
         assertEquals(35.69084362105586, val.get(sc2) * 18.064 * 0.277 * Math.sqrt(3) / 15., 0.00001);
-
     }
 
     private static double getCurrentResult(ShortCircuitAnalysisResult scar, String faultId) {

@@ -20,6 +20,8 @@ public class CalculationLocation {
 
     private final String bus2Location; // used in case computations need 2 busses in input: for example in biphased common support short circuit computations
 
+    private final String branchLocation; // used for branch faults
+
     private final double proportionalLocationOnLine;
 
     private final LocationType locationType;
@@ -46,11 +48,13 @@ public class CalculationLocation {
         this.bus2Location = Objects.requireNonNull(busLocationBiPhased);
         this.proportionalLocationOnLine = 0.0;
         this.locationType = LocationType.BUS;
+        this.branchLocation = "";
     }
 
-    public CalculationLocation(String busLocation, String bus2Location, double proportionalLocationOnLine) {
-        this.busLocation = Objects.requireNonNull(busLocation);
-        this.bus2Location = Objects.requireNonNull(bus2Location);
+    public CalculationLocation(String bus1Location, String bus2Location, String branchLocation, double proportionalLocationOnLine) {
+        this.busLocation = bus1Location;
+        this.bus2Location = bus2Location;
+        this.branchLocation = branchLocation;
 
         if (proportionalLocationOnLine < 0.0 || proportionalLocationOnLine > 100.0) {
             throw new IllegalArgumentException(
@@ -67,6 +71,10 @@ public class CalculationLocation {
 
     public String getBus2Location() {
         return bus2Location;
+    }
+
+    public String getBranchLocation() {
+        return branchLocation;
     }
 
     public void setIidmBusInfo(Pair<String, Integer> iidmBusInfo) {

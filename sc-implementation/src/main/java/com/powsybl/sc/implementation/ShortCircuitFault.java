@@ -33,8 +33,8 @@ public class ShortCircuitFault {
         this.shortCircuitFaultType = ShortCircuitFaultType.BUS;
     }
 
-    public ShortCircuitFault(String busLocation, String bus2Location, double proportionalLocationOnLine, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
-        this.location = new CalculationLocation(busLocation, bus2Location, proportionalLocationOnLine);
+    public ShortCircuitFault(String bus1Location, String bus2Location, String branchLocation, double proportionalLocationOnLine, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
+        this.location = new CalculationLocation(bus1Location, bus2Location, branchLocation, proportionalLocationOnLine);
         this.zf = zf;
         this.type = type;
         this.faultId = faultId;
