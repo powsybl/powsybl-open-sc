@@ -18,6 +18,7 @@ import com.powsybl.sc.util.extensions.ScLoad;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
 import net.jafama.FastMath;
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.complex.ComplexUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,14 +109,29 @@ public final class AdmittanceEquationSystem {
         double tmpB = 0.;
         if (shunt != null) {
             tmpB += shunt.getB();
-            Feeder shuntFeeder = new Feeder(new Complex(0., shunt.getB()), shunt.getId(), Feeder.FeederType.SHUNT);
+            Complex initialCurrentContribution;
+            try {
+                Complex yShunt = new Complex(shunt.getG(), shunt.getB());   // G usually 0
+                initialCurrentContribution = yShunt.multiply(ComplexUtils.polar2Complex(bus.getV(), bus.getAngle()));
+            } catch (Exception e) {
+                initialCurrentContribution = Complex.ZERO;
+            }
+            Feeder shuntFeeder = new Feeder(new Complex(0., shunt.getB()), shunt.getId(), initialCurrentContribution, Feeder.FeederType.SHUNT);
             feederList.add(shuntFeeder);
             //check if g will be implemented
         }
         LfShunt controllerShunt = bus.getControllerShunt().orElse(null);
         if (controllerShunt != null) {
             tmpB += controllerShunt.getB();
-            Feeder shuntFeeder = new Feeder(new Complex(0., controllerShunt.getB()), controllerShunt.getId(), Feeder.FeederType.CONTROLLED_SHUNT);
+            Complex initialCurrentContribution;
+            try {
+                Complex yControllerShunt = new Complex(controllerShunt.getG(), controllerShunt.getB()); // G usually 0
+                initialCurrentContribution = yControllerShunt.multiply(
+                        ComplexUtils.polar2Complex(bus.getV(), bus.getAngle()));
+            } catch (Exception e) {
+                initialCurrentContribution = Complex.ZERO;
+            }
+            Feeder shuntFeeder = new Feeder(new Complex(0., controllerShunt.getB()), controllerShunt.getId(), initialCurrentContribution, Feeder.FeederType.CONTROLLED_SHUNT);
             feederList.add(shuntFeeder);
             //check if g will be implemented
         }
@@ -148,7 +164,15 @@ public final class AdmittanceEquationSystem {
             if (z.abs() > epsilon) {
                 Complex yGen = z.reciprocal().multiply(vnomVl * vnomVl / SB);
                 tmpY = tmpY.add(yGen);
-                Feeder shuntFeeder = new Feeder(yGen, lfgen.getId(), Feeder.FeederType.GENERATOR);
+                Complex initialCurrentContribution;
+                try {
+                    initialCurrentContribution = new Complex(lfgen.getTargetP(), -bus.getQ().eval())
+                            .divide(ComplexUtils.polar2Complex(bus.getV(), Math.toRadians(-bus.getAngle())))
+                            .negate(); // negate() due to current convention
+                } catch (Exception e) {
+                    initialCurrentContribution = Complex.ZERO;
+                }
+                Feeder shuntFeeder = new Feeder(yGen, lfgen.getId(), initialCurrentContribution, Feeder.FeederType.GENERATOR);
                 feederList.add(shuntFeeder);
             }
         }
@@ -206,7 +230,13 @@ public final class AdmittanceEquationSystem {
                 yLoadEq = scLoad.ydEquivalent().divide(v.abs() * v.abs());
 
                 if (yLoadEq.abs() > EPSILON) {
-                    Feeder shuntFeeder = new Feeder(yLoadEq, bus.getId(), Feeder.FeederType.LOAD); // Currently only one feeder aggregating all the loads of the bus!
+                    Complex initialCurrentContribution;
+                    try {
+                        initialCurrentContribution = yLoadEq.multiply(v);
+                    } catch (Exception e) {
+                        initialCurrentContribution = new Complex(0, 0);
+                    }
+                    Feeder shuntFeeder = new Feeder(yLoadEq, bus.getId(), initialCurrentContribution, Feeder.FeederType.LOAD); // Currently only one feeder aggregating all the loads of the bus!
                     feederList.add(shuntFeeder);
                 }
 
