@@ -47,10 +47,10 @@ public class ImpedanceLinearResolution {
 
     public class ImpedanceLinearResolutionResult {
 
-        private LfBus bus;
-        private Complex zthEq;
-        private Complex eth; // Thevenin voltage
-        private Complex zthEq20Hz;
+        private final LfBus bus;
+        private final Complex zthEq;
+        private final Complex eth; // Thevenin voltage
+        private final Complex zthEq20Hz;
 
         // zknf corresponds to extracted impedance term z(k,nf) from inv(Y) to be able to compute Vk = z(k,nf).icc.
         // k is the bus index of the voltage Vk we want to compute and nf is the index of faulted bus
@@ -67,15 +67,15 @@ public class ImpedanceLinearResolution {
 
         public class ImpedanceLinearResolutionResultBiphased {
 
-            private LfBus bus2;
+            private final LfBus bus2;
 
-            private int numBus2Fault; // stored to easily access the extraction vector at bus2 to get the full voltage export if required
+            private final int numBus2Fault; // stored to easily access the extraction vector at bus2 to get the full voltage export if required
 
-            private Complex v2;
+            private final Complex v2;
 
-            private Complex z22; //additional impedance matrix terms to keep as they are needed for biphased common support faults
-            private Complex z21;
-            private Complex z12;
+            private final Complex z22; //additional impedance matrix terms to keep as they are needed for biphased common support faults
+            private final Complex z21;
+            private final Complex z12;
 
             // This map is similar to busToZknf map, applied for bus2 k
             // store necessary data to compute voltage delta of the full grid for a common support biphased fault
