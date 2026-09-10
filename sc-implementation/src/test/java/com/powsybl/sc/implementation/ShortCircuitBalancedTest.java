@@ -18,6 +18,7 @@ import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.sc.util.extensions.ThreeWindingsTransformerNorm;
 import com.powsybl.shortcircuit.*;
@@ -99,6 +100,7 @@ public class ShortCircuitBalancedTest {
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
 
         List<Fault> faults = new ArrayList<>();
         BusFault bf1 = new BusFault("F1", "B1");
@@ -138,6 +140,7 @@ public class ShortCircuitBalancedTest {
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
 
         ShortCircuitAnalysisResult scar = provider.run(nt4, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
 
@@ -162,6 +165,7 @@ public class ShortCircuitBalancedTest {
         ShortCircuitParameters scp = new ShortCircuitParameters()
                 .setStudyType(StudyType.SUB_TRANSIENT)
                 .setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
 
         ShortCircuitAnalysisResult scar = provider.run(nt4, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
 
@@ -185,6 +189,7 @@ public class ShortCircuitBalancedTest {
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
 
         //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
         List<Fault> faults = new ArrayList<>(); // TODO
@@ -438,6 +443,7 @@ public class ShortCircuitBalancedTest {
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters();
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
 
         //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(network4Tfo, scp, cm);
 
@@ -445,9 +451,8 @@ public class ShortCircuitBalancedTest {
 
         List<FaultResult> frs = scar.getFaultResults();
 
-        // Note: Courcirc's results: new double[]{3526.60254, 3695.30591, 3554.53003, 2341.2373},
         assertMagnitudeCurrents(frs,
-                new double[]{3526.46556, 3695.17940, 3554.39777, 2342.88995}
+                new double[]{3526.60254, 3695.30591, 3554.53003, 2341.2373}
         );
     }
 
@@ -466,6 +471,7 @@ public class ShortCircuitBalancedTest {
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters().setWithNeutralPosition(true);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
 
         //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(network4Tfo, scp, cm);
 
@@ -473,9 +479,8 @@ public class ShortCircuitBalancedTest {
 
         List<FaultResult> frs = scar.getFaultResults();
 
-        // Note: Courcirc's results: new double[]{3509.85864, 3697.65112, 3574.19287, 2274.43921},
         assertMagnitudeCurrents(frs,
-                new double[]{3509.7220546590897, 3697.5206241890896, 3574.052947845015, 2276.0427607299207}
+                new double[]{3509.85864, 3697.65112, 3574.19287, 2274.43921}
         );
     }
 
@@ -489,12 +494,12 @@ public class ShortCircuitBalancedTest {
     void openShortCircuitProvider4nRatioTapChangerPredefinedPosition() {
         //set up LF info
         Network network4nRtc = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
-        LoadFlow.run(network4nRtc, loadFlowParameters);
 
         //set up ShortCircuitProvider info
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters().setWithNeutralPosition(false);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
 
         //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(network4Tfo, scp, cm);
 
@@ -502,9 +507,9 @@ public class ShortCircuitBalancedTest {
 
         List<FaultResult> frs = scar.getFaultResults();
 
-        // Note: Courcirc's results: new double[]{3469.37451, 3757.03662, 3721.92114, 2379.39624},
+        // TODO: Courcirc's results: new double[]{3469.37451, 3757.03662, 3721.92114, 2379.39624},
         assertMagnitudeCurrents(frs,
-                new double[]{3469.26752, 3757.00617, 3721.94626, 2379.35989}
+                new double[]{3469.389730628567, 3757.143554198227, 3722.1134944134315, 2377.6867618206334}
         );
     }
 

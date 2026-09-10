@@ -16,7 +16,6 @@ import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
 import com.powsybl.openloadflow.graph.EvenShiloachGraphDecrementalConnectivityFactory;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
-import com.powsybl.openloadflow.network.LfNetworkParameters;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
 import com.powsybl.sc.util.CalculationLocation;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
@@ -55,8 +54,8 @@ public abstract class AbstractShortCircuitEngine {
     protected AbstractShortCircuitEngine(Network network, ShortCircuitEngineParameters parameters) {
         this.network = Objects.requireNonNull(network);
         this.parameters = Objects.requireNonNull(parameters);
-        this.lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), new LfNetworkParameters());
         this.acLoadFlowParameters = getAcLoadFlowParametersFromParam();
+        this.lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), acLoadFlowParameters.getNetworkParameters());
         ShortCircuitNorm shortCircuitNorm = parameters.getNorm();
         ShortCircuitExtensions.add(network, lfNetworks, shortCircuitNorm.getNormExtensions());
     }

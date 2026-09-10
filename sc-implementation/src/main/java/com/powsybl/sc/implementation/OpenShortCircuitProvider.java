@@ -12,15 +12,13 @@ import com.google.common.base.Stopwatch;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.math.matrix.SparseMatrixFactory;
-import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.sc.util.Feeder;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.contingency.violations.LimitViolation;
 import com.powsybl.shortcircuit.*;
@@ -70,11 +68,10 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         Objects.requireNonNull(network);
         Objects.requireNonNull(parameters);
         Stopwatch stopwatch = Stopwatch.createStarted();
-
-        LoadFlowParameters lfParameters = new LoadFlowParameters();
-        LoadFlow.Runner loadFlowRunner = new LoadFlow.Runner(new OpenLoadFlowProvider(matrixFactory));
-
-        LoadFlowResult lfResult = loadFlowRunner.run(network, lfParameters);
+        OpenShortCircuitParameters extension = parameters.getExtension(OpenShortCircuitParameters.class);
+        LoadFlowParameters lfParameters = extension != null
+                ? extension.getLoadFlowParameters()
+                : new LoadFlowParameters();
 
         // building of fault lists
         List<ShortCircuitFault> faultsList = new ArrayList<>();
@@ -87,10 +84,9 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         // Selective or Systematic short circuit analysis
         ShortCircuitEngineParameters.AnalysisType at = ShortCircuitEngineParameters.AnalysisType.SELECTIVE;
 
-        LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, at, faultsList, parameters, shortCircuitNorm);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(lfParameters, matrixFactory, at, faultsList, parameters, shortCircuitNorm);
 
         // lists to store the results
         List<FaultResult> faultResults = new ArrayList<>();

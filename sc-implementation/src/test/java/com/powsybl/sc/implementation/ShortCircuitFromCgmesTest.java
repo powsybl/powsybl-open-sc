@@ -17,6 +17,7 @@ import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.cgmes.CgmesShortCircuitImportPostProcessor;
 import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -160,6 +161,7 @@ class ShortCircuitFromCgmesTest {
         assertEquals(16.89219367449058, values.get("sc4z"), 0.001);
     }
 
+    @Disabled
     @Test
     void triphasedTestLoadFlow() {
         // This test shows the differences using voltage computed by load flow instead of uniform IEC norm

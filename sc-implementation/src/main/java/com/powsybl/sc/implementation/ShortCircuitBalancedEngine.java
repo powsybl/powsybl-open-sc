@@ -40,7 +40,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                 AcLoadFlowResult result = new AcloadFlowEngine(context).run();
                 if (!result.getSolverStatus().equals(AcSolverStatus.CONVERGED)) {
                     throw new PowsyblException("Load flow did not converge for voltage profile calculation on network "
-                            + lfNetwork.getNumCC());
+                            + lfNetwork.getId());
                 }
             }
         }
