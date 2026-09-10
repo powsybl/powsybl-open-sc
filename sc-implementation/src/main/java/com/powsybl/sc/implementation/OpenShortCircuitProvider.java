@@ -194,35 +194,40 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 continue;
             }
 
-            Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
-            ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
+            fillFaultLists(fault, network, scType, balancedFaultsList, scFaultToFault);
+        }
 
-            ShortCircuitFault sc;
-            // TODO : see how to get lfBus from iidm Bus
-            String elementId = fault.getElementId();
+        return new Pair<>(existBalancedFaults, existUnbalancedFaults);
+    }
 
-            if (fault instanceof BranchFault branchFault) { // Branch fault
-                Pair<String, String> branchBusIds = getBranchBusIdsFromElementId(elementId, fault.getId(), network);
+    private void fillFaultLists(Fault fault, Network network, ShortCircuitFault.ShortCircuitType scType, List<ShortCircuitFault> balancedFaultsList, Map<ShortCircuitFault, Fault> scFaultToFault) {
+        Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
+        ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
 
-                if (branchBusIds == null) {
-                    continue;
-                }
+        ShortCircuitFault sc;
+        // TODO : see how to get lfBus from iidm Bus
+        String elementId = fault.getElementId();
 
-                sc = new ShortCircuitFault(branchBusIds.getKey(), branchBusIds.getValue(), elementId, branchFault.getProportionalLocation(), branchFault.getId(), elementId, scz, scType);
-            } else { //Bus fault
-                String busId = getBusId(elementId, fault.getId(), network);
+        if (fault instanceof BranchFault branchFault) { // Branch fault
+            Pair<String, String> branchBusIds = getBranchBusIdsFromElementId(elementId, fault.getId(), network);
 
-                if (busId == null) {
-                    continue;
-                }
-
-                sc = new ShortCircuitFault(busId, fault.getId(), elementId, scz, scType);
+            if (branchBusIds == null) {
+                return;
             }
 
-            balancedFaultsList.add(sc);
-            scFaultToFault.put(sc, fault);
+            sc = new ShortCircuitFault(branchBusIds.getKey(), branchBusIds.getValue(), elementId, branchFault.getProportionalLocation(), branchFault.getId(), elementId, scz, scType);
+        } else { //Bus fault
+            String busId = getBusId(elementId, fault.getId(), network);
+
+            if (busId == null) {
+                return;
+            }
+
+            sc = new ShortCircuitFault(busId, fault.getId(), elementId, scz, scType);
         }
-        return new Pair<>(existBalancedFaults, existUnbalancedFaults);
+
+        balancedFaultsList.add(sc);
+        scFaultToFault.put(sc, fault);
     }
 
     private static Pair<String, String> getBranchBusIdsFromElementId(String elementId, String faultId, Network network) {
