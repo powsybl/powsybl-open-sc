@@ -71,7 +71,7 @@ public class ImpedanceLinearResolutionParameters {
         this.periodType = getAdmittancePeriodTypeFromParamThevenin(thParameters);
         this.admittanceType = admittanceType;
         this.initialVoltages = initialVoltages;
-        this.isWithNeutralPosition = false;
+        this.isWithNeutralPosition = thParameters.isWithNeutralPosition();
     }
 
     public AcLoadFlowParameters getAcLoadFlowParameters() {

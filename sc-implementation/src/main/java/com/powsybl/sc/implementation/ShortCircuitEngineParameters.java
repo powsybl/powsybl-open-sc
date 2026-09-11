@@ -63,7 +63,7 @@ public class ShortCircuitEngineParameters {
 
     private final boolean isWithNeutralPosition;
 
-    public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, boolean isVoltageExport, VoltageProfileType vProfile, boolean ignoreShunts, PeriodType periodType, ShortCircuitNorm norm) {
+    public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, boolean isVoltageExport, VoltageProfileType vProfile, boolean ignoreShunts, PeriodType periodType, ShortCircuitNorm norm, boolean isWithNeutralPosition) {
         this.loadFlowParameters = Objects.requireNonNull(loadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.shortCircuitFaults = Objects.requireNonNull(faults);
@@ -75,7 +75,7 @@ public class ShortCircuitEngineParameters {
         this.analysisType = analysisType;
         this.periodType = periodType;
         this.norm = norm;
-        this.isWithNeutralPosition = false;
+        this.isWithNeutralPosition = isWithNeutralPosition;
     }
 
     public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, ShortCircuitParameters scParameters, ShortCircuitNorm norm) {

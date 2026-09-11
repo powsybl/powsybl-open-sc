@@ -124,6 +124,10 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         r = piModel.getR() * kTr;
         x = piModel.getX() * kTx * freqCoef;
 
+        if (!isWithNeutralPosition) {
+            r = r * rho;
+            x = x * rho;
+        }
         double zk = Math.sqrt(r * r + x * x);
 
         zInvSquare = 1 / (zk * zk);
