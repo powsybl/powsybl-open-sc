@@ -10,6 +10,7 @@ package com.powsybl.sc.implementation;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Stopwatch;
 import com.powsybl.computation.ComputationManager;
+import com.powsybl.iidm.network.Branch;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlow;
@@ -202,22 +203,17 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 // Zf = r + jx
                 zFaultToGround = new Complex(rFault, xFault);
             } else {
-                // Zf = (r*jx)(r+jx) for ConnectionType.PARALLEL
+                // Zf = (r*jx)/(r+jx) for ConnectionType.PARALLEL
                 zFaultToGround = new Complex(rFault, 0)
                         .multiply(new Complex(0, xFault))
                         .divide(new Complex(rFault, xFault));
             }
-            // TODO : see how to get lfBus from iidm Bus
-            String elementId = fault.getElementId();
-            // TODO Nay: if element is a branch, take nominalV of bus1
-            Bus bus = network.getBusBreakerView().getBus(elementId);
-            double vNomVl = bus.getVoltageLevel().getNominalV();
 
             // Convert fault impedance from Ohm into PerUnit
-            Complex zFaultToGroundPerUnit = zFaultToGround.divide(new Complex(vNomVl * vNomVl / SB, 0));
+            Complex zFaultToGroundPerUnit = zFaultToGround.divide(new Complex(getZPerUnitFromFault(fault, network), 0));
             ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGroundPerUnit);
-            String busId = bus.getId();
-            ShortCircuitFault sc = new ShortCircuitFault(busId, busId, scz, scType);
+            String elementId = fault.getElementId();
+            ShortCircuitFault sc = new ShortCircuitFault(elementId, elementId, scz, scType);
             balancedFaultsList.add(sc);
 
             // TODO improve:
@@ -225,5 +221,28 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         }
         return new Pair<>(existBalancedFaults, existUnbalancedFaults);
+    }
+
+    private double getZPerUnitFromFault(Fault fault, Network network) {
+        return switch(fault.getType())
+        {
+            case Fault.Type.BUS -> getZPerUnitForBus(fault, network);
+            case Fault.Type.BRANCH ->getZPerUnitForBranch(fault, network);
+        };
+    }
+
+    private double getZPerUnitForBus(Fault fault, Network network) {
+        String elementId = fault.getElementId();
+        Bus bus = network.getBusBreakerView().getBus(elementId);
+        double vNomVl = bus.getVoltageLevel().getNominalV();
+        return vNomVl * vNomVl / SB;
+    }
+
+    private double getZPerUnitForBranch(Fault fault, Network network) {
+        String elementId = fault.getElementId();
+        Branch<?> branch = network.getBranch(elementId);
+        double vNomVl_1 = branch.getTerminal1().getVoltageLevel().getNominalV();
+        double vNomVl_2 = branch.getTerminal2().getVoltageLevel().getNominalV();
+        return vNomVl_1 * vNomVl_2 / SB;
     }
 }
