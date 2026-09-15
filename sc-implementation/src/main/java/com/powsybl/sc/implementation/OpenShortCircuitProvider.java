@@ -224,10 +224,9 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     }
 
     private double getZPerUnitFromFault(Fault fault, Network network) {
-        return switch(fault.getType())
-        {
+        return switch (fault.getType()) {
             case Fault.Type.BUS -> getZPerUnitForBus(fault, network);
-            case Fault.Type.BRANCH ->getZPerUnitForBranch(fault, network);
+            case Fault.Type.BRANCH -> getZPerUnitForBranch(fault, network);
         };
     }
 
@@ -241,8 +240,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     private double getZPerUnitForBranch(Fault fault, Network network) {
         String elementId = fault.getElementId();
         Branch<?> branch = network.getBranch(elementId);
-        double vNomVl_1 = branch.getTerminal1().getVoltageLevel().getNominalV();
-        double vNomVl_2 = branch.getTerminal2().getVoltageLevel().getNominalV();
-        return vNomVl_1 * vNomVl_2 / SB;
+        double vNomVl1 = branch.getTerminal1().getVoltageLevel().getNominalV();
+        double vNomVl2 = branch.getTerminal2().getVoltageLevel().getNominalV();
+        return vNomVl1 * vNomVl2 / SB;
     }
 }
