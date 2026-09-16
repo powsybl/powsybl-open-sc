@@ -10,22 +10,33 @@ package com.powsybl.sc.util;
 import com.powsybl.iidm.network.ThreeSides;
 import org.apache.commons.math3.complex.Complex;
 
+import java.util.Objects;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class Feeder {
 
     //Feeder class is used to post process the results of a short circuit computation to get the feeder contribution in short-circuit current
-    public Feeder(Complex zFeeder, String id, Complex initialCurrentContribution, Feeder.FeederType feederType, ThreeSides side) {
+    public Feeder(Complex zFeeder, String id, Feeder.FeederType feederType, ThreeSides side) {
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(feederType, "feederType");
+        if (feederType == FeederType.BRANCH) {
+            if (side == null) {
+                throw new IllegalArgumentException("side is required for a BRANCH feeder (id=" + id + ")");
+            }
+        } else if (side != null) {
+            throw new IllegalArgumentException("side must be null for a " + feederType + " feeder (id=" + id
+                    + "), got " + side);
+        }
         this.z = zFeeder;
         this.id = id;
-        this.initialCurrentContribution = initialCurrentContribution;
         this.feederType = feederType;
         this.side = side;
     }
 
-    public Feeder(Complex zFeeder, String id, Complex initialCurrentContribution, Feeder.FeederType feederType) {
-        this(zFeeder, id, initialCurrentContribution, feederType, null);
+    public Feeder(Complex zFeeder, String id, Feeder.FeederType feederType) {
+        this(zFeeder, id, feederType, null);
     }
 
     public enum FeederType {
@@ -44,8 +55,6 @@ public class Feeder {
 
     private final ThreeSides side;
 
-    private final Complex initialCurrentContribution;
-
     public ThreeSides getSide() {
         return side;
     }
@@ -56,10 +65,6 @@ public class Feeder {
 
     public String getId() {
         return id;
-    }
-
-    public Complex getInitialCurrentContribution() {
-        return initialCurrentContribution;
     }
 
     public Feeder.FeederType getFeederType() {

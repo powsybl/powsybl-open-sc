@@ -21,6 +21,7 @@ import com.powsybl.sc.util.Feeder;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.sc.util.InitialCurrentContributionCalculator;
 import com.powsybl.shortcircuit.*;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
@@ -32,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.powsybl.openloadflow.util.PerUnit.SB;
 import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
 
 /**
@@ -141,7 +143,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             double voltage = scResult.getVd().abs() * scResult.getLfBus().getNominalV();
 
             List<FeederResult> feederResultsProvider = new ArrayList<>();
-            fillFeederResults(scbParameters, feederResultsProvider, scResult);
+            fillFeederResults(network, scbParameters, feederResultsProvider, scResult);
 
             List<LimitViolation> limitViolations = new ArrayList<>();
 
@@ -154,23 +156,27 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         }
     }
 
-    private void fillFeederResults(ShortCircuitEngineParameters scbParameters, List<FeederResult> feederResultsProvider, ShortCircuitResult scResult) {
+    private void fillFeederResults(Network network, ShortCircuitEngineParameters scbParameters, List<FeederResult> feederResultsProvider, ShortCircuitResult scResult) {
         for (Map.Entry<LfBus, FeedersAtBusResult> busAndFeedersAtBusResult : scResult.getFeedersResultDirect().entrySet()) {
             LfBus lfBus = busAndFeedersAtBusResult.getKey();
             FeedersAtBusResult feedersAtBusResult = busAndFeedersAtBusResult.getValue();
             for (com.powsybl.sc.util.FeederResult feederResult : feedersAtBusResult.getBusFeedersResult()) {
 
-                Complex iCont = feederResult.getIContribution().multiply(1e5 / Math.sqrt(3) / lfBus.getNominalV());
-                Complex iInitial = new Complex(0, 0);
-                Complex iTotal;
+                // 1000: kA to A
+                double unitToAmpere = SB * 1000 / Math.sqrt(3) / lfBus.getNominalV();
+                Complex iInitial = Complex.ZERO;
                 if (scbParameters.getVoltageProfileType() == ShortCircuitEngineParameters.VoltageProfileType.CALCULATED) {
-                    iInitial = feederResult.getFeeder().getInitialCurrentContribution().multiply(1e5 / Math.sqrt(3) / lfBus.getNominalV());
+                    iInitial = InitialCurrentContributionCalculator.getInitialCurrentContribution(network, feederResult.getFeeder())
+                            .multiply(unitToAmpere);
                     if (iInitial.isNaN() || iInitial.isInfinite()) {
                         LOGGER.warn("Initial current for feeder '{}' on bus '{}' is NaN/Infinite, defaulting to 0.",
                                 feederResult.getFeeder().getId(), lfBus.getId());
                         iInitial = Complex.ZERO;
                     }
                 }
+
+                Complex iCont = feederResult.getIContribution().multiply(unitToAmpere);
+                Complex iTotal;
                 if (feederResult.getFeeder().getFeederType() == Feeder.FeederType.BRANCH) {
                     iTotal = iInitial.add(iCont);
                 } else {
@@ -178,9 +184,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 }
 
                 double magnitude = iTotal.abs();
-
                 String feederId = feederResult.getFeeder().getId();
-
                 MagnitudeFeederResult magnitudeFeederResult = new MagnitudeFeederResult(feederId, magnitude, feederResult.getFeeder().getSide());
                 feederResultsProvider.add(magnitudeFeederResult);
             }

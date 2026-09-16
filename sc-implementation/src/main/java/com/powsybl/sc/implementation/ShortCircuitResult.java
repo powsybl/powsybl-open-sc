@@ -286,18 +286,8 @@ public class ShortCircuitResult {
                     branchDi1.put(branch, new FortescueValue(di1.abs(), di1.getArgument()));
                     branchDi2.put(branch, new FortescueValue(di2.abs(), di2.getArgument()));
                     Complex zBranch = new Complex(branch.getPiModel().getR(), branch.getPiModel().getX());
-
-                    // Current = (S/V)*, * conjugate
-                    Complex s1conj = new Complex(branch.getP1().eval(), -branch.getQ1().eval());
-                    Complex v1 = ComplexUtils.polar2Complex(bus1.getV(), -bus1.getAngle());
-                    Complex initialCurrentContribution1 = s1conj.divide(v1);
-
-                    resultDirectBus1Feeders.getBusFeedersResult().add(new FeederResult(new Feeder(zBranch, branch.getId(), initialCurrentContribution1, Feeder.FeederType.BRANCH, ThreeSides.ONE), di1));
-
-                    Complex s2conj = new Complex(branch.getP2().eval(), -branch.getQ2().eval());
-                    Complex v2 = ComplexUtils.polar2Complex(bus2.getV(), -bus2.getAngle());
-                    Complex initialCurrentContribution2 = s2conj.divide(v2);
-                    resultDirectBus2Feeders.getBusFeedersResult().add(new FeederResult(new Feeder(zBranch, branch.getId(), initialCurrentContribution2, Feeder.FeederType.BRANCH, ThreeSides.TWO), di2));
+                    resultDirectBus1Feeders.getBusFeedersResult().add(new FeederResult(new Feeder(zBranch, branch.getId(), Feeder.FeederType.BRANCH, ThreeSides.ONE), di1));
+                    resultDirectBus2Feeders.getBusFeedersResult().add(new FeederResult(new Feeder(zBranch, branch.getId(), Feeder.FeederType.BRANCH, ThreeSides.TWO), di2));
                     continue;
                 }
 

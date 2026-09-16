@@ -7,12 +7,7 @@
  */
 package com.powsybl.sc.implementation;
 
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.openloadflow.ac.AcLoadFlowContext;
-import com.powsybl.openloadflow.ac.AcLoadFlowResult;
-import com.powsybl.openloadflow.ac.AcloadFlowEngine;
-import com.powsybl.openloadflow.ac.solver.AcSolverStatus;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.sc.util.AdmittanceEquationSystem;
@@ -35,15 +30,6 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
     @Override
     public void run() { //can handle both selective and systematic analysis with one single matrix inversion
         LfNetwork lfNetwork = lfNetworks.getFirst();
-        if (parameters.getVoltageProfileType() == ShortCircuitEngineParameters.VoltageProfileType.CALCULATED) {
-            try (AcLoadFlowContext context = new AcLoadFlowContext(lfNetwork, acLoadFlowParameters)) {
-                AcLoadFlowResult result = new AcloadFlowEngine(context).run();
-                if (!result.getSolverStatus().equals(AcSolverStatus.CONVERGED)) {
-                    throw new PowsyblException("Load flow did not converge for voltage profile calculation on network "
-                            + lfNetwork.getId());
-                }
-            }
-        }
         fillInitialVoltages();
 
         // building a contingency list with all voltage levels
