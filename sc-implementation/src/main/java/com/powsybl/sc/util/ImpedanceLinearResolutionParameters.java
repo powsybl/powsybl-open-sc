@@ -29,15 +29,13 @@ public class ImpedanceLinearResolutionParameters {
         ADM_STEADY_STATE;
     }*/
 
-    // public static final double XSUBTRANSIENT = 0.2; //default value if data not available
-
     private final boolean voltageUpdate;
 
     private final AcLoadFlowParameters acLoadFlowParameters;
 
     private final MatrixFactory matrixFactory;
 
-    private final List<CalculationLocation> calculationLocations; // stores all calculation locations (BUS, LINE, and BIPHASED_COMMON_SUPPORT
+    private final List<CalculationLocation> calculationLocations; // stores all calculation locations (BUS, LINE, and BIPHASED_COMMON_SUPPORT)
 
     private final boolean ignoreShunts;
 
