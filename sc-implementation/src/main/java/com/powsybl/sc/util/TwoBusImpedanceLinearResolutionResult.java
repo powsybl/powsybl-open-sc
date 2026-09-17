@@ -42,7 +42,6 @@ public class TwoBusImpedanceLinearResolutionResult {
 
     public void updateWithVoltagesdelta2(AdmittanceMatrix y, DenseMatrix dEn) {
         bus2ToZknf = y.getDeltaV(dEn, numBus2Fault);
-        //eqSysFeeders = feeders; // TODO : check if feeder are necessary for v2 : contains necessary data to update the contribution of feeders for each shortcircuit
     }
 
     public LfBus getBus2() {

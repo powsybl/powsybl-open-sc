@@ -38,7 +38,7 @@ public class ImpedanceLinearResolution {
 
     private final ImpedanceLinearResolutionParameters parameters;
 
-    public final HashMap<LfBus, ImpedanceLinearResolutionResult> results = new HashMap<>();
+    public final Map<LfBus, ImpedanceLinearResolutionResult> results = new HashMap<>();
 
     public ImpedanceLinearResolution(LfNetwork network, ImpedanceLinearResolutionParameters parameters) {
         this.network = Objects.requireNonNull(network);
@@ -46,7 +46,7 @@ public class ImpedanceLinearResolution {
     }
 
     public record ImpedanceUpperTriangle(Complex z12, Complex z21, Complex z22) {
-    };
+    }
 
     public class ImpedanceLinearResolutionResult {
 
