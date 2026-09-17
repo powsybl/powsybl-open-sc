@@ -12,6 +12,7 @@ import com.google.common.base.Stopwatch;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.Branch;
 import com.powsybl.iidm.network.Bus;
+import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
@@ -240,8 +241,12 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     private double getZPerUnitForBranch(Fault fault, Network network) {
         String elementId = fault.getElementId();
         Branch<?> branch = network.getBranch(elementId);
-        double vNomVl1 = branch.getTerminal1().getVoltageLevel().getNominalV();
         double vNomVl2 = branch.getTerminal2().getVoltageLevel().getNominalV();
-        return vNomVl1 * vNomVl2 / SB;
+        if (branch.getType() == IdentifiableType.TWO_WINDINGS_TRANSFORMER) {
+            return vNomVl2 * vNomVl2 / SB;
+        } else {
+            double vNomVl1 = branch.getTerminal1().getVoltageLevel().getNominalV();
+            return vNomVl1 * vNomVl2 / SB;
+        }
     }
 }
