@@ -16,25 +16,83 @@ import java.util.Objects;
  */
 public class CalculationLocation {
 
+    public enum LocationType {
+        BUS,
+        LINE,
+        BIPHASED_COMMON_SUPPORT
+    }
+
+    private final LocationType locationType;
+
     private final String busLocation;
 
-    private final String bus2Location; // used in case computations need 2 busses in input: for example in biphased common support short circuit computations
+    private final String bus2Location; // meaningful for LINE and BIPHASED_COMMON_SUPPORT only
 
-    private Pair<String, Integer > iidmBusInfo; // additional iidm info to make the correspondence between iidm info and lfNetwork info
+    private final String branchLocation; // meaningful for LINE only
 
-    private Pair<String, Integer > iidmBus2Info; // additional iidm info to make the correspondence between iidm info and lfNetwork info in case of a biphased common support fault
+    private final double proportionalLocationOnLine; // meaningful for LINE only
+
+    private Pair<String, Integer> iidmBusInfo; // additional iidm info to make the correspondence between iidm info and lfNetwork info
+
+    private Pair<String, Integer> iidmBus2Info; // meaningful for LINE and BIPHASED_COMMON_SUPPORT only
 
     private String lfBusInfo; // additional info to have the correspondence between iidm and lfNetwork
 
-    private String lfBus2Info; // additional info to have the correspondence between iidm and lfNetwork for bus 2
+    private String lfBus2Info; // meaningful for LINE and BIPHASED_COMMON_SUPPORT only
 
-    public CalculationLocation(String busLocation) {
-        this(busLocation, "");
+    public CalculationLocation(String busLocation, String bus2Location, String branchLocation,
+                                double proportionalLocationOnLine, LocationType locationType) {
+        this.busLocation = Objects.requireNonNull(busLocation);
+        this.bus2Location = bus2Location;
+        this.branchLocation = branchLocation;
+        this.proportionalLocationOnLine = proportionalLocationOnLine;
+        this.locationType = locationType;
+        validate();
     }
 
-    public CalculationLocation(String busLocation, String busLocationBiPhased) {
-        this.busLocation = Objects.requireNonNull(busLocation);
-        this.bus2Location = Objects.requireNonNull(busLocationBiPhased);
+    private void validate() {
+        if (locationType == LocationType.LINE) {
+            if (branchLocation == null) {
+                throw new IllegalArgumentException("branch id of a location of type LINE must be defined");
+            }
+            if (proportionalLocationOnLine < 0.0 || proportionalLocationOnLine > 100.0) {
+                throw new IllegalArgumentException("percentageFromBus1 must be between 0 and 100 inclusive");
+            }
+        } else if (branchLocation != null) {
+            throw new IllegalArgumentException("branchLocation must be null for locationType " + locationType);
+        }
+
+        if (locationType != LocationType.LINE && locationType != LocationType.BIPHASED_COMMON_SUPPORT
+                && bus2Location != null) {
+            throw new IllegalArgumentException("bus2Location must be null for locationType " + locationType);
+        }
+    }
+
+    /**
+     * Single bus fault.
+     */
+    public CalculationLocation(String busLocation) {
+        this(busLocation, null, null, 0.0, LocationType.BUS);
+    }
+
+    /**
+     * Biphased common support fault, tying together two independent buses
+     * (not necessarily on the same branch, unlike {@link #CalculationLocation(String, String, String, double)}).
+     */
+    public CalculationLocation(String busLocation, String bus2Location) {
+        this(busLocation, Objects.requireNonNull(bus2Location), null, 0.0, LocationType.BIPHASED_COMMON_SUPPORT);
+    }
+
+    /**
+     * Fault located along a line, between its two terminal buses.
+     */
+    public CalculationLocation(String busLocation, String bus2Location, String branchLocation, double proportionalLocationOnLine) {
+        this(busLocation, Objects.requireNonNull(bus2Location), Objects.requireNonNull(branchLocation),
+                proportionalLocationOnLine, LocationType.LINE);
+    }
+
+    public LocationType getLocationType() {
+        return locationType;
     }
 
     public String getBusLocation() {
@@ -45,36 +103,43 @@ public class CalculationLocation {
         return bus2Location;
     }
 
-    public void setIidmBusInfo(Pair<String, Integer> iidmBusInfo) {
-        this.iidmBusInfo = iidmBusInfo;
+    public String getBranchLocation() {
+        return branchLocation;
     }
 
-    public void setIidmBus2Info(Pair<String, Integer> iidmBus2Info) {
-        this.iidmBus2Info = iidmBus2Info;
-    }
-
-    public Pair<String, Integer> getIidmBus2Info() {
-        return iidmBus2Info;
+    public double getProportionalLocationOnLine() {
+        return proportionalLocationOnLine;
     }
 
     public Pair<String, Integer> getIidmBusInfo() {
         return iidmBusInfo;
     }
 
-    public void setLfBusInfo(String lfBusInfo) {
-        this.lfBusInfo = lfBusInfo;
+    public void setIidmBusInfo(Pair<String, Integer> iidmBusInfo) {
+        this.iidmBusInfo = iidmBusInfo;
     }
 
-    public void setLfBus2Info(String lfBus2Info) {
-        this.lfBus2Info = lfBus2Info;
+    public Pair<String, Integer> getIidmBus2Info() {
+        return iidmBus2Info;
+    }
+
+    public void setIidmBus2Info(Pair<String, Integer> iidmBus2Info) {
+        this.iidmBus2Info = iidmBus2Info;
     }
 
     public String getLfBusInfo() {
         return lfBusInfo;
     }
 
+    public void setLfBusInfo(String lfBusInfo) {
+        this.lfBusInfo = lfBusInfo;
+    }
+
     public String getLfBus2Info() {
         return lfBus2Info;
     }
 
+    public void setLfBus2Info(String lfBus2Info) {
+        this.lfBus2Info = lfBus2Info;
+    }
 }
