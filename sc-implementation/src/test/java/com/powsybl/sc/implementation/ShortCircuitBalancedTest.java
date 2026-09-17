@@ -22,7 +22,6 @@ import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.sc.util.extensions.ThreeWindingsTransformerNorm;
 import com.powsybl.shortcircuit.*;
 import org.apache.commons.math3.complex.Complex;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -441,7 +440,6 @@ public class ShortCircuitBalancedTest {
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters();
 
-        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
         List<Fault> faults = new ArrayList<>();
         BusFault bf1 = new BusFault("F1", "B1", 0.5, 1, Fault.ConnectionType.SERIES, Fault.FaultType.THREE_PHASE);
         BusFault bf2 = new BusFault("F2", "B2", 5, 10, Fault.ConnectionType.PARALLEL, Fault.FaultType.THREE_PHASE);
@@ -459,7 +457,7 @@ public class ShortCircuitBalancedTest {
         assertEquals(2.41203491, m1.getCurrent(), 0.00001);
     }
 
-    public static @NonNull Network create2n(NetworkFactory networkFactory) {
+    public static Network create2n(NetworkFactory networkFactory) {
         Objects.requireNonNull(networkFactory);
 
         double p0l2 = 10;
