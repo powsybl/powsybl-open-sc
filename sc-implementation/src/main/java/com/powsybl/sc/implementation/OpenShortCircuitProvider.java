@@ -18,6 +18,7 @@ import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.openloadflow.network.LfBus;
+import com.powsybl.sc.util.CalculationLocation;
 import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.contingency.violations.LimitViolation;
 import com.powsybl.shortcircuit.*;
@@ -215,7 +216,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 return;
             }
 
-            sc = new ShortCircuitFault(branchBusIds.getKey(), branchBusIds.getValue(), elementId, branchFault.getProportionalLocation(), branchFault.getId(), elementId, scz, scType);
+            CalculationLocation location = new CalculationLocation(branchBusIds.getKey(), branchBusIds.getValue(), elementId, branchFault.getProportionalLocation());
+            sc = new ShortCircuitFault(location, branchFault.getId(), elementId, scz, scType);
         } else { //Bus fault
             String busId = getBusId(elementId, fault.getId(), network);
 

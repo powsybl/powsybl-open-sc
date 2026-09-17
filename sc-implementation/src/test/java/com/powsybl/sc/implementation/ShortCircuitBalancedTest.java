@@ -173,7 +173,6 @@ public class ShortCircuitBalancedTest {
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters();
 
-        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
         BranchFault bf1 = new BranchFault("F1", "B1_B2", 10);
         BranchFault bf2 = new BranchFault("F2", "B1_B2", 70);
 
@@ -202,7 +201,6 @@ public class ShortCircuitBalancedTest {
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters();
 
-        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
         BranchFault bf1 = new BranchFault("F1", "B1_B2", 10);
         BranchFault bf2 = new BranchFault("F2", "B1_B2", 70);
 
@@ -230,7 +228,6 @@ public class ShortCircuitBalancedTest {
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters();
 
-        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
         BusFault bf1 = new BusFault("F1", "B1");
         BusFault bf2 = new BusFault("F2", "B2");
 
@@ -264,8 +261,6 @@ public class ShortCircuitBalancedTest {
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters();
 
-        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
-
         BusFault bf1 = new BusFault("F1", "B1");
         BusFault bf2 = new BusFault("F2", "B2");
         BusFault bf3 = new BusFault("F3", "B3");
@@ -294,8 +289,6 @@ public class ShortCircuitBalancedTest {
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters();
-
-        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
 
         BusFault bf1 = new BusFault("F1", "B1");
 

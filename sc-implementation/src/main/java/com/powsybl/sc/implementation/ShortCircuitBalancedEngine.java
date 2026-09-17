@@ -180,7 +180,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         Complex zth20hzBus1 = linearResolutionResult1.getZthEq20Hz();
         Complex zth20hzBus2 = twoBusResult.getZ22At20Hz();
         Complex zth20hzBus1Bus2 = twoBusResult.getZ12At20Hz();
-        Complex zLine20hz = new Complex(lfLine.getPiModel().getR(), lfLine.getPiModel().getX()); // Fixme get zLine20hz?
+        Complex zLine20hz = get20HzLineImpedance(lfLine);
         Complex zth20hz = zth20hzBus1.multiply(s * s)
                 .add(zth20hzBus2.multiply(r * r))
                 .add(zth20hzBus1Bus2.multiply(2 * r * s))
@@ -217,5 +217,10 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException(
                         "No two-bus impedance resolution result found between bus " + bus1Id + " and bus " + bus2Id));
+    }
+
+    private Complex get20HzLineImpedance(LfBranch branch) {
+        double freqCoef = 20. / 50.;
+        return new Complex(branch.getPiModel().getR(), branch.getPiModel().getX() * freqCoef);
     }
 }

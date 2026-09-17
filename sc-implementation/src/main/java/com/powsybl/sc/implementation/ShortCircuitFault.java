@@ -43,10 +43,10 @@ public class ShortCircuitFault {
     }
 
     /**
-     * Fault located along a line, between its two terminal buses.
+     * General case for the location of the fault, including located along a line, between its two terminal buses.
      */
-    public ShortCircuitFault(String bus1Location, String bus2Location, String branchLocation, double proportionalLocationOnLine, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
-        this.location = new CalculationLocation(bus1Location, bus2Location, branchLocation, proportionalLocationOnLine);
+    public ShortCircuitFault(CalculationLocation location, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
+        this.location = location;
         this.zf = zf;
         this.type = type;
         this.faultId = faultId;

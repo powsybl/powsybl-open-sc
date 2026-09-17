@@ -24,21 +24,20 @@ public class TwoBusImpedanceLinearResolutionResult {
 
     private Map<Integer, Complex> bus2ToZknf;
 
-    TwoBusImpedanceLinearResolutionResult(LfBus bus2, Complex v2, Complex z22, Complex z21, Complex z12,
-                                          Complex z22At20Hz, Complex z21At20Hz, Complex z12At20Hz, int numBus2Fault) {
+    TwoBusImpedanceLinearResolutionResult(LfBus bus2, Complex v2, ImpedanceLinearResolution.ImpedanceUpperTriangle zT, ImpedanceLinearResolution.ImpedanceUpperTriangle zTAt20Hz, int numBus2Fault) {
         this.bus2 = bus2;
 
         this.numBus2Fault = numBus2Fault;
 
         this.v2 = v2;
 
-        this.z22 = z22;
-        this.z21 = z21;
-        this.z12 = z12;
+        this.z22 = zT.z22();
+        this.z21 = zT.z21();
+        this.z12 = zT.z12();
 
-        this.z22At20Hz = z22At20Hz;
-        this.z21At20Hz = z21At20Hz;
-        this.z12At20Hz = z12At20Hz;
+        this.z22At20Hz = zTAt20Hz.z22();
+        this.z21At20Hz = zTAt20Hz.z21();
+        this.z12At20Hz = zTAt20Hz.z12();
     }
 
     public void updateWithVoltagesdelta2(AdmittanceMatrix y, DenseMatrix dEn) {

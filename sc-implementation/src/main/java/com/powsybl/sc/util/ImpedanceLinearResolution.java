@@ -45,6 +45,8 @@ public class ImpedanceLinearResolution {
         this.parameters = Objects.requireNonNull(parameters);
     }
 
+    public record ImpedanceUpperTriangle(Complex z12, Complex z21, Complex z22) {};
+
     public class ImpedanceLinearResolutionResult {
 
         private final LfBus bus;
@@ -126,11 +128,10 @@ public class ImpedanceLinearResolution {
             }
         }
 
-        public void addTwoBusResult(LfBus bus2, Complex initV2, Complex z22, Complex z21, Complex z12,
-                                    Complex z22At20Hz, Complex z21At20Hz, Complex z12At20Hz, int numBus2Fault) {
+        public void addTwoBusResult(LfBus bus2, Complex initV2, ImpedanceUpperTriangle zT, ImpedanceUpperTriangle zTAt20Hz, int numBus2Fault) {
             // numBus2Fault is store to easily get the extraction vector for the second bus, in order to compute the full voltage export if required
             TwoBusImpedanceLinearResolutionResult twoBusResult = new TwoBusImpedanceLinearResolutionResult(
-                    bus2, initV2, z22, z21, z12, z22At20Hz, z21At20Hz, z12At20Hz, numBus2Fault);
+                    bus2, initV2, zT, zTAt20Hz, numBus2Fault);
 
             if (twoBusResults == null) {
                 twoBusResults = new ArrayList<>();
