@@ -29,7 +29,7 @@ public class ImpedanceLinearResolutionParameters {
         ADM_STEADY_STATE;
     }*/
 
-    public static final double XSUBTRANSIENT = 0.2; //default value if data not available
+    // public static final double XSUBTRANSIENT = 0.2; //default value if data not available
 
     private final boolean voltageUpdate;
 
@@ -37,9 +37,7 @@ public class ImpedanceLinearResolutionParameters {
 
     private final MatrixFactory matrixFactory;
 
-    private final List<CalculationLocation> calculationLocations; // stores all calculation locations where only one bus is required in input
-
-    private List<CalculationLocation> biphasedCalculationLocations; // stores all calculation locations where 2 busses are required in input
+    private final List<CalculationLocation> calculationLocations; // stores all calculation locations (BUS, LINE, and BIPHASED_COMMON_SUPPORT
 
     private final boolean ignoreShunts;
 
@@ -60,14 +58,6 @@ public class ImpedanceLinearResolutionParameters {
         this.voltageProfileType = theveninVoltageProfileType;
         this.periodType = theveninPeriodType;
         this.admittanceType = admittanceType;
-    }
-
-    public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> calculationLocations, boolean voltageUpdate,
-                                               AdmittanceEquationSystem.AdmittanceVoltageProfileType theveninVoltageProfileType, AdmittanceEquationSystem.AdmittancePeriodType theveninPeriodType, AdmittanceEquationSystem.AdmittanceType admittanceType,
-                                               boolean theveninIgnoreShunts, List<CalculationLocation> biphasedVoltageLevelLocation) {
-        this(acLoadFlowParameters, matrixFactory, calculationLocations, voltageUpdate, theveninVoltageProfileType, theveninPeriodType, admittanceType, theveninIgnoreShunts);
-        this.biphasedCalculationLocations = biphasedVoltageLevelLocation;
-
     }
 
     public AcLoadFlowParameters getAcLoadFlowParameters() {
@@ -92,10 +82,6 @@ public class ImpedanceLinearResolutionParameters {
 
     public AdmittanceEquationSystem.AdmittanceVoltageProfileType getTheveninVoltageProfileType() {
         return voltageProfileType;
-    }
-
-    public List<CalculationLocation> getBiphasedCalculationLocations() {
-        return biphasedCalculationLocations;
     }
 
     public AdmittanceEquationSystem.AdmittancePeriodType getTheveninPeriodType() {

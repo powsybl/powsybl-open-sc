@@ -63,67 +63,7 @@ public class ImpedanceLinearResolution {
 
         private FeedersAtNetwork eqSysFeeders;
 
-        private List<ImpedanceLinearResolutionResultBiphased> biphasedResultsAtBus; // we store here all necessary information for all biphased common ground faults with first bus equal to LfBus = bus
-
-        public class ImpedanceLinearResolutionResultBiphased {
-
-            private final LfBus bus2;
-
-            private final int numBus2Fault; // stored to easily access the extraction vector at bus2 to get the full voltage export if required
-
-            private final Complex v2;
-
-            private final Complex z22; //additional impedance matrix terms to keep as they are needed for biphased common support faults
-            private final Complex z21;
-            private final Complex z12;
-
-            // This map is similar to busToZknf map, applied for bus2 k
-            // store necessary data to compute voltage delta of the full grid for a common support biphased fault
-            // the key stores the number of the bus2 for a biphased common support fault, the value stores the resolved value [Res] = inv(Y)*[En],
-            // with n of vector [En] corresponding to the studied short circuit fault and values at lines of [Res] corresponding real and imaginary parts at bus2 in key
-            private Map<Integer, Complex> bus2ToZknf;
-
-            ImpedanceLinearResolutionResultBiphased(LfBus bus2, Complex v2, Complex z22, Complex z21, Complex z12, int numBus2Fault) {
-                this.bus2 = bus2;
-
-                this.numBus2Fault = numBus2Fault;
-
-                this.v2 = v2;
-
-                this.z22 = z22;
-                this.z21 = z21;
-                this.z12 = z12;
-            }
-
-            public void updateWithVoltagesdelta2(AdmittanceMatrix y, DenseMatrix dEn) {
-                bus2ToZknf = y.getDeltaV(dEn, numBus2Fault);
-                //eqSysFeeders = feeders; // TODO : check if feeder are necessary for v2 : contains necessary data to update the contribution of feeders for each shortcircuit
-            }
-
-            public LfBus getBus2() {
-                return bus2;
-            }
-
-            public Complex getZ12() {
-                return z12;
-            }
-
-            public Complex getZ21() {
-                return z21;
-            }
-
-            public Complex getZ22() {
-                return z22;
-            }
-
-            public Complex getV2() {
-                return v2;
-            }
-
-            public Map<Integer, Complex> getBus2ToZknf() {
-                return bus2ToZknf;
-            }
-        }
+        private List<TwoBusImpedanceLinearResolutionResult> twoBusResults; // we store here all necessary information for all two-bus faults with first bus equal to LfBus = bus
 
         ImpedanceLinearResolutionResult(LfBus bus, Complex zth, Complex eth, Complex zthEq20Hz) {
             this.bus = bus;
@@ -160,8 +100,8 @@ public class ImpedanceLinearResolution {
             return eqSysFeeders;
         }
 
-        public List<ImpedanceLinearResolutionResultBiphased> getBiphasedResultsAtBus() {
-            return biphasedResultsAtBus;
+        public List<TwoBusImpedanceLinearResolutionResult> getTwoBusResults() {
+            return twoBusResults;
         }
 
         public void updatezknf(Complex enBus) {
@@ -186,15 +126,16 @@ public class ImpedanceLinearResolution {
             }
         }
 
-        public void addBiphasedResult(LfBus bus2, Complex initV2, Complex z22, Complex z21, Complex z12, int numBus2Fault) {
+        public void addTwoBusResult(LfBus bus2, Complex initV2, Complex z22, Complex z21, Complex z12,
+                                    Complex z22At20Hz, Complex z21At20Hz, Complex z12At20Hz, int numBus2Fault) {
             // numBus2Fault is store to easily get the extraction vector for the second bus, in order to compute the full voltage export if required
-            ImpedanceLinearResolutionResult.ImpedanceLinearResolutionResultBiphased biphasedResult = new ImpedanceLinearResolutionResult.ImpedanceLinearResolutionResultBiphased(bus2, initV2,
-                    z22, z21, z12, numBus2Fault);
+            TwoBusImpedanceLinearResolutionResult twoBusResult = new TwoBusImpedanceLinearResolutionResult(
+                    bus2, initV2, z22, z21, z12, z22At20Hz, z21At20Hz, z12At20Hz, numBus2Fault);
 
-            if (biphasedResultsAtBus == null) {
-                biphasedResultsAtBus = new ArrayList<>();
+            if (twoBusResults == null) {
+                twoBusResults = new ArrayList<>();
             }
-            biphasedResultsAtBus.add(biphasedResult);
+            twoBusResults.add(twoBusResult);
         }
     }
 
@@ -275,60 +216,35 @@ public class ImpedanceLinearResolution {
                 = AdmittanceEquationSystem.create(network, new VariableSet<>(), parameters.getAdmittanceType(), parameters.getTheveninVoltageProfileType(),
                 parameters.getTheveninPeriodType(), parameters.isTheveninIgnoreShunts(), equationsSystemFeeders20hz, parameters.getAcLoadFlowParameters(), AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ);
 
-        //Get bus by voltage level
-        List<LfBus> inputBusses = new ArrayList<>();
-        for (CalculationLocation faultBranchLocationInfo : parameters.getCalculationLocations()) {
-            String iidmBranchId = faultBranchLocationInfo.getIidmBusInfo().getKey();
-            int branchSide = faultBranchLocationInfo.getIidmBusInfo().getValue();
+        List<LfBus> inputBuses = new ArrayList<>();
+        List<Pair<LfBus, LfBus>> busPairList = new ArrayList<>();
 
-            LfBus bus = getLfBusFromIidmBranch(iidmBranchId, branchSide, network);
-            if (bus != null) {
-                inputBusses.add(bus);
-                faultBranchLocationInfo.setLfBusInfo(bus.getId());
+        for (CalculationLocation locationInfo : parameters.getCalculationLocations()) {
+            String iidmBranchId = locationInfo.getIidmBusInfo().getKey();
+            int branchSide = locationInfo.getIidmBusInfo().getValue();
+
+            LfBus bus1 = getLfBusFromIidmBranch(iidmBranchId, branchSide, network);
+            if (bus1 != null) {
+                if (!inputBuses.contains(bus1)) {
+                    inputBuses.add(bus1);
+                }
+                locationInfo.setLfBusInfo(bus1.getId());
             }
-            if (faultBranchLocationInfo.getLocationType() == CalculationLocation.LocationType.LINE) {
-                String iidmBranchId2 = faultBranchLocationInfo.getIidmBus2Info().getKey();
-                int branchSide2 = faultBranchLocationInfo.getIidmBus2Info().getValue();
+            boolean needsSecondBus = locationInfo.getLocationType() == CalculationLocation.LocationType.LINE
+                    || locationInfo.getLocationType() == CalculationLocation.LocationType.BIPHASED_COMMON_SUPPORT;
+            if (needsSecondBus) {
+                String iidmBranchId2 = locationInfo.getIidmBus2Info().getKey();
+                int branchSide2 = locationInfo.getIidmBus2Info().getValue();
                 LfBus bus2 = getLfBusFromIidmBranch(iidmBranchId2, branchSide2, network);
                 if (bus2 != null) {
-                    inputBusses.add(bus2);
-                    faultBranchLocationInfo.setLfBus2Info(bus2.getId());
+                    if (!inputBuses.contains(bus2)) {
+                        inputBuses.add(bus2);
+                    }
+                    locationInfo.setLfBus2Info(bus2.getId());
+                    if (bus1 != null) {
+                        busPairList.add(new Pair<>(bus1, bus2));
+                    }
                 }
-            }
-        }
-
-        // case it is a biphased common support input, supposing that the number of such input contingencies is low
-        List<Pair<LfBus, LfBus>> biphasedinputBusses = new ArrayList<>();
-        if (parameters.getBiphasedCalculationLocations() != null) {
-            for (CalculationLocation biphasedFaultBranchLocationInfo : parameters.getBiphasedCalculationLocations()) {
-
-                String iidmBranchId = biphasedFaultBranchLocationInfo.getIidmBusInfo().getKey();
-                int branchSide = biphasedFaultBranchLocationInfo.getIidmBusInfo().getValue();
-
-                String iidmBranch2Id = biphasedFaultBranchLocationInfo.getIidmBus2Info().getKey();
-                int branch2Side = biphasedFaultBranchLocationInfo.getIidmBus2Info().getValue();
-
-                LfBus bus1 = getLfBusFromIidmBranch(iidmBranchId, branchSide, network);
-                LfBus bus2 = getLfBusFromIidmBranch(iidmBranch2Id, branch2Side, network);
-
-                if (bus1 != null && bus2 != null) {
-                    Pair<LfBus, LfBus> bussesPair = new Pair<>(bus1, bus2);
-                    biphasedinputBusses.add(bussesPair);
-                    biphasedFaultBranchLocationInfo.setLfBusInfo(bus1.getId());
-                    biphasedFaultBranchLocationInfo.setLfBus2Info(bus2.getId());
-                }
-            }
-        }
-
-        // Addition of biphased faults in the inputBusses
-        for (Pair<LfBus, LfBus> pairBusses : biphasedinputBusses) {
-            LfBus bus1 = pairBusses.getKey();
-            LfBus bus2 = pairBusses.getValue();
-            if (!inputBusses.contains(bus1)) {
-                inputBusses.add(bus1);
-            }
-            if (!inputBusses.contains(bus2)) {
-                inputBusses.add(bus2);
             }
         }
 
@@ -353,12 +269,12 @@ public class ImpedanceLinearResolution {
         try (AdmittanceMatrix yd = new AdmittanceMatrix(equationSystem, parameters.getMatrixFactory(), network);
              AdmittanceMatrix yd20hz = new AdmittanceMatrix(equationSystem20hz, parameters.getMatrixFactory(), network)) {
 
-            DenseMatrix en = new DenseMatrix(yd.getRowCount(), 2 * inputBusses.size());
-            DenseMatrix en20hz = new DenseMatrix(yd.getRowCount(), 2 * inputBusses.size());
+            DenseMatrix en = new DenseMatrix(yd.getRowCount(), 2 * inputBuses.size());
+            DenseMatrix en20hz = new DenseMatrix(yd.getRowCount(), 2 * inputBuses.size());
             List<Integer> tEn2Col = new ArrayList<>();
 
             int numBusFault = 0;
-            for (LfBus lfBus : inputBusses) {
+            for (LfBus lfBus : inputBuses) {
 
                 int yRowx = yd.getRowBus(lfBus.getNum(), EquationType.BUS_YR);
                 int yColx = yd.getColBus(lfBus.getNum(), VariableType.BUS_VR);
@@ -401,7 +317,7 @@ public class ImpedanceLinearResolution {
             Complex eth = new Complex(1.0);
 
             numBusFault = 0;
-            for (LfBus lfBus : inputBusses) {
+            for (LfBus lfBus : inputBuses) {
 
                 int yRow1x = yd.getRowBus(lfBus.getNum(), EquationType.BUS_YR);
                 int yRow1y = yd.getRowBus(lfBus.getNum(), EquationType.BUS_YI);
@@ -436,11 +352,11 @@ public class ImpedanceLinearResolution {
                 res.updatezknf(zknf);
 
                 // handle biphased common support faults extra data
-                for (Pair<LfBus, LfBus> pairBusses : biphasedinputBusses) {
-                    LfBus bus1 = pairBusses.getKey();
+                for (Pair<LfBus, LfBus> busPair : busPairList) {
+                    LfBus bus1 = busPair.getKey();
                     if (bus1 == lfBus) {
                         // lfbus is also the first bus for a biphased common support, we store as an extension necessary additional data for the linear resolution post-processing
-                        LfBus bus2 = pairBusses.getValue();
+                        LfBus bus2 = busPair.getValue();
                         int yCol1x = yd.getColBus(lfBus.getNum(), VariableType.BUS_VR);
                         int yCol1y = yd.getColBus(lfBus.getNum(), VariableType.BUS_VI);
                         int yCol2x = yd.getColBus(bus2.getNum(), VariableType.BUS_VR);
@@ -448,7 +364,7 @@ public class ImpedanceLinearResolution {
 
                         int numBus2Fault = 0; // get the right column of extraction matrix of bus2
                         boolean bus2found = false;
-                        for (LfBus lfBus2 : inputBusses) {
+                        for (LfBus lfBus2 : inputBuses) {
                             if (lfBus2 == bus2) {
                                 bus2found = true;
                                 break;
@@ -457,7 +373,7 @@ public class ImpedanceLinearResolution {
                         }
 
                         if (!bus2found) {
-                            throw new IllegalArgumentException(" Biphased fault second bus = " + bus2.getId() + " : not found in the extraction matrix");
+                            throw new IllegalArgumentException(" Second bus = " + bus2.getId() + " of bi-phased or branch fault : not found in the extraction matrix");
                         }
 
                         Complex z22 = new Complex(zfromLu.get(yCol2x, 2 * numBus2Fault), -zfromLu.get(yCol2x, 2 * numBus2Fault + 1));
@@ -479,12 +395,28 @@ public class ImpedanceLinearResolution {
                         checkMatrixExtractionConsistency(z21, z21bis, lfBus, bus2);
                         checkMatrixExtractionConsistency(z12, z12bis, lfBus, bus2);
 
+                        // Same extraction, at 20Hz: yd and yd20hz share the same column/row layout
+                        // (same network structure, only the admittance values differ with frequency),
+                        // exactly like zth20Hz reuses tEn2Col (built from yd) to index into zfromLu20Hz.
+                        Complex z22At20Hz = new Complex(zfromLu20Hz.get(yCol2x, 2 * numBus2Fault), -zfromLu20Hz.get(yCol2x, 2 * numBus2Fault + 1));
+                        Complex z22bis20Hz = new Complex(zfromLu20Hz.get(yCol2y, 2 * numBus2Fault + 1), zfromLu20Hz.get(yCol2y, 2 * numBus2Fault));
+
+                        Complex z21At20Hz = new Complex(zfromLu20Hz.get(yCol2x, 2 * numBusFault), -zfromLu20Hz.get(yCol2x, 2 * numBusFault + 1));
+                        Complex z21bis20Hz = new Complex(zfromLu20Hz.get(yCol2y, 2 * numBusFault + 1), zfromLu20Hz.get(yCol2y, 2 * numBusFault));
+
+                        Complex z12At20Hz = new Complex(zfromLu20Hz.get(yCol1x, 2 * numBus2Fault), -zfromLu20Hz.get(yCol1x, 2 * numBus2Fault + 1));
+                        Complex z12bis20Hz = new Complex(zfromLu20Hz.get(yCol1y, 2 * numBus2Fault + 1), zfromLu20Hz.get(yCol1y, 2 * numBus2Fault));
+
+                        checkMatrixExtractionConsistency(z22At20Hz, z22bis20Hz, lfBus, bus2);
+                        checkMatrixExtractionConsistency(z21At20Hz, z21bis20Hz, lfBus, bus2);
+                        checkMatrixExtractionConsistency(z12At20Hz, z12bis20Hz, lfBus, bus2);
+
                         Complex eth2 = new Complex(1.0);
                         if (parameters.getTheveninVoltageProfileType() == AdmittanceEquationSystem.AdmittanceVoltageProfileType.CALCULATED) {
                             eth2 = ComplexUtils.polar2Complex(bus2.getV(), Math.toRadians(bus2.getAngle()));
                         }
 
-                        res.addBiphasedResult(bus2, eth2, z22, z21, z12, numBus2Fault);
+                        res.addTwoBusResult(bus2, eth2, z22, z21, z12, z22At20Hz, z21At20Hz, z12At20Hz, numBus2Fault);
                     }
                 }
 
@@ -492,10 +424,10 @@ public class ImpedanceLinearResolution {
                 if (parameters.isVoltageUpdate()) {
                     // This equivalent to store  inv(Y)*[En]
                     res.updateWithVoltagesdelta(yd, zfromLu, numBusFault, equationsSystemFeeders);
-                    if (res.biphasedResultsAtBus != null) {
+                    if (res.twoBusResults != null) {
                         // update for each biphased common support fault
-                        for (ImpedanceLinearResolutionResult.ImpedanceLinearResolutionResultBiphased biphasedResultPart : res.biphasedResultsAtBus) {
-                            biphasedResultPart.updateWithVoltagesdelta2(yd, zfromLu);
+                        for (TwoBusImpedanceLinearResolutionResult twoBusResultPart : res.twoBusResults) {
+                            twoBusResultPart.updateWithVoltagesdelta2(yd, zfromLu);
                         }
                     }
                 }

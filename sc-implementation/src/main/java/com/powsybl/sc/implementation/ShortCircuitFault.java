@@ -14,6 +14,9 @@ import com.powsybl.sc.util.CalculationLocation;
  */
 public class ShortCircuitFault {
 
+    /**
+     * Single bus fault.
+     */
     public ShortCircuitFault(String busLocation, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
         this.location = new CalculationLocation(busLocation);
         this.zf = zf;
@@ -23,8 +26,14 @@ public class ShortCircuitFault {
         this.shortCircuitFaultType = ShortCircuitFaultType.BUS;
     }
 
-    public ShortCircuitFault(String busLocation, String busLocationBiPhased, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
-        this.location = new CalculationLocation(busLocation, busLocationBiPhased);
+    /**
+     * Biphased common support fault, tying together two independent buses.
+     */
+    public ShortCircuitFault(String busLocation, String secondBiphasedBusLocation, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
+        if (type != ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
+            throw new IllegalArgumentException("ShortCircuitType must be BIPHASED_COMMON_SUPPORT for a bi-phased common support fault, got" + type);
+        }
+        this.location = new CalculationLocation(busLocation, secondBiphasedBusLocation);
         this.zf = zf;
         this.type = type;
         this.faultId = faultId;
@@ -33,6 +42,9 @@ public class ShortCircuitFault {
         this.shortCircuitFaultType = ShortCircuitFaultType.BUS;
     }
 
+    /**
+     * Fault located along a line, between its two terminal buses.
+     */
     public ShortCircuitFault(String bus1Location, String bus2Location, String branchLocation, double proportionalLocationOnLine, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
         this.location = new CalculationLocation(bus1Location, bus2Location, branchLocation, proportionalLocationOnLine);
         this.zf = zf;

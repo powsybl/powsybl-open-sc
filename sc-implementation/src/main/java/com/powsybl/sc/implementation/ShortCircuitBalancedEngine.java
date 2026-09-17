@@ -11,10 +11,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
-import com.powsybl.sc.util.AdmittanceEquationSystem;
-import com.powsybl.sc.util.CalculationLocation;
-import com.powsybl.sc.util.ImpedanceLinearResolution;
-import com.powsybl.sc.util.ImpedanceLinearResolutionParameters;
+import com.powsybl.sc.util.*;
 import org.apache.commons.math3.complex.Complex;
 
 import java.util.HashMap;
@@ -39,7 +36,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
             buildSystematicList(ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         }
 
-        solverFaultList = buildFaultListsFromInputs().getKey();
+        solverFaultList = buildFaultListsFromInputs();
         List<CalculationLocation> solverLocationList = solverFaultList.stream().map(ShortCircuitFault::getCalculationLocation).toList();
 
         ImpedanceLinearResolutionParameters linearResolutionParameters = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
@@ -147,18 +144,16 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         if (lfBus2 == null) {
             throw new IllegalStateException("Bus not found: " + bus2Id);
         }
-        Integer busNum2 = lfBus2.getNum();
-        ImpedanceLinearResolution.ImpedanceLinearResolutionResult linearResolutionResult2 = directResolution.results.get(lfBus2);
-        if (linearResolutionResult2 == null) {
-            throw new IllegalStateException("No impedance resolution result found for bus: " + bus2Id);
-        }
+
+        // z12 and z22 come from the two-bus result stored on bus1's resolution
+        TwoBusImpedanceLinearResolutionResult twoBusResult = findTwoBusResult(linearResolutionResult1, lfBus2, bus1Id, bus2Id);
 
         Complex vInit1 = linearResolutionResult1.getEth();
-        Complex vInit2 = linearResolutionResult2.getEth();
+        Complex vInit2 = twoBusResult.getV2();
 
-        Complex zthBus1 = linearResolutionResult1.getZthEq();
-        Complex zthBus2 = linearResolutionResult2.getZthEq();
-        Complex zthBus1Bus2 = linearResolutionResult1.getBusToZknf().get(busNum2);
+        Complex zthBus1 = linearResolutionResult1.getZthEq(); // Z11
+        Complex zthBus2 = twoBusResult.getZ22(); // Z22
+        Complex zthBus1Bus2 = twoBusResult.getZ12(); // Z12
         Complex zLine = new Complex(lfLine.getPiModel().getR(), lfLine.getPiModel().getX());
 
         double r = shortCircuitFault.getCalculationLocation().getProportionalLocationOnLine() / 100.0;
@@ -167,6 +162,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         // r: proportionFromBus1, s: proportionFromBus2
         // vInit = vInit1 * r + vInit2 * s
         Complex vInit = vInit1.multiply(r).add(vInit2.multiply(s));
+
         // Zth = Z11*s*s + Z22*r*r + 2*Z12*r*s + ZLine*r*s
         Complex zth = zthBus1.multiply(s * s)
                 .add(zthBus2.multiply(r * r))
@@ -176,19 +172,14 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         Complex zfToGround = shortCircuitFault.getZf().getZg();
         Complex id = computeFaultCurrent(vInit, zth, zfToGround);
 
-        // The post-fault voltage values at faulted bus are computed as follow :
-        // [Vk_r] = [Vk_r_init] - i_nf_r * [zknf_r] + i_nf_i * [zknf_i]
-        // [Vk_i] = [Vk_i_init] - i_nf_r * [zknf_i] - i_nf_i * [zknf_Vr]
-        Complex zknf1 = linearResolutionResult1.getZknf();
-        Complex zknf2 = linearResolutionResult2.getZknf();
         // dv = -(s*Zq1 + r*Zq2)*Id
-        Complex dv = zknf1.multiply(s)
-                .add(zknf2.multiply(r))
+        Complex dv = zthBus1.multiply(s)
+                .add(zthBus2.multiply(r))
                 .multiply(id.negate());
 
         Complex zth20hzBus1 = linearResolutionResult1.getZthEq20Hz();
-        Complex zth20hzBus2 = linearResolutionResult2.getZthEq20Hz();
-        Complex zth20hzBus1Bus2 = linearResolutionResult1.getBusToZknf().get(busNum2); // Fixme: get zth20hzBus1Bus2?
+        Complex zth20hzBus2 = twoBusResult.getZ22At20Hz();
+        Complex zth20hzBus1Bus2 = twoBusResult.getZ12At20Hz();
         Complex zLine20hz = new Complex(lfLine.getPiModel().getR(), lfLine.getPiModel().getX()); // Fixme get zLine20hz?
         Complex zth20hz = zth20hzBus1.multiply(s * s)
                 .add(zth20hzBus2.multiply(r * r))
@@ -204,7 +195,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
             combinedBusToZknf = new HashMap<>();
             for (int busNum = 0; busNum < nbBusses; busNum++) {
                 Complex zdBus1 = linearResolutionResult1.getBusToZknf().get(busNum);
-                Complex zdBus2 = linearResolutionResult2.getBusToZknf().get(busNum);
+                Complex zdBus2 = twoBusResult.getBus2ToZknf().get(busNum);
                 combinedBusToZknf.put(busNum, zdBus1.multiply(s).add(zdBus2.multiply(r)));
             }
         }
@@ -212,5 +203,19 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
         res.updateFeedersResult(); // feeders are updated only if voltageUpdate is made
         resultsPerFault.put(shortCircuitFault, res);
+    }
+
+    private static TwoBusImpedanceLinearResolutionResult findTwoBusResult(
+            ImpedanceLinearResolution.ImpedanceLinearResolutionResult resultAtBus1, LfBus lfBus2, String bus1Id, String bus2Id) {
+        List<TwoBusImpedanceLinearResolutionResult> twoBusResults =
+                resultAtBus1.getTwoBusResults();
+        if (twoBusResults == null) {
+            throw new IllegalStateException("No two-bus impedance resolution results found for bus: " + bus1Id);
+        }
+        return twoBusResults.stream()
+                .filter(r -> r.getBus2() == lfBus2)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "No two-bus impedance resolution result found between bus " + bus1Id + " and bus " + bus2Id));
     }
 }
