@@ -14,7 +14,6 @@ import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.ThreeWindingsTransformerFortescue;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
@@ -64,7 +63,7 @@ public class ShortCircuitBalancedTest {
     @Test
     void computeIccTest() {
         Network nt2 = create2n(NetworkFactory.findDefault());
-        LoadFlowResult resultnt2 = loadFlowRunner.run(nt2, parameters);
+        loadFlowRunner.run(nt2, parameters);
 
         List<ShortCircuitFault> tmpV = new ArrayList<>();
         ShortCircuitFault sc2 = new ShortCircuitFault("B2", "sc2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
@@ -91,10 +90,7 @@ public class ShortCircuitBalancedTest {
 
     @Test
     void openShortCircuitProvider2n() {
-
-        //set up LF info
         Network nt2 = create2n(NetworkFactory.findDefault());
-        LoadFlow.run(nt2, loadFlowParameters);
 
         //set up ShortCircuitProvider info
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
@@ -132,9 +128,7 @@ public class ShortCircuitBalancedTest {
 
     @Test
     void openShortCircuitProvider4n() {
-        //set up LF info
         Network nt4 = create4n(NetworkFactory.findDefault());
-        LoadFlow.run(nt4, loadFlowParameters);
 
         //set up ShortCircuitProvider info
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
@@ -181,18 +175,14 @@ public class ShortCircuitBalancedTest {
     @Test
     void openShortCircuitProvider2nTfo() {
 
-        //set up LF info
         Network nt2 = create2nTfo(NetworkFactory.findDefault());
-        LoadFlow.run(nt2, loadFlowParameters);
-
         //set up ShortCircuitProvider info
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ComputationManager cm = LocalComputationManager.getDefault();
         ShortCircuitParameters scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
         scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
 
-        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
-        List<Fault> faults = new ArrayList<>(); // TODO
+        List<Fault> faults = new ArrayList<>();
 
         BusFault bf1 = new BusFault("F1", "B1");
         BusFault bf2 = new BusFault("F2", "B2");
@@ -209,11 +199,44 @@ public class ShortCircuitBalancedTest {
 
     }
 
+    /**
+     * Verifies short-circuit current calculations on a 2-node network
+     * having configured voltage profile.
+     */
+    @Test
+    void openShortCircuitProvider2nTfoConfiguredInitialVoltages() {
+        Network network2nTfo = create2nTfo(NetworkFactory.findDefault());
+
+        ComputationManager cm = LocalComputationManager.getDefault();
+        VoltageRange voltageRange1 = new VoltageRange(90, 110, 0.9);
+        VoltageRange voltageRange2 = new VoltageRange(140, 160, 1.1);
+        List<VoltageRange> configuredVoltageRanges = List.of(voltageRange1, voltageRange2);
+
+        ShortCircuitParameters scp = new ShortCircuitParameters()
+                .setInitialVoltageProfileMode(InitialVoltageProfileMode.CONFIGURED)
+                .setVoltageRanges(configuredVoltageRanges);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+
+        BusFault bf1 = new BusFault("F1", "B1");
+        BusFault bf2 = new BusFault("F2", "B2");
+        List<Fault> faults = List.of(bf1, bf2);
+
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ShortCircuitAnalysisResult scar = provider.run(network2nTfo, faults, scp, cm, Collections.emptyList()).join();
+
+        List<FaultResult> frs = scar.getFaultResults();
+
+        assertMagnitudeCurrents(frs,
+                new double[]{2641.36765, 2062.15577} // TODO Nay: validate with Courcirc
+        );
+        // assertFeederCurrents(frs, new double[]{2598.076211, 3040.30195}, "G1"); // TODO Nay: Add with next Core release, validate with Courcirc
+        assertBusVoltages(frs, new double[]{30.09933, 0.0}, 1); // TODO Nay: validate with Courcirc
+    }
+
     @Test
     void shortCircuitSystematic() {
 
         Network nt2 = create2n(NetworkFactory.findDefault());
-        LoadFlow.run(nt2, loadFlowParameters);
 
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
@@ -432,7 +455,6 @@ public class ShortCircuitBalancedTest {
      */
     @Test
     void openShortCircuitProvider4nTfo() {
-        //set up LF info
         Network network4nTfo = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
         // Remove the 2 ratio tap changers in the network
         network4nTfo.getTwoWindingsTransformer("TFO_B1_B4").getRatioTapChanger().remove();
@@ -463,9 +485,7 @@ public class ShortCircuitBalancedTest {
      */
     @Test
     void openShortCircuitProvider4nRatioTapChangerNeutralPosition() {
-        //set up LF info
         Network network4nRtc = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
-        LoadFlow.run(network4nRtc, loadFlowParameters);
 
         //set up ShortCircuitProvider info
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
@@ -492,7 +512,6 @@ public class ShortCircuitBalancedTest {
      */
     @Test
     void openShortCircuitProvider4nRatioTapChangerPredefinedPosition() {
-        //set up LF info
         Network network4nRtc = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
 
         //set up ShortCircuitProvider info
@@ -510,6 +529,36 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{3469.37451, 3757.03662, 3721.92114, 2379.39624}
         );
+    }
+
+    /**
+     * Verifies short-circuit current calculations on a 4-node network
+     * having configured voltage profile.
+     */
+    @Test
+    void openShortCircuitProvider4nTapChangerConfiguredInitialVoltages() {
+        Network network4nTfo = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
+
+        ComputationManager cm = LocalComputationManager.getDefault();
+        VoltageRange voltageRange1 = new VoltageRange(90, 110, 0.9);
+        VoltageRange voltageRange2 = new VoltageRange(140, 160, 1.1);
+        List<VoltageRange> configuredVoltageRanges = List.of(voltageRange1, voltageRange2);
+
+        ShortCircuitParameters scp = new ShortCircuitParameters()
+                .setInitialVoltageProfileMode(InitialVoltageProfileMode.CONFIGURED)
+                .setVoltageRanges(configuredVoltageRanges);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ShortCircuitAnalysisResult scar = provider.run(network4nTfo, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
+
+        List<FaultResult> frs = scar.getFaultResults();
+
+        assertMagnitudeCurrents(frs,
+                new double[]{3222.08637, 3486.87658, 3462.08331, 2701.75104} // TODO Nay: validate with Courcirc
+        );
+        // assertFeederCurrents(frs, new double[]{2407.81296, 2598.076211, 2500.03720, 2972.69206}, "G2"); // TODO Nay: Add with next Core release, validate with Courcirc
+        assertBusVoltages(frs, new double[]{6.59124, 0.0, 3.39618, 12.97710}, 1); // TODO Nay: validate with Courcirc
     }
 
     public static @NonNull Network create2n(NetworkFactory networkFactory) {
