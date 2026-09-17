@@ -45,7 +45,8 @@ public class ImpedanceLinearResolution {
         this.parameters = Objects.requireNonNull(parameters);
     }
 
-    public record ImpedanceUpperTriangle(Complex z12, Complex z21, Complex z22) {};
+    public record ImpedanceUpperTriangle(Complex z12, Complex z21, Complex z22) {
+    };
 
     public class ImpedanceLinearResolutionResult {
 
@@ -417,7 +418,7 @@ public class ImpedanceLinearResolution {
                             eth2 = ComplexUtils.polar2Complex(bus2.getV(), Math.toRadians(bus2.getAngle()));
                         }
 
-                        res.addTwoBusResult(bus2, eth2, z22, z21, z12, z22At20Hz, z21At20Hz, z12At20Hz, numBus2Fault);
+                        res.addTwoBusResult(bus2, eth2, new ImpedanceUpperTriangle(z12, z21, z22), new ImpedanceUpperTriangle(z22At20Hz, z21At20Hz, z12At20Hz), numBus2Fault);
                     }
                 }
 
