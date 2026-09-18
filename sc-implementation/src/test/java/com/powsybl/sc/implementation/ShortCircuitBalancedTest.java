@@ -173,6 +173,30 @@ public class ShortCircuitBalancedTest {
     }
 
     @Test
+    void openShortCircuitProvider4nTfoLoadFlowInitialVoltages() {
+        Network network4nTfo = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
+        LoadFlow.run(network4nTfo, loadFlowParameters);
+
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters()
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+
+        ShortCircuitAnalysisResult scar = provider.run(network4nTfo, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
+
+        List<FaultResult> frs = scar.getFaultResults();
+
+        assertMagnitudeCurrents(frs,
+                new double[]{3516.67901761843, 3792.315266039025, 3649.0527900638367, 2369.099028201667}
+        );
+        // assertFeederCurrents(frs, new double[]{3592.64209, 3792.05432, 3601.38191, 3571.44559}, "G2"); // TODO: Add with next Core release
+        assertBusVoltages(frs, new double[]{6.907880763358512, 0.0, 6.6051007186361, 7.642379581750879}, 1);
+    }
+
+    @Test
     void openShortCircuitProvider2nTfo() {
 
         Network nt2 = create2nTfo(NetworkFactory.findDefault());
@@ -204,7 +228,7 @@ public class ShortCircuitBalancedTest {
      * having configured voltage profile.
      */
     @Test
-    void openShortCircuitProvider2nTfoConfiguredInitialVoltages() {
+    void openShortCircuitProvider2nTfoConfiguredVoltages() {
         Network network2nTfo = create2nTfo(NetworkFactory.findDefault());
 
         ComputationManager cm = LocalComputationManager.getDefault();
@@ -227,10 +251,10 @@ public class ShortCircuitBalancedTest {
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
-                new double[]{2641.36765, 2062.15577} // TODO Nay: validate with Courcirc
+                new double[]{2641.36792, 2062.15551}
         );
-        // assertFeederCurrents(frs, new double[]{2598.076211, 3040.30195}, "G1"); // TODO Nay: Add with next Core release, validate with Courcirc
-        assertBusVoltages(frs, new double[]{30.09933, 0.0}, 1); // TODO Nay: validate with Courcirc
+        // assertFeederCurrents(frs, new double[]{2598.07642, 3040.30176}, "G1"); // TODO: Add with next Core release
+        assertBusVoltages(frs, new double[]{30.09933, 0.0}, 1);
     }
 
     @Test
@@ -536,7 +560,7 @@ public class ShortCircuitBalancedTest {
      * having configured voltage profile.
      */
     @Test
-    void openShortCircuitProvider4nTapChangerConfiguredInitialVoltages() {
+    void openShortCircuitProvider4nTapChangerConfiguredVoltages() {
         Network network4nTfo = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
 
         ComputationManager cm = LocalComputationManager.getDefault();
@@ -555,10 +579,10 @@ public class ShortCircuitBalancedTest {
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
-                new double[]{3222.08637, 3486.87658, 3462.08331, 2701.75104} // TODO Nay: validate with Courcirc
+                new double[]{3222.08637, 3486.87658, 3462.08331, 2701.75104}
         );
-        // assertFeederCurrents(frs, new double[]{2407.81296, 2598.076211, 2500.03720, 2972.69206}, "G2"); // TODO Nay: Add with next Core release, validate with Courcirc
-        assertBusVoltages(frs, new double[]{6.59124, 0.0, 3.39618, 12.97710}, 1); // TODO Nay: validate with Courcirc
+        // assertFeederCurrents(frs, new double[]{2407.81296, 2598.076211, 2500.03720, 2972.69206}, "G2"); // TODO: Add with next Core release
+        assertBusVoltages(frs, new double[]{6.59124, 0.0, 3.39618, 12.97710}, 1);
     }
 
     public static @NonNull Network create2n(NetworkFactory networkFactory) {
