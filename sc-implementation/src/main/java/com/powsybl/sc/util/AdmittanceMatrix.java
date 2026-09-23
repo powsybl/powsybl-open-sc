@@ -237,11 +237,11 @@ public class AdmittanceMatrix implements AutoCloseable {
         for (Variable<VariableType> v : equationSystem.getIndex().getSortedVariablesToFind()) {
             switch (v.getType()) {
                 case BUS_VR:
-                    x[v.getRow()] = initializer.getMagnitude(network.getBus(v.getElementNum())) * Math.cos(Math.toRadians(initializer.getAngle(network.getBus(v.getElementNum()))));
+                    x[v.getRow()] = initializer.getMagnitude(network.getBus(v.getElementNum())) * Math.cos(initializer.getAngle(network.getBus(v.getElementNum())));
                     break;
 
                 case BUS_VI:
-                    x[v.getRow()] = initializer.getMagnitude(network.getBus(v.getElementNum())) * Math.sin(Math.toRadians(initializer.getAngle(network.getBus(v.getElementNum()))));
+                    x[v.getRow()] = initializer.getMagnitude(network.getBus(v.getElementNum())) * Math.sin(initializer.getAngle(network.getBus(v.getElementNum())));
                     break;
 
                 default:
