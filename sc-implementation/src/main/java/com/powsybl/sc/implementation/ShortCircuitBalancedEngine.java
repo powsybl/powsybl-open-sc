@@ -159,6 +159,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         double r = shortCircuitFault.getCalculationLocation().getProportionalLocationOnLine() / 100.0;
         double s = 1 - r;
 
+        // Fix me: Following formulae imply that nominalV1 = nominalV2
         // r: proportionFromBus1, s: proportionFromBus2
         // vInit = vInit1 * r + vInit2 * s
         Complex vInit = vInit1.multiply(r).add(vInit2.multiply(s));
