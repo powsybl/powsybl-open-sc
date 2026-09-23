@@ -242,11 +242,6 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         String elementId = fault.getElementId();
         Branch<?> branch = network.getBranch(elementId);
         double vNomVl2 = branch.getTerminal2().getVoltageLevel().getNominalV();
-        if (branch.getType() == IdentifiableType.TWO_WINDINGS_TRANSFORMER) {
-            return vNomVl2 * vNomVl2 / SB;
-        } else {
-            double vNomVl1 = branch.getTerminal1().getVoltageLevel().getNominalV();
-            return vNomVl1 * vNomVl2 / SB;
-        }
+        return vNomVl2 * vNomVl2 / SB; // Fix me: What if vNomVl2 != vNomVl1?
     }
 }
