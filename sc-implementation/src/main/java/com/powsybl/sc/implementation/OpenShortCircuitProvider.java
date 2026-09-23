@@ -10,6 +10,7 @@ package com.powsybl.sc.implementation;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Stopwatch;
 import com.powsybl.computation.ComputationManager;
+import com.powsybl.iidm.network.Branch;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlow;
@@ -30,6 +31,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+
+import static com.powsybl.openloadflow.util.PerUnit.SB;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -193,20 +196,24 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 continue;
             }
 
-            // TODO : transform parallel input into a series input
-            if (fault.getConnectionType() == Fault.ConnectionType.PARALLEL) {
-                LOGGER.warn("Short circuit connection of type PARALLEL not yet supported, fault: {} is ignored", fault.getId());
-                continue;
+            double rFault = fault.getRToGround();
+            double xFault = fault.getXToGround();
+            Complex zFaultToGround;
+            if (fault.getConnectionType() == Fault.ConnectionType.SERIES) {
+                // Zf = r + jx
+                zFaultToGround = new Complex(rFault, xFault);
+            } else {
+                // Zf = (r*jx)/(r+jx) for ConnectionType.PARALLEL
+                zFaultToGround = new Complex(rFault, 0)
+                        .multiply(new Complex(0, xFault))
+                        .divide(new Complex(rFault, xFault));
             }
 
-            // TODO : see how to get lfBus from iidm Bus
+            // Convert fault impedance from Ohm into PerUnit
+            Complex zFaultToGroundPerUnit = zFaultToGround.divide(new Complex(getZPerUnitFromFault(fault, network), 0));
+            ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGroundPerUnit);
             String elementId = fault.getElementId();
-
-            Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
-            ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
-            Bus bus = network.getBusBreakerView().getBus(elementId);
-            String busId = bus.getId();
-            ShortCircuitFault sc = new ShortCircuitFault(busId, busId, scz, scType);
+            ShortCircuitFault sc = new ShortCircuitFault(elementId, elementId, scz, scType);
             balancedFaultsList.add(sc);
 
             // TODO improve:
@@ -214,5 +221,26 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         }
         return new Pair<>(existBalancedFaults, existUnbalancedFaults);
+    }
+
+    private double getZPerUnitFromFault(Fault fault, Network network) {
+        return switch (fault.getType()) {
+            case Fault.Type.BUS -> getZPerUnitForBus(fault, network);
+            case Fault.Type.BRANCH -> getZPerUnitForBranch(fault, network);
+        };
+    }
+
+    private double getZPerUnitForBus(Fault fault, Network network) {
+        String elementId = fault.getElementId();
+        Bus bus = network.getBusBreakerView().getBus(elementId);
+        double vNomVl = bus.getVoltageLevel().getNominalV();
+        return vNomVl * vNomVl / SB;
+    }
+
+    private double getZPerUnitForBranch(Fault fault, Network network) {
+        String elementId = fault.getElementId();
+        Branch<?> branch = network.getBranch(elementId);
+        double vNomVl2 = branch.getTerminal2().getVoltageLevel().getNominalV();
+        return vNomVl2 * vNomVl2 / SB; // Fix me: What if vNomVl2 != vNomVl1?
     }
 }
