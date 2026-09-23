@@ -12,7 +12,6 @@ import com.google.common.base.Stopwatch;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.Branch;
 import com.powsybl.iidm.network.Bus;
-import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
