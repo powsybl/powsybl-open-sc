@@ -12,43 +12,77 @@ import com.powsybl.sc.util.CalculationLocation;
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
-public class ShortCircuitFault extends CalculationLocation {
+public class ShortCircuitFault {
 
-    public ShortCircuitFault(String busLocation, String faultId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
-        super(busLocation);
+    /**
+     * Single bus fault.
+     */
+    public ShortCircuitFault(String busLocation, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
+        this.location = new CalculationLocation(busLocation);
         this.zf = zf;
         this.type = type;
         this.faultId = faultId;
+        this.elementId = elementId;
+        this.shortCircuitFaultType = ShortCircuitFaultType.BUS;
     }
 
-    public ShortCircuitFault(String busLocation, String busLocationBiPhased, String faultId, ShortCircuitFaultImpedance zf, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
-        super(busLocation, busLocationBiPhased);
+    /**
+     * Biphased common support fault, tying together two independent buses.
+     */
+    public ShortCircuitFault(String busLocation, String secondBiphasedBusLocation, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
+        if (type != ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
+            throw new IllegalArgumentException("ShortCircuitType must be BIPHASED_COMMON_SUPPORT for a bi-phased common support fault, got" + type);
+        }
+        this.location = new CalculationLocation(busLocation, secondBiphasedBusLocation);
         this.zf = zf;
         this.type = type;
         this.faultId = faultId;
+        this.elementId = elementId;
         this.biphasedType = biphasedType;
+        this.shortCircuitFaultType = ShortCircuitFaultType.BUS;
     }
 
+    /**
+     * General case for the location of the fault, including located along a line, between its two terminal buses.
+     */
+    public ShortCircuitFault(CalculationLocation location, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
+        this.location = location;
+        this.zf = zf;
+        this.type = type;
+        this.faultId = faultId;
+        this.elementId = elementId;
+        this.shortCircuitFaultType = ShortCircuitFaultType.BRANCH;
+    }
+
+    public enum ShortCircuitFaultType {
+        BUS,
+        BRANCH
+    }
 
     public enum ShortCircuitType {
         TRIPHASED_GROUND,
         BIPHASED,
         BIPHASED_GROUND,
         BIPHASED_COMMON_SUPPORT,
-        MONOPHASED;
+        MONOPHASED
     }
 
     public enum ShortCircuitBiphasedType {
         C1_C2,
         C1_B2,
-        C1_A2;
+        C1_A2
     }
+    private final CalculationLocation location;
 
-    private String faultId;
+    private final String faultId;
 
-    private ShortCircuitFaultImpedance zf; // the short circuit impedance Zf
+    private final String elementId;
 
-    private ShortCircuitType type;
+    private final ShortCircuitFaultImpedance zf; // the short circuit impedance Zf
+
+    private final ShortCircuitType type;
+
+    private final ShortCircuitFaultType shortCircuitFaultType;
 
     private ShortCircuitBiphasedType biphasedType;
 
@@ -66,5 +100,17 @@ public class ShortCircuitFault extends CalculationLocation {
 
     public String getFaultId() {
         return faultId;
+    }
+
+    public ShortCircuitFaultType getShortCircuitFaultType() {
+        return shortCircuitFaultType;
+    }
+
+    public CalculationLocation getCalculationLocation() {
+        return location;
+    }
+
+    public String getElementId() {
+        return elementId;
     }
 }
