@@ -107,7 +107,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                     }
                 }
 
-                res.updateFeedersResult(); // feeders are updated only if voltageUpdate is made
+                res.updateFeedersResult(parameters.isWithNeutralPosition()); // feeders are updated only if voltageUpdate is made
                 resultsPerFault.put(scf, res);
             }
         }

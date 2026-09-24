@@ -9,10 +9,7 @@ package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.math.matrix.ComplexMatrix;
-import com.powsybl.openloadflow.network.LfBranch;
-import com.powsybl.openloadflow.network.LfBus;
-import com.powsybl.openloadflow.network.LfNetwork;
-import com.powsybl.openloadflow.network.PiModel;
+import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.util.*;
 import com.powsybl.sc.util.extensions.AdmittanceConstants;
 import com.powsybl.shortcircuit.FortescueValue;
@@ -217,7 +214,7 @@ public class ShortCircuitResult {
         return di;
     }
 
-    public void updateFeedersResult() {
+    public void updateFeedersResult(boolean isWithNeutralPosition) {
         if (!isVoltageProfileUpdated) {
             return;
         }
@@ -285,7 +282,17 @@ public class ShortCircuitResult {
                 if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
                     branchDi1.put(branch, new FortescueValue(di1.abs(), di1.getArgument()));
                     branchDi2.put(branch, new FortescueValue(di2.abs(), di2.getArgument()));
-                    Complex zBranch = new Complex(branch.getPiModel().getR(), branch.getPiModel().getX());
+
+                    PiModel piModel = branch.getPiModel();
+                    Complex zBranch;
+                    if (isWithNeutralPosition
+                            && branch.getBranchType() == LfBranch.BranchType.TRANSFO_2 //TODO: TRANSFO_3
+                            && piModel instanceof PiModelArray piModelArray) {
+                        zBranch = new Complex(piModelArray.getModel(0).getR(), piModelArray.getModel(0).getX());
+                    } else {
+                        zBranch = new Complex(branch.getPiModel().getR(), branch.getPiModel().getX());
+                    }
+
                     resultDirectBus1Feeders.getBusFeedersResult().add(new FeederResult(new Feeder(zBranch, branch.getId(), Feeder.FeederType.BRANCH, ThreeSides.ONE), di1));
                     resultDirectBus2Feeders.getBusFeedersResult().add(new FeederResult(new Feeder(zBranch, branch.getId(), Feeder.FeederType.BRANCH, ThreeSides.TWO), di2));
                     continue;

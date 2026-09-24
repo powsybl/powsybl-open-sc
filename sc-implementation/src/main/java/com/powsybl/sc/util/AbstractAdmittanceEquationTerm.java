@@ -80,17 +80,6 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         if (piModel.getX() == 0) {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has reactance equal to zero");
         }
-        // Take the rho of the neutral position (model(0)) of tapChanger if isWithNeutralPosition set to True
-        if (isWithNeutralPosition
-                && branch.getBranchType() == LfBranch.BranchType.TRANSFO_2 //TODO: TRANSFO_3
-                && piModel instanceof PiModelArray piModelArray) {
-            rho = piModelArray.getModel(0).getR1();
-        } else {
-            rho = piModel.getR1();
-        }
-        if (piModel.getZ() == 0) {
-            throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
-        }
 
         double kTr = 1.;
         double kTx = 1.;
@@ -121,13 +110,22 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
             }
         }
 
-        r = piModel.getR() * kTr;
-        x = piModel.getX() * kTx * freqCoef;
-
-        if (!isWithNeutralPosition) {
-            r = r * rho;
-            x = x * rho;
+        // Take the rho of the neutral position (model(0)) of tapChanger if isWithNeutralPosition set to True
+        if (isWithNeutralPosition
+                && branch.getBranchType() == LfBranch.BranchType.TRANSFO_2 //TODO: TRANSFO_3
+                && piModel instanceof PiModelArray piModelArray) {
+            rho = piModelArray.getModel(0).getR1();
+            r = piModelArray.getModel(0).getR() * kTr;
+            x = piModelArray.getModel(0).getX() * kTx * freqCoef;
+        } else {
+            rho = piModel.getR1();
+            r = piModel.getR() * kTr;
+            x = piModel.getX() * kTx * freqCoef;
         }
+        if (piModel.getZ() == 0) {
+            throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
+        }
+
         double zk = Math.sqrt(r * r + x * x);
 
         zInvSquare = 1 / (zk * zk);
