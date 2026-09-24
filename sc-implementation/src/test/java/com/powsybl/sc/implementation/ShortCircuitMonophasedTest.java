@@ -64,7 +64,7 @@ public class ShortCircuitMonophasedTest {
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec, true);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -117,7 +117,7 @@ public class ShortCircuitMonophasedTest {
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec, true);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -151,7 +151,9 @@ public class ShortCircuitMonophasedTest {
 
         ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters();
+        ShortCircuitParameters scp = new ShortCircuitParameters()
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setWithNeutralPosition(true);
 
         List<Fault> faults = new ArrayList<>();
         BusFault bf1 = new BusFault("F1", "B2", 0., 0., Fault.ConnectionType.SERIES, Fault.FaultType.SINGLE_PHASE);
@@ -164,10 +166,10 @@ public class ShortCircuitMonophasedTest {
 
         List<FaultResult> frs = scar.getFaultResults();
         MagnitudeFaultResult magnitudeFaultResult = (MagnitudeFaultResult) frs.get(0);
-        assertEquals(14.548104511643936, magnitudeFaultResult.getCurrent(), 0.00001);
+        assertEquals(14548.104511643936, magnitudeFaultResult.getCurrent(), 0.01);
 
         MagnitudeFaultResult magnitudeFaultResult2 = (MagnitudeFaultResult) frs.get(1);
-        assertEquals(14.464754153502392, magnitudeFaultResult2.getCurrent(), 0.00001);
+        assertEquals(14464.754153502392, magnitudeFaultResult2.getCurrent(), 0.01);
 
     }
 
@@ -196,7 +198,7 @@ public class ShortCircuitMonophasedTest {
         LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.TRANSIENT;
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
-        ShortCircuitEngineParameters scunbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.CALCULATED, false, periodType, shortCircuitNorm);
+        ShortCircuitEngineParameters scunbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.CALCULATED, false, periodType, shortCircuitNorm, true);
         ShortCircuitUnbalancedEngine scunbEngine = new ShortCircuitUnbalancedEngine(network, scunbParameters);
 
         scunbEngine.run();
