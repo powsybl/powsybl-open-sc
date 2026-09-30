@@ -94,6 +94,7 @@ class ShortCircuitFromCgmesTest {
                 true,
                 ShortCircuitEngineParameters.VoltageProfileType.NOMINAL,
                 false,
+                false,
                 ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT,
                 shortCircuitNormIec,
                 true);
@@ -141,6 +142,7 @@ class ShortCircuitFromCgmesTest {
                 true,
                 ShortCircuitEngineParameters.VoltageProfileType.NOMINAL,
                 false,
+                false,
                 ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT,
                 shortCircuitNormIec,
                 true);
@@ -178,6 +180,7 @@ class ShortCircuitFromCgmesTest {
                 buildTriphasedFaultList(),
                 true,
                 ShortCircuitEngineParameters.VoltageProfileType.CALCULATED,
+                false,
                 false,
                 ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT,
                 shortCircuitNormIec,

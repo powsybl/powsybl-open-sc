@@ -34,6 +34,8 @@ public class ImpedanceLinearResolutionParameters {
 
     private final boolean ignoreShunts;
 
+    private final boolean ignoreLoads;
+
     private final AdmittanceEquationSystem.AdmittancePeriodType periodType;
 
     private final AdmittanceEquationSystem.AdmittanceType admittanceType;
@@ -49,6 +51,7 @@ public class ImpedanceLinearResolutionParameters {
         this.calculationLocations = Objects.requireNonNull(calculationLocations);
         this.voltageUpdate = scParameters.isVoltageUpdate();
         this.ignoreShunts = scParameters.isIgnoreShunts();
+        this.ignoreLoads = scParameters.isIgnoreLoads();
         this.periodType = getAdmittancePeriodTypeFromParam(scParameters);
         this.admittanceType = admittanceType;
         this.initialVoltages = initialVoltages;
@@ -68,6 +71,7 @@ public class ImpedanceLinearResolutionParameters {
         this.calculationLocations = Objects.requireNonNull(calculationLocations);
         this.voltageUpdate = thParameters.isVoltageUpdate();
         this.ignoreShunts = thParameters.isTheveninIgnoreShunts();
+        this.ignoreLoads = thParameters.isTheveninIgnoreLoads();
         this.periodType = getAdmittancePeriodTypeFromParamThevenin(thParameters);
         this.admittanceType = admittanceType;
         this.initialVoltages = initialVoltages;
@@ -92,6 +96,10 @@ public class ImpedanceLinearResolutionParameters {
 
     public boolean isTheveninIgnoreShunts() {
         return ignoreShunts;
+    }
+
+    public boolean isTheveninIgnoreLoads() {
+        return ignoreLoads;
     }
 
     public List<CalculationLocation> getBiphasedCalculationLocations() {

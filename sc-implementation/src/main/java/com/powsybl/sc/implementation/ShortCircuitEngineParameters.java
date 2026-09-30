@@ -51,6 +51,8 @@ public class ShortCircuitEngineParameters {
 
     private final boolean ignoreShunts;
 
+    private final boolean ignoreLoads;
+
     private final AnalysisType analysisType;
 
     private boolean voltageUpdate;
@@ -63,13 +65,14 @@ public class ShortCircuitEngineParameters {
 
     private final boolean isWithNeutralPosition;
 
-    public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, boolean isVoltageExport, VoltageProfileType vProfile, boolean ignoreShunts, PeriodType periodType, ShortCircuitNorm norm, boolean isWithNeutralPosition) {
+    public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, boolean isVoltageExport, VoltageProfileType vProfile, boolean ignoreShunts, boolean ignoreLoads, PeriodType periodType, ShortCircuitNorm norm, boolean isWithNeutralPosition) {
         this.loadFlowParameters = Objects.requireNonNull(loadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.shortCircuitFaults = Objects.requireNonNull(faults);
         this.voltageUpdate = isVoltageExport;
         this.minVoltageDropPercent = 0.0;
         this.ignoreShunts = ignoreShunts;
+        this.ignoreLoads = ignoreLoads;
         this.vProfile = vProfile;
         this.vConfiguredRanges = Collections.emptyList();
         this.analysisType = analysisType;
@@ -85,6 +88,7 @@ public class ShortCircuitEngineParameters {
         this.voltageUpdate = scParameters.isWithVoltageResult();
         this.minVoltageDropPercent = scParameters.getMinVoltageDropProportionalThreshold();
         this.ignoreShunts = !scParameters.isWithShuntCompensators();
+        this.ignoreLoads = !scParameters.isWithLoads();
         this.vProfile = toVoltageProfileType(scParameters.getInitialVoltageProfileMode());
         this.vConfiguredRanges = scParameters.getVoltageRanges();
         this.analysisType = analysisType;
@@ -115,6 +119,10 @@ public class ShortCircuitEngineParameters {
 
     public boolean isIgnoreShunts() {
         return ignoreShunts;
+    }
+
+    public boolean isIgnoreLoads() {
+        return ignoreLoads;
     }
 
     public AnalysisType getAnalysisType() {

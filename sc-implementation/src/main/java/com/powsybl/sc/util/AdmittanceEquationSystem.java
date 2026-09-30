@@ -57,12 +57,6 @@ public final class AdmittanceEquationSystem {
         }
     }
 
-    public enum AdmittanceVoltageProfileType {
-        CALCULATED, // use the computed values at nodes to compute Y elements
-        CONFIGURED, // use the configured values per voltage ranges to compute Y elements
-        NOMINAL // use the nominal voltage values at nodes to compute Y elements
-    }
-
     public enum AdmittanceType {
         ADM_INJ, // all external nodal injections that does not come from branches are considered as current injectors (including shunts elements)
         ADM_SHUNT, // all external  nodal injections that does not come from branches are considered as current injectors (but not shunt elements)
@@ -160,6 +154,7 @@ public final class AdmittanceEquationSystem {
                                      ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, FrequencyType frequencyType) {
         AdmittanceType admittanceType = parameters.getAdmittanceType();
         boolean isShuntsIgnore = parameters.isTheveninIgnoreShunts();
+        boolean isLoadsIgnore = parameters.isTheveninIgnoreLoads();
         AdmittancePeriodType admittancePeriodType = parameters.getTheveninPeriodType();
 
         for (LfBus bus : network.getBuses()) {
@@ -202,12 +197,14 @@ public final class AdmittanceEquationSystem {
                     y = new Complex(0., getBfromShuntAndUpdateFeederList(bus, feederList)); // ! updates feederList
                 }
 
-                ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-                yLoadEq = scLoad.ydEquivalent().divide(v.abs() * v.abs());
+                if (!isLoadsIgnore) {
+                    ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
+                    yLoadEq = scLoad.ydEquivalent().divide(v.abs() * v.abs());
 
-                if (yLoadEq.abs() > EPSILON) {
-                    Feeder shuntFeeder = new Feeder(yLoadEq, bus.getId(), Feeder.FeederType.LOAD); // Currently only one feeder aggregating all the loads of the bus!
-                    feederList.add(shuntFeeder);
+                    if (yLoadEq.abs() > EPSILON) {
+                        Feeder shuntFeeder = new Feeder(yLoadEq, bus.getId(), Feeder.FeederType.LOAD); // Currently only one feeder aggregating all the loads of the bus!
+                        feederList.add(shuntFeeder);
+                    }
                 }
 
                 yGenEq = getYtransfromRdXdAndUpdateFeederList(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList
