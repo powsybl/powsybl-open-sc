@@ -189,13 +189,11 @@ public class ShortCircuitBalancedTest {
 
         List<FaultResult> frs = scar.getFaultResults();
 
-        // TODO HG: Verify results with CC
-
-        /*assertMagnitudeCurrents(frs,
-                new double[]{3516.67901761843, 3792.315266039025, 3649.0527900638367, 2369.099028201667}
+        assertMagnitudeCurrents(frs,
+                new double[]{3516.67236328125, 3792.351318359375, 3649.132568359375, 2368.190673828125}
         );
-        // assertFeederCurrents(frs, new double[]{3592.64209, 3792.05432, 3601.38191, 3571.44559}, "G2"); // TODO: Add with next Core release
-        assertBusVoltages(frs, new double[]{6.907880763358512, 0.0, 6.6051007186361, 7.642379581750879}, 1); */
+        // assertFeederCurrents(frs, new double[]{3592.60962, 3792.05566, 3601.41699, 3570.39941}, "G2"); // TODO: Add with next Core release
+        assertBusVoltages(frs, new double[]{6.90904474, 0.0, 6.60392666, 7.67868948}, 1);
     }
 
     @Test
@@ -222,6 +220,37 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{2945.050248502227, 1881.491000035193}
         );
+
+    }
+
+    @Test
+    void openShortCircuitProvider2nTfoLoadFlowVoltages() {
+
+        Network nt2Tfo = create2nTfo(NetworkFactory.findDefault());
+        LoadFlow.run(nt2Tfo, loadFlowParameters);
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters()
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+
+        List<Fault> faults = new ArrayList<>();
+
+        BusFault bf1 = new BusFault("F1", "B1");
+        BusFault bf2 = new BusFault("F2", "B2");
+        faults.add(bf1);
+        faults.add(bf2);
+
+        ShortCircuitAnalysisResult scar = provider.run(nt2Tfo, faults, scp, cm, Collections.emptyList()).join();
+
+        List<FaultResult> frs = scar.getFaultResults();
+
+        assertMagnitudeCurrents(frs, new double[]{2945.155029296875, 1879.8883056640625});
+        // assertFeederCurrents(frs, new double[]{2945.104, 2819.78149}, "G1"); // TODO: Add with next Core release
+        assertBusVoltages(frs, new double[]{0.0, 4.34129143}, 0);
+        assertBusVoltages(frs, new double[]{0.000213178486, 0.0}, 1);
 
     }
 
