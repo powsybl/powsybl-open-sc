@@ -9,6 +9,7 @@ package com.powsybl.sc.implementation;
 
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.MatrixFactory;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
@@ -53,6 +54,8 @@ public class ShortCircuitEngineParameters {
 
     private final boolean ignoreLoads;
 
+    private final boolean ignoreCapacities;
+
     private final AnalysisType analysisType;
 
     private boolean voltageUpdate;
@@ -65,7 +68,14 @@ public class ShortCircuitEngineParameters {
 
     private final boolean isWithNeutralPosition;
 
-    public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, boolean isVoltageExport, VoltageProfileType vProfile, boolean ignoreShunts, boolean ignoreLoads, PeriodType periodType, ShortCircuitNorm norm, boolean isWithNeutralPosition) {
+    public ShortCircuitEngineParameters(MatrixFactory matrixFactory,
+                                        AnalysisType analysisType, List<ShortCircuitFault> faults,
+                                        ShortCircuitParameters scParameters, ShortCircuitNorm norm) {
+        this(matrixFactory, analysisType, faults, scParameters,
+                getOrDefaultOpenScParameters(scParameters), norm);
+    }
+
+    public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, boolean isVoltageExport, VoltageProfileType vProfile, boolean ignoreShunts, boolean ignoreLoads, boolean ignoreCapacities, PeriodType periodType, ShortCircuitNorm norm, boolean isWithNeutralPosition) {
         this.loadFlowParameters = Objects.requireNonNull(loadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.shortCircuitFaults = Objects.requireNonNull(faults);
@@ -73,6 +83,7 @@ public class ShortCircuitEngineParameters {
         this.minVoltageDropPercent = 0.0;
         this.ignoreShunts = ignoreShunts;
         this.ignoreLoads = ignoreLoads;
+        this.ignoreCapacities = ignoreCapacities;
         this.vProfile = vProfile;
         this.vConfiguredRanges = Collections.emptyList();
         this.analysisType = analysisType;
@@ -81,20 +92,27 @@ public class ShortCircuitEngineParameters {
         this.isWithNeutralPosition = isWithNeutralPosition;
     }
 
-    public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, ShortCircuitParameters scParameters, ShortCircuitNorm norm) {
-        this.loadFlowParameters = Objects.requireNonNull(loadFlowParameters);
+    public ShortCircuitEngineParameters(MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, ShortCircuitParameters scParameters, OpenShortCircuitParameters openScParameters, ShortCircuitNorm norm) {
+        this.loadFlowParameters = openScParameters.getLoadFlowParameters();
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.shortCircuitFaults = Objects.requireNonNull(faults);
         this.voltageUpdate = scParameters.isWithVoltageResult();
         this.minVoltageDropPercent = scParameters.getMinVoltageDropProportionalThreshold();
         this.ignoreShunts = !scParameters.isWithShuntCompensators();
         this.ignoreLoads = !scParameters.isWithLoads();
+        this.ignoreCapacities = !openScParameters.isWithCapacities();
         this.vProfile = toVoltageProfileType(scParameters.getInitialVoltageProfileMode());
         this.vConfiguredRanges = scParameters.getVoltageRanges();
         this.analysisType = analysisType;
         this.periodType = toPeriodType(scParameters.getStudyType());
         this.norm = norm;
         this.isWithNeutralPosition = scParameters.isWithNeutralPosition();
+    }
+
+    private static OpenShortCircuitParameters getOrDefaultOpenScParameters(ShortCircuitParameters scParameters) {
+        OpenShortCircuitParameters openScParameters = Objects.requireNonNull(scParameters)
+                .getExtension(OpenShortCircuitParameters.class);
+        return openScParameters != null ? openScParameters : new OpenShortCircuitParameters();
     }
 
     public LoadFlowParameters getLoadFlowParameters() {
@@ -123,6 +141,10 @@ public class ShortCircuitEngineParameters {
 
     public boolean isIgnoreLoads() {
         return ignoreLoads;
+    }
+
+    public boolean isIgnoreCapacities() {
+        return ignoreCapacities;
     }
 
     public AnalysisType getAnalysisType() {

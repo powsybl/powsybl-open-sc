@@ -43,18 +43,21 @@ public class TheveninEquivalentParameters {
 
     private final boolean theveninIgnoreLoads;
 
+    private final boolean theveninIgnoreCapacities;
+
     private final TheveninVoltageProfileType theveninVoltageProfileType;
 
     private final TheveninPeriodType theveninPeriodType;
 
     private final boolean isWithNeutralPosition;
 
-    public TheveninEquivalentParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> voltageLevels, boolean voltageUpdate, TheveninVoltageProfileType theveninVoltageProfileType, TheveninPeriodType theveninPeriodType, boolean theveninIgnoreShunts, boolean theveninIgnoreLoads, boolean isWithNeutralPosition) {
+    public TheveninEquivalentParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> voltageLevels, boolean voltageUpdate, TheveninVoltageProfileType theveninVoltageProfileType, TheveninPeriodType theveninPeriodType, boolean theveninIgnoreShunts, boolean theveninIgnoreLoads, boolean theveninIgnoreCapacities, boolean isWithNeutralPosition) {
         this.acLoadFlowParameters = Objects.requireNonNull(acLoadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.theveninCalculationLocation = Objects.requireNonNull(voltageLevels);
         this.voltageUpdate = voltageUpdate;
         this.theveninIgnoreShunts = theveninIgnoreShunts;
+        this.theveninIgnoreCapacities = theveninIgnoreCapacities;
         this.theveninIgnoreLoads = theveninIgnoreLoads;
         this.theveninVoltageProfileType = theveninVoltageProfileType;
         this.theveninPeriodType = theveninPeriodType;
@@ -83,6 +86,10 @@ public class TheveninEquivalentParameters {
 
     public boolean isTheveninIgnoreLoads() {
         return theveninIgnoreLoads;
+    }
+
+    public boolean isTheveninIgnoreCapacities() {
+        return theveninIgnoreCapacities;
     }
 
     public TheveninVoltageProfileType getTheveninVoltageProfileType() {

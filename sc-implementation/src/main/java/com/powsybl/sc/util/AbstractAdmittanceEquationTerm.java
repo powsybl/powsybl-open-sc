@@ -58,7 +58,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
     protected double freqCoef;
 
-    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
+    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, boolean ignoreCapacities, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
         super(branch);
         Objects.requireNonNull(bus1);
         Objects.requireNonNull(bus2);
@@ -136,10 +136,10 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         cos2A = Math.cos(2 * alpha);
         sin2A = Math.sin(2 * alpha);
 
-        gPi1 = piModel.getG1() / kTr;
-        bPi1 = piModel.getB1() / kTx;
-        gPi2 = piModel.getG2() / kTr;
-        bPi2 = piModel.getB2() / kTx;
+        gPi1 = ignoreCapacities ? 0.0 : piModel.getG1() / kTr;
+        bPi1 = ignoreCapacities ? 0.0 : piModel.getB1() / kTx;
+        gPi2 = ignoreCapacities ? 0.0 : piModel.getG2() / kTr;
+        bPi2 = ignoreCapacities ? 0.0 : piModel.getB2() / kTx;
     }
 
     @Override

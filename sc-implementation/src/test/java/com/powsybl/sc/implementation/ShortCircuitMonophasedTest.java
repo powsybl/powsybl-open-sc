@@ -64,7 +64,7 @@ public class ShortCircuitMonophasedTest {
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, periodType, shortCircuitNormIec, true);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, periodType, shortCircuitNormIec, true);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -75,7 +75,7 @@ public class ShortCircuitMonophasedTest {
 
         // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
         // and I"k = sqrt(3) * cmax * Un /(Zeq) and expected I"k = 35.64 kA with some approximations on the impedance values
-        assertEquals(35.70435548244156, val.get(0), 0.00001);
+        assertEquals(35.70435548244156, val.getFirst(), 0.00001);
 
     }
 
@@ -117,7 +117,7 @@ public class ShortCircuitMonophasedTest {
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, periodType, shortCircuitNormIec, true);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, periodType, shortCircuitNormIec, true);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -177,7 +177,7 @@ public class ShortCircuitMonophasedTest {
     void computeIoTestNew() {
         Network network = createGiard(NetworkFactory.findDefault());
 
-        LoadFlowResult resultntg = loadFlowRunner.run(network, parameters);
+        loadFlowRunner.run(network, parameters);
 
         network.getGenerator("GB").newExtension(GeneratorFortescueAdder.class)
                 .withGrounded(true)
@@ -198,7 +198,7 @@ public class ShortCircuitMonophasedTest {
         LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.TRANSIENT;
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
-        ShortCircuitEngineParameters scunbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.CALCULATED, false, false, periodType, shortCircuitNorm, true);
+        ShortCircuitEngineParameters scunbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.CALCULATED, false, false, false, periodType, shortCircuitNorm, true);
         ShortCircuitUnbalancedEngine scunbEngine = new ShortCircuitUnbalancedEngine(network, scunbParameters);
 
         scunbEngine.run();

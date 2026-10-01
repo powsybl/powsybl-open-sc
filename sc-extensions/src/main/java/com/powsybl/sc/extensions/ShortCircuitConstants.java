@@ -29,4 +29,6 @@ public final class ShortCircuitConstants {
     public static final double DEFAULT_CQ = 1.1;
     public static final double DEFAULT_R1_X1_RATIO = 1.;
     public static final double DEFAULT_IKQ = 10;
+
+    public static final boolean DEFAULT_WITH_CAPACITIES = true;
 }

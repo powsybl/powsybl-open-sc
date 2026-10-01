@@ -12,7 +12,6 @@ import com.google.common.base.Stopwatch;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.openloadflow.network.LfBus;
@@ -70,10 +69,6 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         Objects.requireNonNull(network);
         Objects.requireNonNull(parameters);
         Stopwatch stopwatch = Stopwatch.createStarted();
-        OpenShortCircuitParameters extension = parameters.getExtension(OpenShortCircuitParameters.class);
-        LoadFlowParameters lfParameters = extension != null
-                ? extension.getLoadFlowParameters()
-                : new LoadFlowParameters();
 
         // building of fault lists
         List<ShortCircuitFault> faultsList = new ArrayList<>();
@@ -88,7 +83,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(lfParameters, matrixFactory, at, faultsList, parameters, shortCircuitNorm);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory, at, faultsList, parameters, shortCircuitNorm);
 
         // lists to store the results
         List<FaultResult> faultResults = new ArrayList<>();
