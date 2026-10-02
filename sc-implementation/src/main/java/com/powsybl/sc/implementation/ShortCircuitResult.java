@@ -214,34 +214,7 @@ public class ShortCircuitResult {
         return di;
     }
 
-    public void updateFeedersResult(boolean isWithNeutralPosition) {
-        if (!isVoltageProfileUpdated) {
-            return;
-        }
-        // Building the structure to support the feeders result, a FeederResult is built from each Feeder in input
-        feedersResultDirect = new HashMap<>(); // TODO : homopolar
-        feedersResultsHomopolar = new HashMap<>();
-        feedersResultsInverse = new HashMap<>();
-        for (LfBus bus : lfNetwork.getBuses()) {
-            // Init of feeder results
-            FeedersAtBus busFeedersDirect = eqSysFeedersDirect.busToFeeders.get(bus);
-            FeedersAtBusResult feedersAtBusResultDirect = new FeedersAtBusResult(busFeedersDirect);
-            feedersResultDirect.put(bus, feedersAtBusResultDirect);
-
-            if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
-                continue;
-            }
-
-            // Homopolar
-            FeedersAtBus busFeedersHomopolar = eqSysFeedersHomopolar.busToFeeders.get(bus);
-            FeedersAtBusResult feedersAtBusResultHomopolar = new FeedersAtBusResult(busFeedersHomopolar);
-            feedersResultsHomopolar.put(bus, feedersAtBusResultHomopolar);
-
-            // Inverse
-            FeedersAtBus busFeedersInverse = eqSysFeedersDirect.busToFeeders.get(bus); // for now we use direct feeder impedance to compute inverse current
-            FeedersAtBusResult feedersAtBusResultInverse = new FeedersAtBusResult(busFeedersInverse);
-            feedersResultsInverse.put(bus, feedersAtBusResultInverse);
-        }
+    public void calculateCurrentPerBus(boolean isWithNeutralPosition) {
 
         // For each branch, we build the sum of currents at busses from branches
         // 1- Input is the voltage delta at each end of the branch
@@ -249,8 +222,6 @@ public class ShortCircuitResult {
         // 3- Then dI is added to the sum of current of bus
         // 4- The resulting sum of current at each bus is the current coming from branches,
         // which is equal to the current at bus injectors (Kirchhoff's law)
-        // 5- Given the admittance of each feeder at bus, computed during building of AdmittanceEquationSystem,
-        // we can then deduce the current contribution of each feeder, which is stored in feeder result
 
         // Start with the fault bus contribution
         feedersResultDirect.get(lfBus).addItofeedersSum(ComplexUtils.polar2Complex(iFortescue.getPositiveMagnitude(), iFortescue.getPositiveAngle()));
@@ -259,6 +230,7 @@ public class ShortCircuitResult {
         branchDi2 = new HashMap<>();
 
         for (LfBranch branch : lfNetwork.getBranches()) {
+
             LfBus bus1 = branch.getBus1();
             LfBus bus2 = branch.getBus2();
             if (bus1 != null && bus2 != null) {
@@ -326,10 +298,43 @@ public class ShortCircuitResult {
                         di1.getArgument(), dio1.getArgument(), dii1.getArgument()));
                 branchDi2.put(branch, new FortescueValue(di2.abs(), dio2.abs(), dii2.abs(),
                         di2.getArgument(), dio2.getArgument(), dii2.getArgument()));
-
             }
         }
+    }
 
+    public void updateFeedersResult(boolean isWithNeutralPosition) {
+        if (!isVoltageProfileUpdated) {
+            return;
+        }
+        // Building the structure to support the feeders result, a FeederResult is built from each Feeder in input
+        feedersResultDirect = new HashMap<>(); // TODO : homopolar
+        feedersResultsHomopolar = new HashMap<>();
+        feedersResultsInverse = new HashMap<>();
+        for (LfBus bus : lfNetwork.getBuses()) {
+            // Init of feeder results
+            FeedersAtBus busFeedersDirect = eqSysFeedersDirect.busToFeeders.get(bus);
+            FeedersAtBusResult feedersAtBusResultDirect = new FeedersAtBusResult(busFeedersDirect);
+            feedersResultDirect.put(bus, feedersAtBusResultDirect);
+
+            if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+                continue;
+            }
+
+            // Homopolar
+            FeedersAtBus busFeedersHomopolar = eqSysFeedersHomopolar.busToFeeders.get(bus);
+            FeedersAtBusResult feedersAtBusResultHomopolar = new FeedersAtBusResult(busFeedersHomopolar);
+            feedersResultsHomopolar.put(bus, feedersAtBusResultHomopolar);
+
+            // Inverse
+            FeedersAtBus busFeedersInverse = eqSysFeedersDirect.busToFeeders.get(bus); // for now we use direct feeder impedance to compute inverse current
+            FeedersAtBusResult feedersAtBusResultInverse = new FeedersAtBusResult(busFeedersInverse);
+            feedersResultsInverse.put(bus, feedersAtBusResultInverse);
+        }
+
+        calculateCurrentPerBus(isWithNeutralPosition);
+
+        // Given the admittance of each feeder at bus, computed during building of AdmittanceEquationSystem,
+        // we can then deduce the current contribution of each feeder, which is stored in feeder result
         // computing feeders contribution of each feeder at bus from the sum of currents at bus
         // and based on the admittance dispatch key of feeders
         for (LfBus bus : lfNetwork.getBuses()) {

@@ -58,29 +58,11 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
     protected double freqCoef;
 
-    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
-        super(branch);
-        Objects.requireNonNull(bus1);
-        Objects.requireNonNull(bus2);
-        Objects.requireNonNull(variableSet);
+    private record KTCoeff(double kTr, double kTx) {
 
-        v1rVar = variableSet.getVariable(bus1.getNum(), VariableType.BUS_VR);
-        v2rVar = variableSet.getVariable(bus2.getNum(), VariableType.BUS_VR);
-        v1iVar = variableSet.getVariable(bus1.getNum(), VariableType.BUS_VI);
-        v2iVar = variableSet.getVariable(bus2.getNum(), VariableType.BUS_VI);
+    };
 
-        variables = List.of(v1rVar, v2rVar, v1iVar, v2iVar);
-
-        freqCoef = 1.0;
-        if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
-            freqCoef = 20. / 50.;
-        }
-
-        PiModel piModel = branch.getPiModel();
-        if (piModel.getX() == 0) {
-            throw new IllegalArgumentException("Branch '" + branch.getId() + "' has reactance equal to zero");
-        }
-
+    private KTCoeff computeKTCoeff(LfBranch branch) {
         double kTr = 1.;
         double kTx = 1.;
         if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_2) {
@@ -109,6 +91,37 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
                 }
             }
         }
+
+        return new KTCoeff(kTr, kTx);
+    }
+
+    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
+        super(branch);
+        Objects.requireNonNull(bus1);
+        Objects.requireNonNull(bus2);
+        Objects.requireNonNull(variableSet);
+
+        v1rVar = variableSet.getVariable(bus1.getNum(), VariableType.BUS_VR);
+        v2rVar = variableSet.getVariable(bus2.getNum(), VariableType.BUS_VR);
+        v1iVar = variableSet.getVariable(bus1.getNum(), VariableType.BUS_VI);
+        v2iVar = variableSet.getVariable(bus2.getNum(), VariableType.BUS_VI);
+
+        variables = List.of(v1rVar, v2rVar, v1iVar, v2iVar);
+
+        freqCoef = 1.0;
+        if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
+            freqCoef = 20. / 50.;
+        }
+
+        PiModel piModel = branch.getPiModel();
+        if (piModel.getX() == 0) {
+            throw new IllegalArgumentException("Branch '" + branch.getId() + "' has reactance equal to zero");
+        }
+
+        KTCoeff ktCoeff = computeKTCoeff(branch);
+
+        double kTr = ktCoeff.kTr();
+        double kTx = ktCoeff.kTx();
 
         // Take the rho of the neutral position (model(0)) of tapChanger if isWithNeutralPosition set to True
         if (isWithNeutralPosition
