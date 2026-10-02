@@ -14,7 +14,6 @@ import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
 import com.powsybl.shortcircuit.VoltageRange;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
