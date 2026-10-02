@@ -8,11 +8,9 @@
 package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.Network;
-import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
-import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.util.ReferenceNetwork;
 import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,48 +27,38 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class ShortCircuitBiphasedTest {
 
-    private LoadFlowParameters parameters;
+    private LoadFlowParameters loadFlowParameters;
 
     private MatrixFactory matrixFactory;
 
-    private LoadFlow.Runner loadFlowRunner;
-
     @BeforeEach
     void setUp() {
-        parameters = new LoadFlowParameters();
+        loadFlowParameters = new LoadFlowParameters()
+                .setTwtSplitShuntAdmittance(true);
         matrixFactory = new DenseMatrixFactory();
-        loadFlowRunner = new LoadFlow.Runner(new OpenLoadFlowProvider(matrixFactory));
     }
 
     @Test
     void shortCircuit6NodesIec9094() {
 
-        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
-        loadFlowParameters.setTwtSplitShuntAdmittance(true);
-
         Network network = ReferenceNetwork.create6NodesIec9094();
 
-        MatrixFactory matrixFactory = new DenseMatrixFactory();
-
-        List<ShortCircuitFault> faultList = new ArrayList<>();
         ShortCircuitFault sc1 = new ShortCircuitFault("B3", "sc1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.BIPHASED);
-        faultList.add(sc1);
 
         ShortCircuitFaultImpedance scZ2 = new ShortCircuitFaultImpedance(new Complex(0.), new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
         ShortCircuitFault sc2 = new ShortCircuitFault("B3", "sc1", scZ2, ShortCircuitFault.ShortCircuitType.BIPHASED);
-        faultList.add(sc2);
 
         ShortCircuitFaultImpedance scZ3 = new ShortCircuitFaultImpedance(new Complex(0.), new Complex(0.0001, 0.0002), new Complex(0., 0.));
         ShortCircuitFault sc3 = new ShortCircuitFault("B3", "sc1", scZ3, ShortCircuitFault.ShortCircuitType.BIPHASED);
-        faultList.add(sc3);
 
         ShortCircuitFaultImpedance scZ4 = new ShortCircuitFaultImpedance(new Complex(0.0003, 0.0004), new Complex(0.0001, 0.0002), new Complex(0., 0.));
         ShortCircuitFault sc4 = new ShortCircuitFault("B3", "sc1", scZ4, ShortCircuitFault.ShortCircuitType.BIPHASED);
-        faultList.add(sc4);
+
+        List<ShortCircuitFault> faultList = List.of(sc1, sc2, sc3, sc4);
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, false, periodType, shortCircuitNormIec, true);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();

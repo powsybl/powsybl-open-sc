@@ -268,7 +268,7 @@ public final class ShortCircuitExtensions {
         lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT, new ScGenerator(new Complex(transRd, transX),
                 new Complex(0., stepUpTfoX), ScGenerator.MachineType.SYNCHRONOUS_GEN,
                 new Complex(subTransRd, subtransX), toGround, new Complex(0.), zo));
-        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT_NORM, kG); // set in a separate extension because is does not depend only on iidm in input but also on the type of norm
+        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT_NORM, kG); // set in a separate extension because it does not depend only on iidm in input but also on the type of norm
     }
 
     private static void addLoadExtension(Network network, LfBus lfBus) {

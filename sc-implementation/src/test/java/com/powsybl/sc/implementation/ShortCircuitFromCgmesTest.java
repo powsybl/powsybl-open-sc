@@ -94,8 +94,12 @@ class ShortCircuitFromCgmesTest {
                 true,
                 ShortCircuitEngineParameters.VoltageProfileType.NOMINAL,
                 false,
+                false,
+                false,
+                false,
                 ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT,
-                shortCircuitNormIec);
+                shortCircuitNormIec,
+                true);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         List<Double> values = getrunResultBalanced(scbEngine);
@@ -140,8 +144,12 @@ class ShortCircuitFromCgmesTest {
                 true,
                 ShortCircuitEngineParameters.VoltageProfileType.NOMINAL,
                 false,
+                false,
+                false,
+                false,
                 ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT,
-                shortCircuitNormIec);
+                shortCircuitNormIec,
+                true);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         Map<String, Double> values = getRunResultUnbalanced(scbEngine);
@@ -177,8 +185,12 @@ class ShortCircuitFromCgmesTest {
                 true,
                 ShortCircuitEngineParameters.VoltageProfileType.CALCULATED,
                 false,
+                false,
+                false,
+                false,
                 ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT,
-                shortCircuitNormIec);
+                shortCircuitNormIec,
+                true);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         List<Double> values = getrunResultBalanced(scbEngine);
