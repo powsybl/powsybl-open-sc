@@ -10,7 +10,7 @@ import java.util.Objects;
 public abstract class AbstractFeeder implements Feeder {
 
     //Feeder class is used to post process the results of a short circuit computation to get the feeder contribution in short-circuit current
-    public AbstractFeeder(Complex zFeeder, String id) {
+    protected AbstractFeeder(Complex zFeeder, String id) {
         Objects.requireNonNull(id, "id");
         this.z = zFeeder;
         this.id = id;

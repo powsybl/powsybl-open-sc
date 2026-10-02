@@ -191,11 +191,11 @@ public abstract class AbstractShortCircuitEngine {
     }
 
     protected void fillInitialVoltages() {
-        List<Complex> initialVoltages = new ArrayList<>(lfNetworks.getFirst().getBuses().size());
+        List<Complex> initialVs = new ArrayList<>(lfNetworks.getFirst().getBuses().size());
         for (LfBus lfBus : lfNetworks.getFirst().getBuses()) {
-            initialVoltages.add(lfBus.getNum(), computeBusInitialVoltage(lfBus));
+            initialVs.add(lfBus.getNum(), computeBusInitialVoltage(lfBus));
         }
-        this.initialVoltages = initialVoltages;
+        this.initialVoltages = initialVs;
     }
 
     private Complex computeBusInitialVoltage(LfBus bus) {
