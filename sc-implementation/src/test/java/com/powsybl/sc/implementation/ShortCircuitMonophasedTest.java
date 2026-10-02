@@ -62,9 +62,13 @@ public class ShortCircuitMonophasedTest {
         ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc1);
 
-        ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec, true);
+        ShortCircuitParameters scParameters = new ShortCircuitParameters()
+                .setWithVoltageResult(false)
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setWithNeutralPosition(true);
+
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -117,7 +121,11 @@ public class ShortCircuitMonophasedTest {
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec, true);
+        ShortCircuitParameters scParameters = new ShortCircuitParameters()
+                .setWithVoltageResult(false)
+                .setWithNeutralPosition(true);
+
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -196,9 +204,12 @@ public class ShortCircuitMonophasedTest {
         faultList.add(sc1);
 
         LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
-        ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.TRANSIENT;
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
-        ShortCircuitEngineParameters scunbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.CALCULATED, false, periodType, shortCircuitNorm, true);
+        ShortCircuitParameters scParameters = new ShortCircuitParameters()
+                .setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE)
+                .setWithNeutralPosition(true);
+
+        ShortCircuitEngineParameters scunbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNorm);
         ShortCircuitUnbalancedEngine scunbEngine = new ShortCircuitUnbalancedEngine(network, scunbParameters);
 
         scunbEngine.run();

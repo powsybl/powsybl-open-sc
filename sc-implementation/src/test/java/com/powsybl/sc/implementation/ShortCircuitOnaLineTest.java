@@ -14,6 +14,8 @@ import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.sc.util.ReferenceNetwork;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
+import com.powsybl.shortcircuit.StudyType;
 import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.Test;
 
@@ -55,9 +57,12 @@ public class ShortCircuitOnaLineTest {
         ShortCircuitFault sc7 = new ShortCircuitFault("B2", "F7", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc7);
 
-        ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec, true);
+        ShortCircuitParameters scParameters = new ShortCircuitParameters()
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setWithNeutralPosition(true);
+
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -165,9 +170,12 @@ public class ShortCircuitOnaLineTest {
         ShortCircuitFault sc7 = new ShortCircuitFault("B2", "F7", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc7);
 
-        ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, periodType, shortCircuitNormIec, true);
+        ShortCircuitParameters scParameters = new ShortCircuitParameters()
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setWithNeutralPosition(true);
+
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();

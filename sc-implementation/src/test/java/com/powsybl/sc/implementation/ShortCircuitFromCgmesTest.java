@@ -15,6 +15,9 @@ import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.cgmes.CgmesShortCircuitImportPostProcessor;
+import com.powsybl.shortcircuit.InitialVoltageProfileMode;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
+import com.powsybl.shortcircuit.StudyType;
 import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,17 +89,17 @@ class ShortCircuitFromCgmesTest {
         //double kG1 = 0.99597;
         //double kG2 = 0.876832;
 
+        ShortCircuitParameters scParameters = new ShortCircuitParameters()
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setWithNeutralPosition(true);
+
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(new LoadFlowParameters()
                 .setTwtSplitShuntAdmittance(true),
                 new DenseMatrixFactory(),
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE,
                 buildTriphasedFaultList(),
-                true,
-                ShortCircuitEngineParameters.VoltageProfileType.NOMINAL,
-                false,
-                ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT,
-                shortCircuitNormIec,
-                true);
+                scParameters,
+                shortCircuitNormIec);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         List<Double> values = getrunResultBalanced(scbEngine);
@@ -133,17 +136,17 @@ class ShortCircuitFromCgmesTest {
         //  keeping the values provided in input, short circuit at bus2 varies from 15.9722 kA ( = the reference) to 15.981 kA
         //  if we want to keep the reference result, we need to modify the ratio of ro_b/r_b and ro_c/r_c equal to : double coeffRoT4 = 0.107281 / (rT4b + rT4c) 120. /120. ;
 
+        ShortCircuitParameters scParameters = new ShortCircuitParameters()
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setWithNeutralPosition(true);
+
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(new LoadFlowParameters()
                 .setTwtSplitShuntAdmittance(true),
                 new DenseMatrixFactory(),
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE,
                 buildMonophasedFaultList(),
-                true,
-                ShortCircuitEngineParameters.VoltageProfileType.NOMINAL,
-                false,
-                ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT,
-                shortCircuitNormIec,
-                true);
+                scParameters,
+                shortCircuitNormIec);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         Map<String, Double> values = getRunResultUnbalanced(scbEngine);
@@ -171,17 +174,18 @@ class ShortCircuitFromCgmesTest {
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
         shortCircuitNormIec.applyNormToNetwork(network); // this modifies the characteristics of some iidm equipments
 
+        ShortCircuitParameters scParameters = new ShortCircuitParameters()
+                .setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE)
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setWithNeutralPosition(true);
+
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(new LoadFlowParameters()
                 .setTwtSplitShuntAdmittance(true),
                 new DenseMatrixFactory(),
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE,
                 buildTriphasedFaultList(),
-                true,
-                ShortCircuitEngineParameters.VoltageProfileType.CALCULATED,
-                false,
-                ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT,
-                shortCircuitNormIec,
-                true);
+                scParameters,
+                shortCircuitNormIec);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         List<Double> values = getrunResultBalanced(scbEngine);
