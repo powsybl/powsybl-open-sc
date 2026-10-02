@@ -254,10 +254,6 @@ public class ShortCircuitBalancedTest {
 
     }
 
-    /**
-     * Verifies short-circuit current calculations on a 2-node network
-     * having configured voltage profile.
-     */
     @Test
     void openShortCircuitProvider2nTfoConfiguredVoltages() {
         Network network2nTfo = create2nTfo(NetworkFactory.findDefault());
@@ -504,10 +500,6 @@ public class ShortCircuitBalancedTest {
 
     }
 
-    /**
-     * Verifies short-circuit current calculations on a 4-node network
-     * having transformers.
-     */
     @Test
     void openShortCircuitProvider4nTfo() {
         Network network4nTfo = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
@@ -533,11 +525,6 @@ public class ShortCircuitBalancedTest {
         );
     }
 
-    /**
-     * Verifies short-circuit current calculations on a 4-node network
-     * having ratio tap changers.
-     * WithNeutralPosition is set to True.
-     */
     @Test
     void openShortCircuitProvider4nRatioTapChangerNeutralPosition() {
         Network network4nRtc = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
@@ -559,12 +546,6 @@ public class ShortCircuitBalancedTest {
         );
     }
 
-
-    /**
-     * Verifies short-circuit current calculations on a 4-node network
-     * having ratio tap changers.
-     * WithNeutralPosition is set to False
-     */
     @Test
     void openShortCircuitProvider4nRatioTapChangerPredefinedPosition() {
         Network network4nRtc = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
@@ -586,10 +567,6 @@ public class ShortCircuitBalancedTest {
         );
     }
 
-    /**
-     * Verifies short-circuit current calculations on a 4-node network
-     * having configured voltage profile.
-     */
     @Test
     void openShortCircuitProvider4nTapChangerConfiguredVoltages() {
         Network network4nTfo = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
@@ -978,30 +955,6 @@ public class ShortCircuitBalancedTest {
         return network;
     }
 
-    /**
-     * Creates a variant of the 4-bus benchmark network containing two
-     * two-winding transformers.
-     *
-     * <p>Compared to {@link #create4n(NetworkFactory)}:
-     *
-     * <ul>
-     *   <li>Voltage level VL_4 is changed from 100 kV to 150 kV.</li>
-     *   <li>Line B1_B4 is replaced by transformer TFO_B1_B4.</li>
-     *   <li>Line B3_B4 is replaced by transformer TFO_B3_B4.</li>
-     *   <li>Each transformer has a ratio tap changer.</li>
-     *   <li>Lines B1_B2, B1_B3 and B2_B3 are kept unchanged.</li>
-     * </ul>
-     *
-     * <p>The network is organised as follows:
-     *
-     * <pre>
-     * Substation S1
-     *   - VL_1 (100 kV) : B1
-     *   - VL_3 (100 kV) : B3
-     *   - VL_4 (150 kV) : B4
-     * Substation S1
-     *  - VL_2 (100 kV) : B2
-     */
     public static Network create4nTfoRatioTapChanger(NetworkFactory networkFactory) {
 
         Objects.requireNonNull(networkFactory);

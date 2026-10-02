@@ -108,14 +108,14 @@ public final class AdmittanceEquationSystem {
         double tmpB = 0.;
         if (shunt != null) {
             tmpB += shunt.getB();
-            Feeder shuntFeeder = new Feeder(new Complex(0., shunt.getB()), shunt.getId(), Feeder.FeederType.SHUNT);
+            Feeder shuntFeeder = new ShuntFeeder(new Complex(0., shunt.getB()), shunt.getId(), shunt, bus, Feeder.FeederType.SHUNT);
             feederList.add(shuntFeeder);
             //check if g will be implemented
         }
         LfShunt controllerShunt = bus.getControllerShunt().orElse(null);
         if (controllerShunt != null) {
             tmpB += controllerShunt.getB();
-            Feeder shuntFeeder = new Feeder(new Complex(0., controllerShunt.getB()), controllerShunt.getId(), Feeder.FeederType.CONTROLLED_SHUNT);
+            Feeder shuntFeeder = new ShuntFeeder(new Complex(0., controllerShunt.getB()), controllerShunt.getId(), controllerShunt, bus, Feeder.FeederType.CONTROLLER_SHUNT);
             feederList.add(shuntFeeder);
             //check if g will be implemented
         }
@@ -148,8 +148,8 @@ public final class AdmittanceEquationSystem {
             if (z.abs() > epsilon) {
                 Complex yGen = z.reciprocal().multiply(vnomVl * vnomVl / SB);
                 tmpY = tmpY.add(yGen);
-                Feeder shuntFeeder = new Feeder(yGen, lfgen.getId(), Feeder.FeederType.GENERATOR);
-                feederList.add(shuntFeeder);
+                Feeder genFeeder = new GeneratorFeeder(yGen, lfgen.getId(), lfgen);
+                feederList.add(genFeeder);
             }
         }
 
@@ -206,8 +206,8 @@ public final class AdmittanceEquationSystem {
                 yLoadEq = scLoad.ydEquivalent().divide(v.abs() * v.abs());
 
                 if (yLoadEq.abs() > EPSILON) {
-                    Feeder shuntFeeder = new Feeder(yLoadEq, bus.getId(), Feeder.FeederType.LOAD); // Currently only one feeder aggregating all the loads of the bus!
-                    feederList.add(shuntFeeder);
+                    Feeder loadFeeder = new LoadFeeder(yLoadEq, bus.getId(), bus); // Currently only one feeder aggregating all the loads of the bus!
+                    feederList.add(loadFeeder);
                 }
 
                 yGenEq = getYtransfromRdXdAndUpdateFeederList(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList

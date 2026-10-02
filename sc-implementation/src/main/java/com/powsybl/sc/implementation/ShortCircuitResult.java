@@ -293,8 +293,8 @@ public class ShortCircuitResult {
                         zBranch = new Complex(branch.getPiModel().getR(), branch.getPiModel().getX());
                     }
 
-                    resultDirectBus1Feeders.getBusFeedersResult().add(new FeederResult(new Feeder(zBranch, branch.getId(), Feeder.FeederType.BRANCH, ThreeSides.ONE), di1));
-                    resultDirectBus2Feeders.getBusFeedersResult().add(new FeederResult(new Feeder(zBranch, branch.getId(), Feeder.FeederType.BRANCH, ThreeSides.TWO), di2));
+                    resultDirectBus1Feeders.getBusFeedersResult().add(new FeederResult(new BranchFeeder(zBranch, branch.getId(), branch, ThreeSides.ONE), di1));
+                    resultDirectBus2Feeders.getBusFeedersResult().add(new FeederResult(new BranchFeeder(zBranch, branch.getId(), branch, ThreeSides.TWO), di2));
                     continue;
                 }
 

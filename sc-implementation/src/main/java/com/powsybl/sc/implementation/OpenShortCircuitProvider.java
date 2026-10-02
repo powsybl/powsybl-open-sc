@@ -21,7 +21,6 @@ import com.powsybl.sc.util.Feeder;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.contingency.violations.LimitViolation;
-import com.powsybl.sc.util.InitialCurrentContributionCalculator;
 import com.powsybl.shortcircuit.*;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
@@ -166,8 +165,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 double unitToAmpere = SB * 1000 / Math.sqrt(3) / lfBus.getNominalV();
                 Complex iInitial = Complex.ZERO;
                 if (scbParameters.getVoltageProfileType() == ShortCircuitEngineParameters.VoltageProfileType.CALCULATED) {
-                    iInitial = InitialCurrentContributionCalculator.getInitialCurrentContribution(network, feederResult.getFeeder())
-                            .multiply(unitToAmpere);
+                    iInitial = feederResult.getFeeder().getInitialCurrentContribution(network).multiply(unitToAmpere);
                     if (iInitial.isNaN() || iInitial.isInfinite()) {
                         LOGGER.warn("Initial current for feeder '{}' on bus '{}' is NaN/Infinite, defaulting to 0.",
                                 feederResult.getFeeder().getId(), lfBus.getId());

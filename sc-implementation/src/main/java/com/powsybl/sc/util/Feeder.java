@@ -7,68 +7,30 @@
  */
 package com.powsybl.sc.util;
 
+import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ThreeSides;
 import org.apache.commons.math3.complex.Complex;
-
-import java.util.Objects;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
-public class Feeder {
+public interface Feeder {
 
-    //Feeder class is used to post process the results of a short circuit computation to get the feeder contribution in short-circuit current
-    public Feeder(Complex zFeeder, String id, Feeder.FeederType feederType, ThreeSides side) {
-        Objects.requireNonNull(id, "id");
-        Objects.requireNonNull(feederType, "feederType");
-        if (feederType == FeederType.BRANCH) {
-            if (side == null) {
-                throw new IllegalArgumentException("side is required for a BRANCH feeder (id=" + id + ")");
-            }
-        } else if (side != null) {
-            throw new IllegalArgumentException("side must be null for a " + feederType + " feeder (id=" + id
-                    + "), got " + side);
-        }
-        this.z = zFeeder;
-        this.id = id;
-        this.feederType = feederType;
-        this.side = side;
-    }
-
-    public Feeder(Complex zFeeder, String id, Feeder.FeederType feederType) {
-        this(zFeeder, id, feederType, null);
-    }
-
-    public enum FeederType {
+    enum FeederType {
         GENERATOR,
         SHUNT,
-        CONTROLLED_SHUNT,
+        CONTROLLER_SHUNT,
         LOAD,
         BRANCH
     }
 
-    private final Complex z;
+    Complex getZ();
 
-    private final String id; // id in LfNetwork
+    String getId();
 
-    private final Feeder.FeederType feederType;
+    FeederType getFeederType();
 
-    private final ThreeSides side;
+    Complex getInitialCurrentContribution(Network network);
 
-    public ThreeSides getSide() {
-        return side;
-    }
-
-    public Complex getZ() {
-        return z;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public Feeder.FeederType getFeederType() {
-        return feederType;
-    }
-
+    ThreeSides getSide();
 }
