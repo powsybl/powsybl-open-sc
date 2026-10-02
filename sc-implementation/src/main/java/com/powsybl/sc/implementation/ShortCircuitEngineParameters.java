@@ -56,6 +56,8 @@ public class ShortCircuitEngineParameters {
 
     private final boolean ignoreCapacities;
 
+    private final boolean ignoreResistances;
+
     private final AnalysisType analysisType;
 
     private boolean voltageUpdate;
@@ -75,7 +77,7 @@ public class ShortCircuitEngineParameters {
                 getOrDefaultOpenScParameters(scParameters), norm);
     }
 
-    public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, boolean isVoltageExport, VoltageProfileType vProfile, boolean ignoreShunts, boolean ignoreLoads, boolean ignoreCapacities, PeriodType periodType, ShortCircuitNorm norm, boolean isWithNeutralPosition) {
+    public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, boolean isVoltageExport, VoltageProfileType vProfile, boolean ignoreShunts, boolean ignoreLoads, boolean ignoreCapacities, boolean ignoreResistances, PeriodType periodType, ShortCircuitNorm norm, boolean isWithNeutralPosition) {
         this.loadFlowParameters = Objects.requireNonNull(loadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.shortCircuitFaults = Objects.requireNonNull(faults);
@@ -84,6 +86,7 @@ public class ShortCircuitEngineParameters {
         this.ignoreShunts = ignoreShunts;
         this.ignoreLoads = ignoreLoads;
         this.ignoreCapacities = ignoreCapacities;
+        this.ignoreResistances = ignoreResistances;
         this.vProfile = vProfile;
         this.vConfiguredRanges = Collections.emptyList();
         this.analysisType = analysisType;
@@ -101,6 +104,7 @@ public class ShortCircuitEngineParameters {
         this.ignoreShunts = !scParameters.isWithShuntCompensators();
         this.ignoreLoads = !scParameters.isWithLoads();
         this.ignoreCapacities = !openScParameters.isWithCapacities();
+        this.ignoreResistances = !openScParameters.isWithResistances();
         this.vProfile = toVoltageProfileType(scParameters.getInitialVoltageProfileMode());
         this.vConfiguredRanges = scParameters.getVoltageRanges();
         this.analysisType = analysisType;
@@ -145,6 +149,10 @@ public class ShortCircuitEngineParameters {
 
     public boolean isIgnoreCapacities() {
         return ignoreCapacities;
+    }
+
+    public boolean isIgnoreResistances() {
+        return ignoreResistances;
     }
 
     public AnalysisType getAnalysisType() {

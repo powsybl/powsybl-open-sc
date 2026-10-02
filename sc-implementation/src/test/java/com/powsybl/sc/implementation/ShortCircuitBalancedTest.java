@@ -75,7 +75,7 @@ public class ShortCircuitBalancedTest {
 
         LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, at, tmpV, true, vp, false, false, false, periodType, shortCircuitNorm, true);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, at, tmpV, true, vp, false, false, false, false, periodType, shortCircuitNorm, true);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(nt2, scbParameters);
 
         scbEngine.run();
@@ -299,7 +299,7 @@ public class ShortCircuitBalancedTest {
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.TRANSIENT;
 
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC, tmpV, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, periodType, shortCircuitNorm, true);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC, tmpV, false, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, false, periodType, shortCircuitNorm, true);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(nt2, scbParameters);
 
         scbEngine.run();
@@ -342,7 +342,7 @@ public class ShortCircuitBalancedTest {
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, periodType, shortCircuitNormIec, true);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, false, periodType, shortCircuitNormIec, true);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -446,7 +446,7 @@ public class ShortCircuitBalancedTest {
 
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, periodType, shortCircuitNormIec, true);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, false, periodType, shortCircuitNormIec, true);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -486,7 +486,7 @@ public class ShortCircuitBalancedTest {
         ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT;
 
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, periodType, shortCircuitNorm, true);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, false, periodType, shortCircuitNorm, true);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();

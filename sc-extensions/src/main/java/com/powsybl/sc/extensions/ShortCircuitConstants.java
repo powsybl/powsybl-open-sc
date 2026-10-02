@@ -31,4 +31,5 @@ public final class ShortCircuitConstants {
     public static final double DEFAULT_IKQ = 10;
 
     public static final boolean DEFAULT_WITH_CAPACITIES = true;
+    public static final boolean DEFAULT_WITH_RESISTANCES = true;
 }

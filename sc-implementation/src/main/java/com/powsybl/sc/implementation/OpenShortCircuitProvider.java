@@ -67,7 +67,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters, ComputationManager computationManager, List<FaultParameters> faultParameters) {
 
         Objects.requireNonNull(network);
-        Objects.requireNonNull(parameters);
+        checkShortCircuitParametersConsistency(parameters);
         Stopwatch stopwatch = Stopwatch.createStarted();
 
         // building of fault lists
@@ -249,5 +249,40 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         }
         return new Pair<>(existBalancedFaults, existUnbalancedFaults);
+    }
+
+    private static void checkShortCircuitParametersConsistency(ShortCircuitParameters parameters) {
+        Objects.requireNonNull(parameters);
+        if (parameters.getInitialVoltageProfileMode() != InitialVoltageProfileMode.PREVIOUS_VALUE) {
+            return;
+        }
+
+        OpenShortCircuitParameters openScParameters = parameters.getExtension(OpenShortCircuitParameters.class);
+        if (openScParameters == null) {
+            openScParameters = new OpenShortCircuitParameters();
+        }
+
+        List<String> inconsistentOptions = new ArrayList<>();
+        if (!parameters.isWithLoads()) {
+            inconsistentOptions.add("withLoads=false");
+        }
+        if (!parameters.isWithShuntCompensators()) {
+            inconsistentOptions.add("withShuntCompensators=false");
+        }
+        if (parameters.isWithNeutralPosition()) {
+            inconsistentOptions.add("withNeutralPosition=true");
+        }
+        if (!openScParameters.isWithResistances()) {
+            inconsistentOptions.add("withResistances=false");
+        }
+        if (!openScParameters.isWithCapacities()) {
+            inconsistentOptions.add("withCapacities=false");
+        }
+
+        if (!inconsistentOptions.isEmpty()) {
+            LOGGER.warn("Initial voltage profile mode is PREVIOUS_VALUE, but {} {}: the initial voltages come from a load flow "
+                            + "computed with the complete network model, so they may not be consistent with the admittance matrix. ",
+                    inconsistentOptions, inconsistentOptions.size() > 1 ? "are set" : "is set");
+        }
     }
 }

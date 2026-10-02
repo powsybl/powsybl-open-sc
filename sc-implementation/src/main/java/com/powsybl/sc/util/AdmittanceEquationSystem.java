@@ -40,20 +40,20 @@ public final class AdmittanceEquationSystem {
 
     //Equations are created based on the branches connections
     private static void createImpedantBranch(VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
-                                             LfBranch branch, LfBus bus1, LfBus bus2, AdmittanceType admittanceType, boolean ignoreCapacities, boolean isWithNeutralPosition, FrequencyType frequencyType) {
+                                             LfBranch branch, LfBus bus1, LfBus bus2, AdmittanceType admittanceType, boolean ignoreCapacities, boolean ignoreResistances, boolean isWithNeutralPosition, FrequencyType frequencyType) {
         if (bus1 != null && bus2 != null) {
             // Equation system Y*V = I (expressed in cartesian coordinates x,y)
             equationSystem.createEquation(bus1.getNum(), EquationType.BUS_YR)
-                    .addTerm(new AdmittanceEquationTermX1(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, isWithNeutralPosition, frequencyType));
+                    .addTerm(new AdmittanceEquationTermX1(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, ignoreResistances, isWithNeutralPosition, frequencyType));
 
             equationSystem.createEquation(bus1.getNum(), EquationType.BUS_YI)
-                    .addTerm(new AdmittanceEquationTermY1(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, isWithNeutralPosition, frequencyType));
+                    .addTerm(new AdmittanceEquationTermY1(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, ignoreResistances, isWithNeutralPosition, frequencyType));
 
             equationSystem.createEquation(bus2.getNum(), EquationType.BUS_YR)
-                    .addTerm(new AdmittanceEquationTermX2(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, isWithNeutralPosition, frequencyType));
+                    .addTerm(new AdmittanceEquationTermX2(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, ignoreResistances, isWithNeutralPosition, frequencyType));
 
             equationSystem.createEquation(bus2.getNum(), EquationType.BUS_YI)
-                    .addTerm(new AdmittanceEquationTermY2(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, isWithNeutralPosition, frequencyType));
+                    .addTerm(new AdmittanceEquationTermY2(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, ignoreResistances, isWithNeutralPosition, frequencyType));
         }
     }
 
@@ -76,7 +76,7 @@ public final class AdmittanceEquationSystem {
         FREQ_50_HZ
     }
 
-    private static void createBranches(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem, AdmittanceType admittanceType, boolean ignoreCapacities, boolean isWithNeutralPosition, FrequencyType frequencyType) {
+    private static void createBranches(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem, AdmittanceType admittanceType, boolean ignoreCapacities, boolean ignoreResistances, boolean isWithNeutralPosition, FrequencyType frequencyType) {
         for (LfBranch branch : network.getBranches()) {
             LfBus bus1 = branch.getBus1();
             LfBus bus2 = branch.getBus2();
@@ -87,7 +87,7 @@ public final class AdmittanceEquationSystem {
                             branch.getId());
                 }
             } else {
-                createImpedantBranch(variableSet, equationSystem, branch, bus1, bus2, admittanceType, ignoreCapacities, isWithNeutralPosition, frequencyType);
+                createImpedantBranch(variableSet, equationSystem, branch, bus1, bus2, admittanceType, ignoreCapacities, ignoreResistances, isWithNeutralPosition, frequencyType);
             }
         }
     }
@@ -260,7 +260,7 @@ public final class AdmittanceEquationSystem {
             }
         }
 
-        createBranches(network, variableSet, equationSystem, admittanceType, parameters.isTheveninIgnoreCapacities(), isWithNeutralPosition, frequencyType);
+        createBranches(network, variableSet, equationSystem, admittanceType, parameters.isTheveninIgnoreCapacities(), parameters.isTheveninIgnoreResistances(), isWithNeutralPosition, frequencyType);
         if (admittanceType != AdmittanceType.ADM_INJ) { //shunts created in the admittance matrix are only those that really exist in the network
             createShunts(network, variableSet, equationSystem, parameters, feeders, frequencyType);
         }

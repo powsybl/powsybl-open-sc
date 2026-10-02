@@ -47,7 +47,7 @@ class ShortCircuitBiphasedCommonSupportTest {
         faultList.add(sc1);
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT, shortCircuitNormIec, true);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, false, ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT, shortCircuitNormIec, true);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -74,7 +74,7 @@ class ShortCircuitBiphasedCommonSupportTest {
         List<ShortCircuitFault> faultList = List.of(sc1, sc2);
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT, shortCircuitNormIec, true);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, false, ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT, shortCircuitNormIec, true);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();

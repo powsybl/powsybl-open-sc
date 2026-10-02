@@ -58,7 +58,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
     protected double freqCoef;
 
-    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, boolean ignoreCapacities, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
+    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, boolean ignoreCapacities, boolean ignoreResistances, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
         super(branch);
         Objects.requireNonNull(bus1);
         Objects.requireNonNull(bus2);
@@ -124,6 +124,10 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         }
         if (piModel.getZ() == 0) {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
+        }
+
+        if (ignoreResistances) {
+            r = 0.0;
         }
 
         double zk = Math.sqrt(r * r + x * x);
