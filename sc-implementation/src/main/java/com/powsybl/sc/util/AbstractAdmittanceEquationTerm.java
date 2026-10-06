@@ -60,7 +60,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
     private record KTCoeff(double kTr, double kTx) {
 
-    };
+    }
 
     private KTCoeff computeKTCoeff(LfBranch branch) {
         double kTr = 1.;

@@ -119,7 +119,6 @@ public class ShortCircuitMonophasedTest {
         ShortCircuitFault sc8 = new ShortCircuitFault("B3", "sc6z", scz2, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
         faultList.add(sc8);
 
-        ShortCircuitEngineParameters.PeriodType periodType = ShortCircuitEngineParameters.PeriodType.TRANSIENT;
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
         ShortCircuitParameters scParameters = new ShortCircuitParameters()
                 .setWithVoltageResult(false)
