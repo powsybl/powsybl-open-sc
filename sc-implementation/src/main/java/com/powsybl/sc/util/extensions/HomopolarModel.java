@@ -209,7 +209,7 @@ public class HomopolarModel {
         mY.set(1, 1, yInfinite);
 
         var piModel = branch.getPiModel();
-        Complex rhoA = ComplexUtils.polar2Complex(piModel.getR1(), Math.toRadians(piModel.getA1()));
+        Complex rhoA = ComplexUtils.polar2Complex(piModel.getR1(), piModel.getA1());
 
         // if the free fluxes option is false, we suppose that if Yom given in input is zero, then Zom = is zero  : TODO : see if there is a more robust way to handle this
         // if the free fluxes option is true, Zom is infinite and Yom is then considered as zero
