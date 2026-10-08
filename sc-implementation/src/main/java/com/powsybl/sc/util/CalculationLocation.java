@@ -76,7 +76,7 @@ public class CalculationLocation {
     }
 
     /**
-     * Biphased common support fault, tying together two independent buses
+     * Biphased common support fault, tying together two buses
      * (not necessarily on the same branch, unlike {@link #CalculationLocation(String, String, String, double)}).
      */
     public CalculationLocation(String busLocation, String bus2Location) {

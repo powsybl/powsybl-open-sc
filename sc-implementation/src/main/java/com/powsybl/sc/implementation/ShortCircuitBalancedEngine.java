@@ -154,6 +154,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         Complex zthBus1 = linearResolutionResult1.getZthEq(); // Z11
         Complex zthBus2 = twoBusResult.getZ22(); // Z22
         Complex zthBus1Bus2 = twoBusResult.getZ12(); // Z12
+        Complex zthBus2Bus1 = twoBusResult.getZ21(); // Z21
         Complex zLine = new Complex(lfLine.getPiModel().getR(), lfLine.getPiModel().getX());
 
         double r = shortCircuitFault.getCalculationLocation().getProportionalLocationOnLine() / 100.0;
@@ -164,10 +165,11 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         // vInit = vInit1 * r + vInit2 * s
         Complex vInit = vInit1.multiply(r).add(vInit2.multiply(s));
 
-        // Zth = Z11*s*s + Z22*r*r + 2*Z12*r*s + ZLine*r*s
+        // Zth = Z11*s*s + Z22*r*r + (Z12+Z21)*r*s + ZLine*r*s
         Complex zth = zthBus1.multiply(s * s)
                 .add(zthBus2.multiply(r * r))
-                .add(zthBus1Bus2.multiply(2 * r * s))
+                .add(zthBus1Bus2.multiply(r * s))
+                .add(zthBus2Bus1.multiply(r * s))
                 .add(zLine.multiply(r * s));
 
         Complex zfToGround = shortCircuitFault.getZf().getZg();
@@ -181,10 +183,12 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         Complex zth20hzBus1 = linearResolutionResult1.getZthEq20Hz();
         Complex zth20hzBus2 = twoBusResult.getZ22At20Hz();
         Complex zth20hzBus1Bus2 = twoBusResult.getZ12At20Hz();
+        Complex zth20hzBus2Bus1 = twoBusResult.getZ21At20Hz();
         Complex zLine20hz = get20HzLineImpedance(lfLine);
         Complex zth20hz = zth20hzBus1.multiply(s * s)
                 .add(zth20hzBus2.multiply(r * r))
-                .add(zth20hzBus1Bus2.multiply(2 * r * s))
+                .add(zth20hzBus1Bus2.multiply(r * s))
+                .add(zth20hzBus2Bus1.multiply(r * s))
                 .add(zLine20hz.multiply(r * s));
 
         ShortCircuitResult res = new ShortCircuitResult(shortCircuitFault, lfBus1, id, zth, vInit, dv,

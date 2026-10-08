@@ -27,7 +27,7 @@ public class ShortCircuitFault {
     }
 
     /**
-     * Biphased common support fault, tying together two independent buses.
+     * Biphased common support fault, tying together two buses.
      */
     public ShortCircuitFault(String busLocation, String secondBiphasedBusLocation, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
         if (type != ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
@@ -43,7 +43,7 @@ public class ShortCircuitFault {
     }
 
     /**
-     * General case for the location of the fault, including located along a line, between its two terminal buses.
+     * Branch fault between its two terminal buses.
      */
     public ShortCircuitFault(CalculationLocation location, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type) {
         this.location = location;
