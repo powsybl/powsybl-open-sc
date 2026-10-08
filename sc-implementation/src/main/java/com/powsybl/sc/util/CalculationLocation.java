@@ -48,10 +48,8 @@ public class CalculationLocation {
     }
 
     private void validate() {
-        if (locationType == LocationType.LINE) {
-            if (proportionalLocationOnLine < 0.0 || proportionalLocationOnLine > 100.0) {
-                throw new IllegalArgumentException("percentageFromBus1 must be between 0 and 100 inclusive");
-            }
+        if (locationType == LocationType.LINE && (proportionalLocationOnLine < 0.0 || proportionalLocationOnLine > 100.0)) {
+            throw new IllegalArgumentException("percentageFromBus1 must be between 0 and 100 inclusive");
         }
     }
 
