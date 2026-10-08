@@ -216,7 +216,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 return;
             }
 
-            CalculationLocation location = new CalculationLocation(branchBusIds.getKey(), branchBusIds.getValue(), elementId, branchFault.getProportionalLocation());
+            CalculationLocation location = new CalculationLocation(branchBusIds.getKey(), branchBusIds.getValue(), branchFault.getProportionalLocation());
             sc = new ShortCircuitFault(location, branchFault.getId(), elementId, scz, scType);
         } else { //Bus fault
             String busId = getBusId(elementId, fault.getId(), network);

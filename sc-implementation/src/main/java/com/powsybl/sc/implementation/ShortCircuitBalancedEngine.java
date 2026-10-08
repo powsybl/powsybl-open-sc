@@ -66,9 +66,10 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
     }
 
     /**
-     * Applies the post-fault voltage profile update on the result, if enabled in the parameters.
+     * Fills the ShortCircuitResult with delta Voltages used to compute post-fault voltages.
+     * Only computed if enabled in the parameters.
      * busToZknf maps each bus number to the Zknf contribution used to derive its delta-V:
-     * deltaV(bus) = -Id * zknf(bus)
+     * deltaV(bus) = -Id * zknf(bus).
      */
     private void updateVoltageProfileIfNeeded(ShortCircuitResult res, LfNetwork lfNetwork, Complex id, Map<Integer, Complex> busToZknf) {
         if (!parameters.isVoltageUpdate()) {

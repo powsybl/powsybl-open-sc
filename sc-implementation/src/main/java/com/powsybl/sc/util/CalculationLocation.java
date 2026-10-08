@@ -28,8 +28,6 @@ public class CalculationLocation {
 
     private final String bus2Location; // meaningful for LINE and BIPHASED_COMMON_SUPPORT only
 
-    private final String branchLocation; // meaningful for LINE only
-
     private final double proportionalLocationOnLine; // meaningful for LINE only
 
     private Pair<String, Integer> iidmBusInfo; // additional iidm info to make the correspondence between iidm info and lfNetwork info
@@ -40,11 +38,10 @@ public class CalculationLocation {
 
     private String lfBus2Info; // meaningful for LINE and BIPHASED_COMMON_SUPPORT only
 
-    public CalculationLocation(String busLocation, String bus2Location, String branchLocation,
+    public CalculationLocation(String busLocation, String bus2Location,
                                 double proportionalLocationOnLine, LocationType locationType) {
         this.busLocation = Objects.requireNonNull(busLocation);
         this.bus2Location = bus2Location;
-        this.branchLocation = branchLocation;
         this.proportionalLocationOnLine = proportionalLocationOnLine;
         this.locationType = locationType;
         validate();
@@ -52,19 +49,9 @@ public class CalculationLocation {
 
     private void validate() {
         if (locationType == LocationType.LINE) {
-            if (branchLocation == null) {
-                throw new IllegalArgumentException("branch id of a location of type LINE must be defined");
-            }
             if (proportionalLocationOnLine < 0.0 || proportionalLocationOnLine > 100.0) {
                 throw new IllegalArgumentException("percentageFromBus1 must be between 0 and 100 inclusive");
             }
-        } else if (branchLocation != null) {
-            throw new IllegalArgumentException("branchLocation must be null for locationType " + locationType);
-        }
-
-        if (locationType != LocationType.LINE && locationType != LocationType.BIPHASED_COMMON_SUPPORT
-                && bus2Location != null) {
-            throw new IllegalArgumentException("bus2Location must be null for locationType " + locationType);
         }
     }
 
@@ -72,23 +59,21 @@ public class CalculationLocation {
      * Single bus fault.
      */
     public CalculationLocation(String busLocation) {
-        this(busLocation, null, null, 0.0, LocationType.BUS);
+        this(busLocation, null, 0.0, LocationType.BUS);
     }
 
     /**
-     * Biphased common support fault, tying together two buses
-     * (not necessarily on the same branch, unlike {@link #CalculationLocation(String, String, String, double)}).
+     * Biphased common support fault, tying together two buses.
      */
     public CalculationLocation(String busLocation, String bus2Location) {
-        this(busLocation, Objects.requireNonNull(bus2Location), null, 0.0, LocationType.BIPHASED_COMMON_SUPPORT);
+        this(busLocation, Objects.requireNonNull(bus2Location), 0.0, LocationType.BIPHASED_COMMON_SUPPORT);
     }
 
     /**
      * Fault located along a line, between its two terminal buses.
      */
-    public CalculationLocation(String busLocation, String bus2Location, String branchLocation, double proportionalLocationOnLine) {
-        this(busLocation, Objects.requireNonNull(bus2Location), Objects.requireNonNull(branchLocation),
-                proportionalLocationOnLine, LocationType.LINE);
+    public CalculationLocation(String busLocation, String bus2Location, double proportionalLocationOnLine) {
+        this(busLocation, Objects.requireNonNull(bus2Location), proportionalLocationOnLine, LocationType.LINE);
     }
 
     public LocationType getLocationType() {
@@ -101,10 +86,6 @@ public class CalculationLocation {
 
     public String getBus2Location() {
         return bus2Location;
-    }
-
-    public String getBranchLocation() {
-        return branchLocation;
     }
 
     public double getProportionalLocationOnLine() {

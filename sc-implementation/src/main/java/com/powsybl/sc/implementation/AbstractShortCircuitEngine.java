@@ -97,34 +97,11 @@ public abstract class AbstractShortCircuitEngine {
         Map<String, Pair<String, Integer>> branchInfoByBusName = new HashMap<>();
 
         for (ShortCircuitFault scfe : parameters.getShortCircuitFaults()) {
-            validateFaultTopology(scfe);
             enrichFaultWithIidmBusInfo(scfe, branchInfoByBusName);
             faultList.add(scfe);
         }
 
         return faultList;
-    }
-
-    private void validateFaultTopology(ShortCircuitFault scfe) {
-        CalculationLocation location = scfe.getCalculationLocation();
-        String bus1Name = location.getBusLocation();
-        String bus2Name = location.getBus2Location();
-
-        if (scfe.getShortCircuitFaultType() == ShortCircuitFault.ShortCircuitFaultType.BUS) {
-            if (bus2Name == null && scfe.getType() == ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
-                throw new IllegalArgumentException("short circuit fault: " + bus1Name
-                        + " must have a second voltage level defined because it is a common support fault");
-            }
-            if (bus2Name != null && scfe.getType() != ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
-                throw new IllegalArgumentException("short circuit fault: " + bus1Name + " has a second bus defined: "
-                        + bus2Name + " but is not a common support fault");
-            }
-        } else { // BRANCH
-            if (bus2Name == null) {
-                throw new IllegalArgumentException("short circuit fault: " + bus1Name
-                        + " is a branch fault but has no second bus defined");
-            }
-        }
     }
 
     private void enrichFaultWithIidmBusInfo(ShortCircuitFault scfe, Map<String, Pair<String, Integer>> branchInfoByBusName) {
