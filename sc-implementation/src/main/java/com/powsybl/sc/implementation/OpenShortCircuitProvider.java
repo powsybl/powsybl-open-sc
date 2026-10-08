@@ -201,6 +201,19 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         return new Pair<>(existBalancedFaults, existUnbalancedFaults);
     }
 
+    private void checkForBranchNominalVoltageCoherency(Network network, String busId1, String busId2) {
+        // TODO: to remove when different nominal voltages at branch sides are correctly handled
+        Bus bus1 = network.getBusBreakerView().getBus(busId1);
+        Bus bus2 = network.getBusBreakerView().getBus(busId2);
+
+        double nominalV1 = bus1.getVoltageLevel().getNominalV();
+        double nominalV2 = bus2.getVoltageLevel().getNominalV();
+
+        if (nominalV1 != nominalV2) {
+            LOGGER.warn("Default on a Branch connecting two Buses of different nominal voltages: A fictitious ideal transformer is added at side 1 of the branch");
+        }
+    }
+
     private void fillFaultLists(Fault fault, Network network, ShortCircuitFault.ShortCircuitType scType, List<ShortCircuitFault> balancedFaultsList, Map<ShortCircuitFault, Fault> scFaultToFault) {
         Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
         ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
@@ -218,6 +231,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
             CalculationLocation location = new CalculationLocation(branchBusIds.getKey(), branchBusIds.getValue(), branchFault.getProportionalLocation());
             sc = new ShortCircuitFault(location, branchFault.getId(), elementId, scz, scType);
+            checkForBranchNominalVoltageCoherency(network, branchBusIds.getKey(), branchBusIds.getValue());
         } else { //Bus fault
             String busId = getBusId(elementId, fault.getId(), network);
 
