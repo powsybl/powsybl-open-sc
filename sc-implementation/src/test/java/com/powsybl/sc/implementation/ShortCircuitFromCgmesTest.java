@@ -88,7 +88,7 @@ class ShortCircuitFromCgmesTest {
 
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(new LoadFlowParameters()
                 .setTwtSplitShuntAdmittance(true),
-                new DenseMatrixFactory(),
+                matrixFactory,
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE,
                 buildTriphasedFaultList(),
                 true,
@@ -98,21 +98,21 @@ class ShortCircuitFromCgmesTest {
                 shortCircuitNormIec);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
-        List<Double> values = getrunResultBalanced(scbEngine);
+        Map<String, Double> values = getrunResultBalanced(scbEngine);
 
         // I"k = 1/sqrt(3) * cmax * Un /(Zeq)
-        assertEquals(40.64478476116188, values.get(0), 0.001); // bus 1 : expected in IEC doc = 40.6447 kA and in CGMES doc = 40.6375 kA
-        assertEquals(31.783052222534174, values.get(1), 0.0001); // bus 2 : expected in doc =  31.7831 kA  and in CGMES doc = 31.6939 kA
-        assertEquals(19.672955775750143, values.get(2), 0.00001); // bus 3 : expected in doc =  19.673 kA and in CGMES doc = 19.5243 kA
-        assertEquals(16.227655866910894, values.get(3), 0.00001); // bus 4 : expected in doc =  16.2277 kA and in CGMES doc = 16.1686 kA
-        assertEquals(33.18941481677016, values.get(4), 0.0001); // bus 5 : expected in doc =  33.1894 kA and in CGMES doc = 33.0764 kA
-        assertEquals(37.56287899040728, values.get(5), 0.001); // bus 6 : expected in doc =  37.5629 kA and in CGMES doc = 37.5547 kA
+        assertEquals(40.64478476116188, values.get("sc1"), 0.001); // bus 1 : expected in IEC doc = 40.6447 kA and in CGMES doc = 40.6375 kA
+        assertEquals(31.783052222534174, values.get("sc2"), 0.0001); // bus 2 : expected in doc =  31.7831 kA  and in CGMES doc = 31.6939 kA
+        assertEquals(19.672955775750143, values.get("sc3"), 0.00001); // bus 3 : expected in doc =  19.673 kA and in CGMES doc = 19.5243 kA
+        assertEquals(16.227655866910894, values.get("sc4"), 0.00001); // bus 4 : expected in doc =  16.2277 kA and in CGMES doc = 16.1686 kA
+        assertEquals(33.18941481677016, values.get("sc5"), 0.0001); // bus 5 : expected in doc =  33.1894 kA and in CGMES doc = 33.0764 kA
+        assertEquals(37.56287899040728, values.get("sc6"), 0.001); // bus 6 : expected in doc =  37.5629 kA and in CGMES doc = 37.5547 kA
 
-        assertEquals(25.589463480212533, values.get(6), 0.0001); // bus 7 : expected in doc =  25.5895 kA and in CGMES doc = 25.5862 kA
-        assertEquals(25.534284158956773, values.get(7), 0.0001); // bus 7 : with z not zero
+        assertEquals(25.589463480212533, values.get("sc7"), 0.0001); // bus 7 : expected in doc =  25.5895 kA and in CGMES doc = 25.5862 kA
+        assertEquals(25.534284158956773, values.get("sc7z"), 0.0001); // bus 7 : with z not zero
 
-        assertEquals(13.577771545200052, values.get(8), 0.0001); // bus 8 : expected in doc =  13.5778 kA and in CGMES doc = 13.632 kA
-        assertEquals(13.53390016463997, values.get(9), 0.0001); // bus 8 : with z not zero
+        assertEquals(13.577771545200052, values.get("sc8"), 0.0001); // bus 8 : expected in doc =  13.5778 kA and in CGMES doc = 13.632 kA
+        assertEquals(13.53390016463997, values.get("sc8z"), 0.0001); // bus 8 : with z not zero
     }
 
     @Test
@@ -134,7 +134,7 @@ class ShortCircuitFromCgmesTest {
 
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(new LoadFlowParameters()
                 .setTwtSplitShuntAdmittance(true),
-                new DenseMatrixFactory(),
+                matrixFactory,
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE,
                 buildMonophasedFaultList(),
                 true,
@@ -171,7 +171,7 @@ class ShortCircuitFromCgmesTest {
 
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(new LoadFlowParameters()
                 .setTwtSplitShuntAdmittance(true),
-                new DenseMatrixFactory(),
+                matrixFactory,
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE,
                 buildTriphasedFaultList(),
                 true,
@@ -181,21 +181,21 @@ class ShortCircuitFromCgmesTest {
                 shortCircuitNormIec);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
-        List<Double> values = getrunResultBalanced(scbEngine);
+        Map<String, Double> values = getrunResultBalanced(scbEngine);
 
         // I"k = 1/sqrt(3) * cmax * Un /(Zeq)
-        assertEquals(40.723429420095876, values.get(0), 0.001); // bus 1 : expected in IEC doc = 40.6447 kA and in CGMES doc = 40.6375 kA
-        assertEquals(32.99735645040225, values.get(1), 0.0001); // bus 2 : expected in doc =  31.7831 kA  and in CGMES doc = 31.6939 kA
-        assertEquals(20.432180704312042, values.get(2), 0.00001); // bus 3 : expected in doc =  19.673 kA and in CGMES doc = 19.5243 kA
-        assertEquals(16.862496851561012, values.get(3), 0.00001); // bus 4 : expected in doc =  16.2277 kA and in CGMES doc = 16.1686 kA
-        assertEquals(34.452883063364084, values.get(4), 0.0001); // bus 5 : expected in doc =  33.1894 kA and in CGMES doc = 33.0764 kA
-        assertEquals(38.83333954687385, values.get(5), 0.001); // bus 6 : expected in doc =  37.5629 kA and in CGMES doc = 37.5547 kA
+        assertEquals(40.723429420095876, values.get("sc1"), 0.001); // bus 1 : expected in IEC doc = 40.6447 kA and in CGMES doc = 40.6375 kA
+        assertEquals(32.99735645040225, values.get("sc2"), 0.0001); // bus 2 : expected in doc =  31.7831 kA  and in CGMES doc = 31.6939 kA
+        assertEquals(20.432180704312042, values.get("sc3"), 0.00001); // bus 3 : expected in doc =  19.673 kA and in CGMES doc = 19.5243 kA
+        assertEquals(16.862496851561012, values.get("sc4"), 0.00001); // bus 4 : expected in doc =  16.2277 kA and in CGMES doc = 16.1686 kA
+        assertEquals(34.452883063364084, values.get("sc5"), 0.0001); // bus 5 : expected in doc =  33.1894 kA and in CGMES doc = 33.0764 kA
+        assertEquals(38.83333954687385, values.get("sc6"), 0.001); // bus 6 : expected in doc =  37.5629 kA and in CGMES doc = 37.5547 kA
 
-        assertEquals(26.09914297220819, values.get(6), 0.0001); // bus 7 : expected in doc =  25.5895 kA and in CGMES doc = 25.5862 kA
-        assertEquals(26.04323218798688, values.get(7), 0.0001); // bus 7 : with z not zero
+        assertEquals(26.09914297220819, values.get("sc7"), 0.0001); // bus 7 : expected in doc =  25.5895 kA and in CGMES doc = 25.5862 kA
+        assertEquals(26.04323218798688, values.get("sc7z"), 0.0001); // bus 7 : with z not zero
 
-        assertEquals(12.923781384471045, values.get(8), 0.0001); // bus 8 : expected in doc =  13.5778 kA and in CGMES doc = 13.632 kA
-        assertEquals(12.882024685656189, values.get(9), 0.0001); // bus 8 : with z not zero
+        assertEquals(12.923781384471045, values.get("sc8"), 0.0001); // bus 8 : expected in doc =  13.5778 kA and in CGMES doc = 13.632 kA
+        assertEquals(12.882024685656189, values.get("sc8z"), 0.0001); // bus 8 : with z not zero
     }
 
     public List<ShortCircuitFault> buildTriphasedFaultList() {
@@ -203,28 +203,28 @@ class ShortCircuitFromCgmesTest {
         Complex zFault = new Complex(0.);
         ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFault);
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault(busNameToId.get("Bus1"), "sc1", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc1 = new ShortCircuitFault(busNameToId.get("Bus1"), "sc1", busNameToId.get("Bus1"), scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault(busNameToId.get("Bus2"), "sc2", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc2 = new ShortCircuitFault(busNameToId.get("Bus2"), "sc2", busNameToId.get("Bus2"), scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault(busNameToId.get("Bus3"), "sc3", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc3 = new ShortCircuitFault(busNameToId.get("Bus3"), "sc3", busNameToId.get("Bus3"), scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault(busNameToId.get("Bus4"), "sc4", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc4 = new ShortCircuitFault(busNameToId.get("Bus4"), "sc4", busNameToId.get("Bus4"), scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc4);
-        ShortCircuitFault sc5 = new ShortCircuitFault(busNameToId.get("Bus5"), "sc5", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc5 = new ShortCircuitFault(busNameToId.get("Bus5"), "sc5", busNameToId.get("Bus5"), scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc5);
-        ShortCircuitFault sc6 = new ShortCircuitFault(busNameToId.get("Bus6"), "sc6", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc6 = new ShortCircuitFault(busNameToId.get("Bus6"), "sc6", busNameToId.get("Bus6"), scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc6);
-        ShortCircuitFault sc7 = new ShortCircuitFault(busNameToId.get("Bus7"), "sc7", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc7 = new ShortCircuitFault(busNameToId.get("Bus7"), "sc7", busNameToId.get("Bus7"), scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc7);
-        ShortCircuitFault sc8 = new ShortCircuitFault(busNameToId.get("Bus8"), "sc8", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc8 = new ShortCircuitFault(busNameToId.get("Bus8"), "sc8", busNameToId.get("Bus8"), scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc8);
 
         Complex zFault2 = new Complex(0.0002, 0.0005);
         ShortCircuitFaultImpedance scz2 = new ShortCircuitFaultImpedance(zFault2);
-        ShortCircuitFault sc7z = new ShortCircuitFault(busNameToId.get("Bus7"), "sc7z", scz2, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc7z = new ShortCircuitFault(busNameToId.get("Bus7"), "sc7z", busNameToId.get("Bus7"), scz2, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc7z);
-        ShortCircuitFault sc8z = new ShortCircuitFault(busNameToId.get("Bus8"), "sc8z", scz2, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc8z = new ShortCircuitFault(busNameToId.get("Bus8"), "sc8z", busNameToId.get("Bus8"), scz2, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc8z);
 
         return faultList;
@@ -234,23 +234,23 @@ class ShortCircuitFromCgmesTest {
         Complex zFault = new Complex(0.);
         ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFault);
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault(busNameToId.get("Bus2"), "sc1", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc1 = new ShortCircuitFault(busNameToId.get("Bus2"), "sc1", busNameToId.get("Bus2"), scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault(busNameToId.get("Bus3"), "sc2", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc2 = new ShortCircuitFault(busNameToId.get("Bus3"), "sc2", busNameToId.get("Bus3"), scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault(busNameToId.get("Bus4"), "sc3", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc3 = new ShortCircuitFault(busNameToId.get("Bus4"), "sc3", busNameToId.get("Bus4"), scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault(busNameToId.get("Bus5"), "sc4", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc4 = new ShortCircuitFault(busNameToId.get("Bus5"), "sc4", busNameToId.get("Bus5"), scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc4);
         zFault = new Complex(0.0001, 0.0003);
         ShortCircuitFaultImpedance sczImpedant = new ShortCircuitFaultImpedance(zFault);
-        ShortCircuitFault sc1z = new ShortCircuitFault(busNameToId.get("Bus2"), "sc1z", sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc1z = new ShortCircuitFault(busNameToId.get("Bus2"), "sc1z", busNameToId.get("Bus2"), sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc1z);
-        ShortCircuitFault sc2z = new ShortCircuitFault(busNameToId.get("Bus3"), "sc2z", sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc2z = new ShortCircuitFault(busNameToId.get("Bus3"), "sc2z", busNameToId.get("Bus3"), sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc2z);
-        ShortCircuitFault sc3z = new ShortCircuitFault(busNameToId.get("Bus4"), "sc3z", sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc3z = new ShortCircuitFault(busNameToId.get("Bus4"), "sc3z", busNameToId.get("Bus4"), sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc3z);
-        ShortCircuitFault sc4z = new ShortCircuitFault(busNameToId.get("Bus5"), "sc4z", sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc4z = new ShortCircuitFault(busNameToId.get("Bus5"), "sc4z", busNameToId.get("Bus5"), sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
         faultList.add(sc4z);
 
         return faultList;
@@ -267,16 +267,16 @@ class ShortCircuitFromCgmesTest {
         return values;
     }
 
-    public List<Double> getrunResultBalanced(ShortCircuitBalancedEngine scbEngine) {
+    public Map<String, Double> getrunResultBalanced(ShortCircuitBalancedEngine scbEngine) {
 
         scbEngine.run();
-        List<Double> values = new ArrayList<>();
+        Map<String, Double> results = new HashMap<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.getResultsPerFault().entrySet()) {
-            values.add(res.getValue().getIk().abs());
+            results.put(res.getKey().getFaultId(), res.getValue().getIk().abs());
             ShortCircuitResultPrinter scp = new ShortCircuitResultPrinter(res.getValue());
             scp.printShortCircuitResult();
         }
-        return values;
+        return results;
     }
 
     public Network getCgmesNetwork() {

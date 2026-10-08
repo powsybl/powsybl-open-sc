@@ -24,6 +24,8 @@ import org.usefultoys.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -69,11 +71,16 @@ public class TheveninTest {
         TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
 
         thEq.run();
-
-        assertEquals(0.0027661335620416884, thEq.getImpedanceLinearResolution().results.get(1).getZthEq().getReal(), 0.000001);
-        assertEquals(0.16629396899928067, thEq.getImpedanceLinearResolution().results.get(1).getZthEq().getImaginary(), 0.000001);
-        assertEquals(0.0030247992008329934, thEq.getImpedanceLinearResolution().results.get(0).getZthEq().getReal(), 0.000001);
-        assertEquals(0.1833452236067607, thEq.getImpedanceLinearResolution().results.get(0).getZthEq().getImaginary(), 0.000001);
+        Map<String, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> resultByBusId =
+                thEq.getImpedanceLinearResolution().results.entrySet().stream()
+                        .collect(Collectors.toMap(
+                                entry -> entry.getKey().getId(),
+                                Map.Entry::getValue
+                        ));
+        assertEquals(0.0027661335620416884, resultByBusId.get("VL_2_0").getZthEq().getReal(), 0.000001);
+        assertEquals(0.16629396899928067, resultByBusId.get("VL_2_0").getZthEq().getImaginary(), 0.000001);
+        assertEquals(0.0030247992008329934, resultByBusId.get("VL_4_0").getZthEq().getReal(), 0.000001);
+        assertEquals(0.1833452236067607, resultByBusId.get("VL_4_0").getZthEq().getImaginary(), 0.000001);
         //assertEquals(0.16522876711663945, thEq.results.get(0).getDvr1().get(0), 0.000001);
 
     }
@@ -101,19 +108,24 @@ public class TheveninTest {
         TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
 
         thEq.run();
+        Map<String, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> resultByBusId =
+                thEq.getImpedanceLinearResolution().results.entrySet().stream()
+                        .collect(Collectors.toMap(
+                                entry -> entry.getKey().getId(),
+                                Map.Entry::getValue
+                        ));
 
         // results here are with Sbase = 100 MVA we convert them into Sbase = 15 MVA to be in line with the reference doc result :
-        assertEquals(0.003683374391319212, thEq.getImpedanceLinearResolution().results.get(0).getZthEq().getReal() * 15. / 100., 0.000001); //F1 : doc result = Zth(Sbase15) ~ 0.0036+j0.0712
-        assertEquals(0.07118802892811232, thEq.getImpedanceLinearResolution().results.get(0).getZthEq().getImaginary() * 15. / 100., 0.000001);
-        assertEquals(0.019949496420349225, thEq.getImpedanceLinearResolution().results.get(1).getZthEq().getReal() * 15. / 100., 0.000001); //F2 : doc result = Zth(Sbase15) ~ 0.0199+j0.2534
-        assertEquals(0.2534161781273357, thEq.getImpedanceLinearResolution().results.get(1).getZthEq().getImaginary() * 15. / 100., 0.000001);
+        assertEquals(0.003683374391319212, resultByBusId.get("VL_2_0").getZthEq().getReal() * 15. / 100., 0.000001); //F1 : doc result = Zth(Sbase15) ~ 0.0036+j0.0712
+        assertEquals(0.07118802892811232, resultByBusId.get("VL_2_0").getZthEq().getImaginary() * 15. / 100., 0.000001);
+        assertEquals(0.019949496420349225, resultByBusId.get("VL_5_0").getZthEq().getReal() * 15. / 100., 0.000001); //F2 : doc result = Zth(Sbase15) ~ 0.0199+j0.2534
+        assertEquals(0.2534161781273357, resultByBusId.get("VL_5_0").getZthEq().getImaginary() * 15. / 100., 0.000001);
 
     }
 
     @Test
     void referenceSubTransientTest() {
         Network network = ReferenceNetwork.createShortCircuitReference();
-
         List<CalculationLocation> faultsList = new ArrayList<>();
         CalculationLocation f1 = new CalculationLocation("B2");
         CalculationLocation f2 = new CalculationLocation("B5");
@@ -133,14 +145,19 @@ public class TheveninTest {
         TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
 
         thEq.run();
-
+        Map<String, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> resultByBusId =
+                thEq.getImpedanceLinearResolution().results.entrySet().stream()
+                        .collect(Collectors.toMap(
+                                entry -> entry.getKey().getId(),
+                                Map.Entry::getValue
+                        ));
         // results here are with Sbase = 100 MVA we convert them into Sbase = 15 MVA to be in line with the reference doc result :
-        assertEquals(0.0035803351059196286, thEq.getImpedanceLinearResolution().results.get(0).getZthEq().getReal() * 15. / 100., 0.000001); //F1 : doc result = Zth(Sbase15) ~ 0.0035+j0.0666
-        assertEquals(0.0666102621341282, thEq.getImpedanceLinearResolution().results.get(0).getZthEq().getImaginary() * 15. / 100., 0.000001);
-        assertEquals(0.01766454025768954, thEq.getImpedanceLinearResolution().results.get(1).getZthEq().getReal() * 15. / 100., 0.000001); //F2 : doc result = Zth(Sbase15) ~ 0.0175+j0.2313
-        assertEquals(0.2313127317660599, thEq.getImpedanceLinearResolution().results.get(1).getZthEq().getImaginary() * 15. / 100., 0.000001);
-        assertEquals(0.07967413109647312, thEq.getImpedanceLinearResolution().results.get(2).getZthEq().getReal() * 15. / 100., 0.000001); //F2 : doc result = Zth(Sbase15) ~ 0.0796+j0.5
-        assertEquals(0.4997813218278794, thEq.getImpedanceLinearResolution().results.get(2).getZthEq().getImaginary() * 15. / 100., 0.000001);
+        assertEquals(0.0035803351059196286, resultByBusId.get("VL_2_0").getZthEq().getReal() * 15. / 100., 0.000001); //F1 : doc result = Zth(Sbase15) ~ 0.0035+j0.0666
+        assertEquals(0.0666102621341282, resultByBusId.get("VL_2_0").getZthEq().getImaginary() * 15. / 100., 0.000001);
+        assertEquals(0.01766454025768954, resultByBusId.get("VL_5_0").getZthEq().getReal() * 15. / 100., 0.000001); //F2 : doc result = Zth(Sbase15) ~ 0.0175+j0.2313
+        assertEquals(0.2313127317660599, resultByBusId.get("VL_5_0").getZthEq().getImaginary() * 15. / 100., 0.000001);
+        assertEquals(0.07967413109647312, resultByBusId.get("VL_7_0").getZthEq().getReal() * 15. / 100., 0.000001); //F2 : doc result = Zth(Sbase15) ~ 0.0796+j0.5
+        assertEquals(0.4997813218278794, resultByBusId.get("VL_7_0").getZthEq().getImaginary() * 15. / 100., 0.000001);
 
     }
 }
