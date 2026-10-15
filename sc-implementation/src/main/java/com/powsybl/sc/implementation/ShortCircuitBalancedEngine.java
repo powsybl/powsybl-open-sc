@@ -42,7 +42,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         ImpedanceLinearResolutionParameters linearResolutionParameters = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
                 parameters.getMatrixFactory(), solverFaultList, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN, initialVoltages);
 
-        ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(lfNetwork, linearResolutionParameters);
+        ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(network, lfNetwork, linearResolutionParameters);
 
         directResolution.run();
 

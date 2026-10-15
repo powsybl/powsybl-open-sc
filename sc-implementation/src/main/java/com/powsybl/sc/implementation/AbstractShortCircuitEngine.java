@@ -7,10 +7,7 @@
  */
 package com.powsybl.sc.implementation;
 
-import com.powsybl.iidm.network.Branch;
-import com.powsybl.iidm.network.Bus;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.ThreeWindingsTransformer;
+import com.powsybl.iidm.network.*;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
 import com.powsybl.openloadflow.graph.EvenShiloachGraphDecrementalConnectivityFactory;
@@ -200,7 +197,7 @@ public abstract class AbstractShortCircuitEngine {
 
     private Complex computeBusInitialVoltage(LfBus bus) {
         return switch (parameters.getVoltageProfileType()) {
-            case CALCULATED -> ComplexUtils.polar2Complex(bus.getV(), bus.getAngle());
+            case PREVIOUS_VALUE -> ComplexUtils.polar2Complex(bus.getV(), bus.getAngle());
             case CONFIGURED -> computeVoltageUsingRanges(bus);
             case NOMINAL -> new Complex(1.);
         };

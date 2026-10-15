@@ -53,8 +53,8 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                 parameters.getMatrixFactory(), solverFaultList, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN,
                 solverBiphasedFaultList, initialVoltages);
 
-        ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(lfNetwork, admittanceLinearResolutionParametersDirect);
-        ImpedanceLinearResolution homopolarResolution = new ImpedanceLinearResolution(lfNetwork, admittanceLinearResolutionParametersHomopolar);
+        ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(network, lfNetwork, admittanceLinearResolutionParametersDirect);
+        ImpedanceLinearResolution homopolarResolution = new ImpedanceLinearResolution(network, lfNetwork, admittanceLinearResolutionParametersHomopolar);
 
         directResolution.run();
         homopolarResolution.run();

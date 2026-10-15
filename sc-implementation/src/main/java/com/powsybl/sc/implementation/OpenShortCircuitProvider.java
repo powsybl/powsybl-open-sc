@@ -160,7 +160,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 // 1000: kA to A
                 double unitToAmpere = SB * 1000 / Math.sqrt(3) / lfBus.getNominalV();
                 Complex iInitial = Complex.ZERO;
-                if (scbParameters.getVoltageProfileType() == ShortCircuitEngineParameters.VoltageProfileType.CALCULATED) {
+                if (scbParameters.getVoltageProfileType() == InitialVoltageProfileMode.PREVIOUS_VALUE) {
                     iInitial = InitialCurrentContributionCalculator.getInitialCurrentContribution(network, feederResult.getFeeder())
                             .multiply(unitToAmpere);
                     if (iInitial.isNaN() || iInitial.isInfinite()) {

@@ -32,4 +32,8 @@ public final class ShortCircuitConstants {
 
     public static final boolean DEFAULT_WITH_CAPACITIES = true;
     public static final boolean DEFAULT_WITH_RESISTANCES = true;
+
+    public static final GeneratorSelectionMode DEFAULT_INNER_ZONE_GENERATOR_SELECTION_MODE = GeneratorSelectionMode.ALL;
+    public static final GeneratorSelectionMode DEFAULT_OUTER_ZONE_GENERATOR_SELECTION_MODE = GeneratorSelectionMode.RUNNING_ONLY;
+    public static final double DEFAULT_RUNNING_GENERATOR_THRESHOLD = 0.0;
 }

@@ -11,7 +11,11 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.ReferenceNetwork;
+import com.powsybl.shortcircuit.InitialVoltageProfileMode;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
+import com.powsybl.shortcircuit.StudyType;
 import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,8 +50,20 @@ class ShortCircuitBiphasedCommonSupportTest {
         ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_A2);
         faultList.add(sc1);
 
-        ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, false, ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT, shortCircuitNormIec, true);
+        ShortCircuitParameters scp = new ShortCircuitParameters()
+                .setWithVoltageResult(true)
+                .setInitialVoltageProfileMode(InitialVoltageProfileMode.NOMINAL)
+                .setWithShuntCompensators(true)
+                .setWithLoads(true)
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setWithNeutralPosition(true)
+                .setMinVoltageDropProportionalThreshold(0.0);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters)
+                .setWithCapacities(true)
+                .setWithResistances(true));
+
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
+                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -73,8 +89,13 @@ class ShortCircuitBiphasedCommonSupportTest {
         // TODO : a list that contains BIPHASED_COMMON_SUPPORT with the same nodes is not supported yet : FIX_ME
         List<ShortCircuitFault> faultList = List.of(sc1, sc2);
 
-        ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, true, ShortCircuitEngineParameters.VoltageProfileType.NOMINAL, false, false, false, false, ShortCircuitEngineParameters.PeriodType.SUB_TRANSIENT, shortCircuitNormIec, true);
+        ShortCircuitParameters scp = new ShortCircuitParameters()
+                .setStudyType(StudyType.SUB_TRANSIENT)
+                .setWithNeutralPosition(true);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
+                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();

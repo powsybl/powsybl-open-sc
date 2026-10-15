@@ -7,22 +7,30 @@
  */
 package com.powsybl.sc.util;
 
+import com.powsybl.iidm.network.Bus;
+import com.powsybl.iidm.network.Generator;
+import com.powsybl.iidm.network.Network;
 import com.powsybl.openloadflow.ac.AcLoadFlowContext;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
 import com.powsybl.openloadflow.ac.AcloadFlowEngine;
 import com.powsybl.openloadflow.equations.EquationSystem;
 import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.*;
+import com.powsybl.openloadflow.util.PerUnit;
+import com.powsybl.sc.extensions.GeneratorSelectionMode;
 import com.powsybl.sc.util.extensions.ScGenerator;
 import com.powsybl.sc.util.extensions.ScLoad;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
+import com.powsybl.shortcircuit.StudyType;
 import net.jafama.FastMath;
 import org.apache.commons.math3.complex.Complex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -63,12 +71,6 @@ public final class AdmittanceEquationSystem {
         ADM_ADMIT, // all external  nodal injections are transformed into passive shunt elements included in the Y matrix (then [Ie] should be [0])
         ADM_THEVENIN, // used to compute the Zth Thevenin Equivalent: shunts remain shunts, synchronous machines are transformed into X" equivalent shunts, remaining injections are transformed into passive shunt elements included in the Y matrix
         ADM_THEVENIN_HOMOPOLAR // used to compute the homopolar admittance matrix for unbalanced short circuits
-    }
-
-    public enum AdmittancePeriodType {
-        ADM_SUB_TRANSIENT,
-        ADM_TRANSIENT,
-        ADM_STEADY_STATE,
     }
 
     public enum FrequencyType {
@@ -117,15 +119,18 @@ public final class AdmittanceEquationSystem {
         return tmpB;
     }
 
-    private static Complex getYtransfromRdXdAndUpdateFeederList(LfBus bus, AdmittancePeriodType admittancePeriodType, List<Feeder> feederList, AdmittanceType admittanceType) {
+    private static Complex getYtransfromRdXdAndUpdateFeederList(Network network, LfBus bus, ImpedanceLinearResolutionParameters parameters, StudyType admittanceStudyType, List<Feeder> feederList, AdmittanceType admittanceType) {
         double vnomVl = bus.getNominalV();
-
+        Set<String> innerZoneLfBusIds = getLfBusIdsFromIidmBusId(network, parameters.getInnerZoneBusIds());
         Complex tmpY = new Complex(0.);
         for (LfGenerator lfgen : bus.getGenerators()) { //compute R'd or R"d from generators at bus
+            if (!isGeneratorSelected(lfgen, innerZoneLfBusIds, parameters, network)) {
+                continue;
+            }
             ScGenerator scGen = (ScGenerator) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
             double kG = (Double) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
             Complex z = scGen.getTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
-            if (admittancePeriodType == AdmittancePeriodType.ADM_SUB_TRANSIENT) {
+            if (admittanceStudyType == StudyType.SUB_TRANSIENT) {
                 z = scGen.getSubTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
             }
 
@@ -150,14 +155,14 @@ public final class AdmittanceEquationSystem {
         return tmpY;
     }
 
-    private static void createShunts(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
+    private static void createShunts(Network network, LfNetwork lfNetwork, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
                                      ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, FrequencyType frequencyType) {
         AdmittanceType admittanceType = parameters.getAdmittanceType();
         boolean isShuntsIgnore = parameters.isTheveninIgnoreShunts();
         boolean isLoadsIgnore = parameters.isTheveninIgnoreLoads();
-        AdmittancePeriodType admittancePeriodType = parameters.getTheveninPeriodType();
+        StudyType admittanceStudyType = parameters.getStudyType();
 
-        for (LfBus bus : network.getBuses()) {
+        for (LfBus bus : lfNetwork.getBuses()) {
 
             Complex y = new Complex(0.); //total shunt at bus to be integrated in the admittance matrix
             Complex yLoadEq = new Complex(0.); //shunts created to represent the equivalence of loads and to be integrated in the total admittance matrix shunt at bus
@@ -207,7 +212,7 @@ public final class AdmittanceEquationSystem {
                     }
                 }
 
-                yGenEq = getYtransfromRdXdAndUpdateFeederList(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList
+                yGenEq = getYtransfromRdXdAndUpdateFeederList(network, bus, parameters, admittanceStudyType, feederList, admittanceType); // ! updates feederList
                 // TODO : check how to verify that the generators are operating
 
                 FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
@@ -217,7 +222,7 @@ public final class AdmittanceEquationSystem {
 
                 List<Feeder> feederList = new ArrayList<>(); // not used yet in homopolar
 
-                y = getYtransfromRdXdAndUpdateFeederList(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList
+                y = getYtransfromRdXdAndUpdateFeederList(network, bus, parameters, admittanceStudyType, feederList, admittanceType); // ! updates feederList
                 //TODO : check how to verify that the generators are operating
 
                 FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
@@ -245,26 +250,73 @@ public final class AdmittanceEquationSystem {
         }
     }
 
-    public static EquationSystem<VariableType, EquationType> create(LfNetwork network, VariableSet<VariableType> variableSet,
+    public static EquationSystem<VariableType, EquationType> create(Network network, LfNetwork lfNetwork, VariableSet<VariableType> variableSet,
                                                                     ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, FrequencyType frequencyType) {
         AdmittanceType admittanceType = parameters.getAdmittanceType();
         AcLoadFlowParameters acLoadFlowParameters = parameters.getAcLoadFlowParameters();
         boolean isWithNeutralPosition = parameters.isWithNeutralPosition();
 
-        EquationSystem<VariableType, EquationType> equationSystem = new EquationSystem<>(EquationType.class, network, variableSet);
+        EquationSystem<VariableType, EquationType> equationSystem = new EquationSystem<>(EquationType.class, lfNetwork, variableSet);
 
         if (admittanceType == AdmittanceType.ADM_ADMIT) {
-            try (AcLoadFlowContext context = new AcLoadFlowContext(network, acLoadFlowParameters)) {
+            try (AcLoadFlowContext context = new AcLoadFlowContext(lfNetwork, acLoadFlowParameters)) {
                 new AcloadFlowEngine(context)
                         .run();
             }
         }
 
-        createBranches(network, variableSet, equationSystem, admittanceType, parameters.isTheveninIgnoreCapacities(), parameters.isTheveninIgnoreResistances(), isWithNeutralPosition, frequencyType);
+        createBranches(lfNetwork, variableSet, equationSystem, admittanceType, parameters.isTheveninIgnoreCapacities(), parameters.isTheveninIgnoreResistances(), isWithNeutralPosition, frequencyType);
         if (admittanceType != AdmittanceType.ADM_INJ) { //shunts created in the admittance matrix are only those that really exist in the network
-            createShunts(network, variableSet, equationSystem, parameters, feeders, frequencyType);
+            createShunts(network, lfNetwork, variableSet, equationSystem, parameters, feeders, frequencyType);
         }
 
         return equationSystem;
     }
+
+    static Set<String> getLfBusIdsFromIidmBusId(Network network, Set<String> innerZoneBusIds) {
+        Set<String> lfBusIds = new HashSet<>();
+        for (String busId : innerZoneBusIds) {
+            Bus busBreakerBus = network.getBusBreakerView().getBus(busId);
+            if (busBreakerBus == null) {
+                LOGGER.warn("Inner zone bus {} not found in the network, it is ignored", busId);
+                continue;
+            }
+            Bus mergedBus = busBreakerBus.getVoltageLevel().getBusView().getMergedBus(busId);
+            if (mergedBus != null) {
+                lfBusIds.add(mergedBus.getId());
+            }
+        }
+        return lfBusIds;
+    }
+
+    static boolean isGeneratorSelected(LfGenerator generator, Set<String> innerZoneLfBusIds,
+                                       ImpedanceLinearResolutionParameters parameters, Network network) {
+        LfBus bus = generator.getBus();
+        boolean inInnerZone = parameters.getInnerZoneGeneratorSelectionMode().equals(GeneratorSelectionMode.ALL) || bus != null && innerZoneLfBusIds.contains(bus.getId());
+
+        GeneratorSelectionMode mode = inInnerZone
+                ? parameters.getInnerZoneGeneratorSelectionMode()
+                : parameters.getOuterZoneGeneratorSelectionMode();
+        if (mode == GeneratorSelectionMode.ALL) {
+            return true;
+        }
+
+        // Synchronous condensers always contribute to the fault current, whatever their active power
+        Generator iidmGenerator = network.getGenerator(generator.getOriginalId());
+        if (iidmGenerator != null && iidmGenerator.isCondenser()) {
+            return true;
+        }
+
+        double threshold = inInnerZone
+                ? parameters.getInnerZoneRunningGeneratorThreshold()
+                : parameters.getOuterZoneRunningGeneratorThreshold();
+        double absTargetPMw = Math.abs(generator.getTargetP() * PerUnit.SB); // LF values are in per unit
+        boolean running = absTargetPMw > threshold;
+        if (!running) {
+            LOGGER.info("Generator {} is not running (|P| = {} MW <= threshold {} MW) and is not taken into account",
+                    generator.getOriginalId(), absTargetPMw, threshold);
+        }
+        return running;
+    }
+
 }

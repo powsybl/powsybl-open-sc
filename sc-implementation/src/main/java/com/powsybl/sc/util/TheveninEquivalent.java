@@ -44,8 +44,8 @@ public class TheveninEquivalent {
         lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), new LfNetworkParameters());
         ShortCircuitExtensions.add(network, lfNetworks);
         this.parameters = Objects.requireNonNull(parameters);
-        LfNetwork lfNetwork = lfNetworks.get(0);
-        impedanceLinearResolution = new ImpedanceLinearResolution(lfNetwork, generateAdmittanceLinearResolutionParam(network, lfNetwork, parameters));
+        LfNetwork lfNetwork = lfNetworks.getFirst();
+        impedanceLinearResolution = new ImpedanceLinearResolution(network, lfNetwork, generateAdmittanceLinearResolutionParam(network, lfNetwork, parameters));
     }
 
     public ImpedanceLinearResolution getImpedanceLinearResolution() {
@@ -144,7 +144,7 @@ public class TheveninEquivalent {
                     initialVoltages.add(Complex.ONE);
                 }
             }
-            case CALCULATED -> {
+            case PREVIOUS_VALUE -> {
                 for (LfBus lfBus : lfNetwork.getBuses()) {
                     initialVoltages.add(ComplexUtils.polar2Complex(lfBus.getV(), lfBus.getAngle()));
                 }
