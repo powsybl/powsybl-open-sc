@@ -12,15 +12,6 @@ import org.apache.commons.math3.complex.Complex;
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
-public class ScLoad {
+public record ScLoad(Complex ydEquivalent) {
 
-    private Complex ydEquivalent;
-
-    public ScLoad(Complex ydEquivalent) {
-        this.ydEquivalent = ydEquivalent;
-    }
-
-    public Complex getYdEquivalent() {
-        return ydEquivalent;
-    }
 }
