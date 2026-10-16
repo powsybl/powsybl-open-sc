@@ -258,7 +258,6 @@ public class ShortCircuitResult {
                     PiModel piModel = branch.getPiModel();
                     Complex zBranch;
                     if (isWithNeutralPosition
-                            && branch.getBranchType() == LfBranch.BranchType.TRANSFO_2 //TODO: TRANSFO_3
                             && piModel instanceof PiModelArray piModelArray) {
                         zBranch = new Complex(piModelArray.getModel(0).getR(), piModelArray.getModel(0).getX());
                     } else {

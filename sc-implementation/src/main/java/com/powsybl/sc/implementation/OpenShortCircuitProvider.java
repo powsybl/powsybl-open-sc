@@ -148,7 +148,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
             List<ShortCircuitBusResults> busResults = new ArrayList<>();
             if (scbParameters.isVoltageUpdate()) {
-                fillBusResults(scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(), scbParameters.getMinVoltageDropPercent());
+                fillBusResults(scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(), scbParameters.getMinVoltageDropProportional());
             }
             MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);

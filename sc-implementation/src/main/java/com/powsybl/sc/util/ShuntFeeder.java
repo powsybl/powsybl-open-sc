@@ -13,7 +13,7 @@ import com.powsybl.openloadflow.network.LfShunt;
 import org.apache.commons.math3.complex.Complex;
 
 /**
- * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
+ * @author Hadrien Godard <hadrien.godard at artelys.com>
  */
 public class ShuntFeeder extends AbstractFeeder {
 
@@ -38,6 +38,7 @@ public class ShuntFeeder extends AbstractFeeder {
         double v = bus.getV() * bus.getNominalV(); // kV
         double phi = bus.getAngle(); // Rad
 
+        // TODO HG: issue
         double p = shunt.getP().eval();
         double q = shunt.getQ().eval();
 

@@ -12,7 +12,7 @@ import com.powsybl.openloadflow.network.LfBus;
 import org.apache.commons.math3.complex.Complex;
 
 /**
- * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
+ * @author Hadrien Godard <hadrien.godard at artelys.com>
  */
 public class LoadFeeder extends AbstractFeeder {
 
@@ -33,6 +33,7 @@ public class LoadFeeder extends AbstractFeeder {
         double v = bus.getV() * bus.getNominalV(); // kV
         double phi = bus.getAngle(); // Rad
 
+        // TODO HG: Seems ok
         double p = bus.getLoadTargetP();
         double q = bus.getLoadTargetQ();
 

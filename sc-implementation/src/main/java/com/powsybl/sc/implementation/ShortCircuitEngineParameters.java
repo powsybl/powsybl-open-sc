@@ -54,7 +54,7 @@ public class ShortCircuitEngineParameters {
 
     private boolean voltageUpdate;
 
-    private final double minVoltageDropPercent;
+    private final double minVoltageDropProportional;
 
     private final PeriodType periodType;
 
@@ -67,7 +67,7 @@ public class ShortCircuitEngineParameters {
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.shortCircuitFaults = Objects.requireNonNull(faults);
         this.voltageUpdate = scParameters.isWithVoltageResult();
-        this.minVoltageDropPercent = scParameters.getMinVoltageDropProportionalThreshold();
+        this.minVoltageDropProportional = scParameters.getMinVoltageDropProportionalThreshold();
         this.ignoreShunts = !scParameters.isWithShuntCompensators();
         this.vProfile = toVoltageProfileType(scParameters.getInitialVoltageProfileMode());
         this.vConfiguredRanges = scParameters.getVoltageRanges();
@@ -121,8 +121,8 @@ public class ShortCircuitEngineParameters {
         return voltageUpdate;
     }
 
-    public double getMinVoltageDropPercent() {
-        return minVoltageDropPercent;
+    public double getMinVoltageDropProportional() {
+        return minVoltageDropProportional;
     }
 
     public void setVoltageUpdate(boolean bool) {

@@ -14,7 +14,7 @@ import com.powsybl.openloadflow.network.LfGenerator;
 import org.apache.commons.math3.complex.Complex;
 
 /**
- * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
+ * @author Hadrien Godard <hadrien.godard at artelys.com>
  */
 public class GeneratorFeeder extends AbstractFeeder {
 

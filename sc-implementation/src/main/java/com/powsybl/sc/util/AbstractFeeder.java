@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 
 /**
- * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
+ * @author Hadrien Godard <hadrien.godard at artelys.com>
  */
 public abstract class AbstractFeeder implements Feeder {
 

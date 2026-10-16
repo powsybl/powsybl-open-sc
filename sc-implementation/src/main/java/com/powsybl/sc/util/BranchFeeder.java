@@ -14,7 +14,7 @@ import com.powsybl.openloadflow.network.LfBus;
 import org.apache.commons.math3.complex.Complex;
 
 /**
- * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
+ * @author Hadrien Godard <hadrien.godard at artelys.com>
  */
 public class BranchFeeder extends AbstractFeeder {
 
@@ -42,6 +42,7 @@ public class BranchFeeder extends AbstractFeeder {
         LfBus bus = null;
         double p = 0;
         double q = 0;
+        // TODO HG: issue
         if (side == ThreeSides.ONE) {
             bus = branch.getBus1();
             p = branch.getP1().eval();
