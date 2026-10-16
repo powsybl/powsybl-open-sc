@@ -45,14 +45,17 @@ public class TheveninEquivalentParameters {
 
     private final TheveninPeriodType theveninPeriodType;
 
-    public TheveninEquivalentParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> voltageLevels, boolean voltageUpdate, TheveninVoltageProfileType theveninVoltageProfileType, TheveninPeriodType theveninPeriodType, boolean theveninIgnoreShunts) {
+    private final boolean isWithNeutralPosition;
+
+    public TheveninEquivalentParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> voltageLevels, TheveninVoltageProfileType theveninVoltageProfileType, TheveninPeriodType theveninPeriodType) {
         this.acLoadFlowParameters = Objects.requireNonNull(acLoadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.theveninCalculationLocation = Objects.requireNonNull(voltageLevels);
-        this.voltageUpdate = voltageUpdate;
-        this.theveninIgnoreShunts = theveninIgnoreShunts;
         this.theveninVoltageProfileType = theveninVoltageProfileType;
         this.theveninPeriodType = theveninPeriodType;
+        this.voltageUpdate = true;
+        this.theveninIgnoreShunts = false;
+        this.isWithNeutralPosition = true;
     }
 
     public AcLoadFlowParameters getAcLoadFlowParameters() {
@@ -83,4 +86,7 @@ public class TheveninEquivalentParameters {
         return theveninPeriodType;
     }
 
+    public boolean isWithNeutralPosition() {
+        return isWithNeutralPosition;
+    }
 }

@@ -14,7 +14,6 @@ import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.ArrayList;
@@ -267,16 +266,13 @@ public class ImpedanceLinearResolution {
     }
 
     public void run() {
-
         FeedersAtNetwork equationsSystemFeeders = new FeedersAtNetwork();
         EquationSystem<VariableType, EquationType> equationSystem
-                = AdmittanceEquationSystem.create(network, new VariableSet<>(), parameters.getAdmittanceType(), parameters.getTheveninVoltageProfileType(),
-                parameters.getTheveninPeriodType(), parameters.isTheveninIgnoreShunts(), equationsSystemFeeders, parameters.getAcLoadFlowParameters(), AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ);
+                = AdmittanceEquationSystem.create(network, new VariableSet<>(), parameters, equationsSystemFeeders, AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ);
 
         FeedersAtNetwork equationsSystemFeeders20hz = new FeedersAtNetwork();
         EquationSystem<VariableType, EquationType> equationSystem20hz
-                = AdmittanceEquationSystem.create(network, new VariableSet<>(), parameters.getAdmittanceType(), parameters.getTheveninVoltageProfileType(),
-                parameters.getTheveninPeriodType(), parameters.isTheveninIgnoreShunts(), equationsSystemFeeders20hz, parameters.getAcLoadFlowParameters(), AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ);
+                = AdmittanceEquationSystem.create(network, new VariableSet<>(), parameters, equationsSystemFeeders20hz, AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ);
 
         //Get bus by voltage level
         List<LfBus> inputBusses = new ArrayList<>();
@@ -392,17 +388,13 @@ public class ImpedanceLinearResolution {
 
             //DenseMatrix z = (DenseMatrix) tEn.times(en);
 
-            Complex eth = new Complex(1.0);
-
             numBusFault = 0;
             for (LfBus lfBus : inputBusses) {
 
                 int yRow1x = yd.getRowBus(lfBus.getNum(), EquationType.BUS_YR);
                 int yRow1y = yd.getRowBus(lfBus.getNum(), EquationType.BUS_YI);
 
-                if (parameters.getTheveninVoltageProfileType() == AdmittanceEquationSystem.AdmittanceVoltageProfileType.CALCULATED) {
-                    eth = ComplexUtils.polar2Complex(lfBus.getV(), Math.toRadians(lfBus.getAngle()));
-                }
+                Complex eth = parameters.getInitialVoltage(lfBus.getNum());
 
                 // This is equivalent to get the diagonal blocks of tEn * inv(Y) * En but taking advantage of the sparsity of tEn
                 // The diagonal terms of the impedance matrix are the Thevenin impedance at each corresponding bus
@@ -473,10 +465,7 @@ public class ImpedanceLinearResolution {
                         checkMatrixExtractionConsistency(z21, z21bis, lfBus, bus2);
                         checkMatrixExtractionConsistency(z12, z12bis, lfBus, bus2);
 
-                        Complex eth2 = new Complex(1.0);
-                        if (parameters.getTheveninVoltageProfileType() == AdmittanceEquationSystem.AdmittanceVoltageProfileType.CALCULATED) {
-                            eth2 = ComplexUtils.polar2Complex(bus2.getV(), Math.toRadians(bus2.getAngle()));
-                        }
+                        Complex eth2 = parameters.getInitialVoltage(bus2.getNum());
 
                         res.addBiphasedResult(bus2, eth2, z22, z21, z12, numBus2Fault);
                     }

@@ -30,6 +30,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
     @Override
     public void run() {
         LfNetwork lfNetwork = lfNetworks.get(0);
+        fillInitialVoltages();
 
         if (parameters.getAnalysisType() == ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC) {
             buildSystematicList(ShortCircuitFault.ShortCircuitType.MONOPHASED); // TODO : by default it is monophased, could be changed to choose type of systematic default
@@ -45,14 +46,12 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         solverBiphasedFaultList = faultLists.getValue();
 
         ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersHomopolar = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
-                parameters.getMatrixFactory(), solverFaultList, parameters.isVoltageUpdate(),
-                getAdmittanceVoltageProfileTypeFromParam(), getAdmittancePeriodTypeFromParam(), AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR,
-                parameters.isIgnoreShunts(), solverBiphasedFaultList);
+                parameters.getMatrixFactory(), solverFaultList, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR,
+                solverBiphasedFaultList, initialVoltages);
 
         ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersDirect = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
-                parameters.getMatrixFactory(), solverFaultList, parameters.isVoltageUpdate(),
-                getAdmittanceVoltageProfileTypeFromParam(), getAdmittancePeriodTypeFromParam(), AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN,
-                parameters.isIgnoreShunts(), solverBiphasedFaultList);
+                parameters.getMatrixFactory(), solverFaultList, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN,
+                solverBiphasedFaultList, initialVoltages);
 
         ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(lfNetwork, admittanceLinearResolutionParametersDirect);
         ImpedanceLinearResolution homopolarResolution = new ImpedanceLinearResolution(lfNetwork, admittanceLinearResolutionParametersHomopolar);
@@ -143,7 +142,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                             directResult, homopolarResult,
                             scf, lfBus1, v1dInit, lfNetwork);
 
-                    res.updateFeedersResult(); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
+                    res.updateFeedersResult(false); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
                     resultsPerFault.put(scf, res);
 
                 } else if (shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
@@ -196,7 +195,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                                     lfBus1, v1dInit, lfNetwork,
                                     lfBus2, v2dInit, biphasedDirectResult, biphasedHomopolarResult);
 
-                            res.updateFeedersResult(); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
+                            res.updateFeedersResult(false); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
                             resultsPerFault.put(scf, res);
 
                         } else {
