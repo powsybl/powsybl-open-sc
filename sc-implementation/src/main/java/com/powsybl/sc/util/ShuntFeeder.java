@@ -18,7 +18,7 @@ import org.apache.commons.math3.complex.Complex;
  */
 public class ShuntFeeder extends AbstractFeeder {
 
-    private final LfBus bus;
+    private final LfBus lfBus;
     private final FeederType shuntType;
 
     // Note: strings used when LfShuntImpl/LfShunt ids are built in
@@ -28,7 +28,7 @@ public class ShuntFeeder extends AbstractFeeder {
 
     public ShuntFeeder(Complex zFeeder, String id, LfBus bus, FeederType shuntType) {
         super(zFeeder, id);
-        this.bus = bus;
+        this.lfBus = bus;
         this.shuntType = shuntType;
     }
 
@@ -39,8 +39,8 @@ public class ShuntFeeder extends AbstractFeeder {
 
     @Override
     public Complex getInitialCurrentContribution(Network network) {
-        double v = bus.getV(); // pu
-        double phi = bus.getAngle(); // Rad
+        double v = lfBus.getV(); // pu
+        double phi = lfBus.getAngle(); // Rad
 
         // TODO: Two current limitations:
         //  1. We use the LfNetwork to build the feeders

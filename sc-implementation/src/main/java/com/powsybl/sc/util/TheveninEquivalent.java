@@ -17,6 +17,7 @@ import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.openloadflow.network.LfNetworkParameters;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
+import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.Pair;
@@ -34,17 +35,12 @@ public class TheveninEquivalent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TheveninEquivalent.class);
 
-    private final List<LfNetwork> lfNetworks;
-
-    private final TheveninEquivalentParameters parameters;
-
     private final ImpedanceLinearResolution impedanceLinearResolution;
 
     public TheveninEquivalent(Network network, TheveninEquivalentParameters parameters) {
-        lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), new LfNetworkParameters());
+        List<LfNetwork> lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), new LfNetworkParameters());
         ShortCircuitExtensions.add(network, lfNetworks);
-        this.parameters = Objects.requireNonNull(parameters);
-        LfNetwork lfNetwork = lfNetworks.get(0);
+        LfNetwork lfNetwork = lfNetworks.getFirst();
         impedanceLinearResolution = new ImpedanceLinearResolution(lfNetwork, generateAdmittanceLinearResolutionParam(network, lfNetwork, parameters));
     }
 
@@ -138,16 +134,13 @@ public class TheveninEquivalent {
         }
 
         List<Complex> initialVoltages = new ArrayList<>();
-        switch (parameters.getTheveninVoltageProfileType()) {
-            case NOMINAL -> {
-                for (LfBus ignored : lfNetwork.getBuses()) {
-                    initialVoltages.add(Complex.ONE);
-                }
+        if (Objects.requireNonNull(parameters.getTheveninVoltageProfileType()) == InitialVoltageProfileMode.PREVIOUS_VALUE) {
+            for (LfBus lfBus : lfNetwork.getBuses()) {
+                initialVoltages.add(ComplexUtils.polar2Complex(lfBus.getV(), lfBus.getAngle()));
             }
-            case PREVIOUS_VALUE -> {
-                for (LfBus lfBus : lfNetwork.getBuses()) {
-                    initialVoltages.add(ComplexUtils.polar2Complex(lfBus.getV(), lfBus.getAngle()));
-                }
+        } else {
+            for (LfBus ignored : lfNetwork.getBuses()) {
+                initialVoltages.add(Complex.ONE);
             }
         }
 
