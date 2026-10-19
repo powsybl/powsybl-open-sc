@@ -13,6 +13,8 @@ import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfGenerator;
 import org.apache.commons.math3.complex.Complex;
 
+import static com.powsybl.openloadflow.util.PerUnit.SB;
+
 /**
  * @author Hadrien Godard <hadrien.godard at artelys.com>
  */
@@ -20,8 +22,8 @@ public class GeneratorFeeder extends AbstractFeeder {
 
     private final LfGenerator generator;
 
-    public GeneratorFeeder(Complex zFeeder, String id, LfGenerator generator) {
-        super(zFeeder, id);
+    public GeneratorFeeder(Complex zFeeder, LfGenerator generator) {
+        super(zFeeder, generator.getId());
         this.generator = generator;
     }
 
@@ -33,7 +35,7 @@ public class GeneratorFeeder extends AbstractFeeder {
     @Override
     public Complex getInitialCurrentContribution(Network network) {
         LfBus bus = generator.getBus();
-        double v = bus.getV() * bus.getNominalV(); // kV
+        double v = bus.getV(); // pu
         double phi = bus.getAngle(); // Rad
 
         // TODO: Two current limitations:
@@ -43,8 +45,8 @@ public class GeneratorFeeder extends AbstractFeeder {
         //  Reaching Generator through Feeder Id's is ugly and dangerous
         Terminal terminal = network.getGenerator(id).getTerminal();
 
-        double p = terminal.getP();
-        double q = terminal.getQ();
+        double p = terminal.getP() / SB; // pu
+        double q = terminal.getQ() / SB; // pu
 
         return computeCurrent(v, phi, p, q);
     }

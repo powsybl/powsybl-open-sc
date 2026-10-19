@@ -96,8 +96,8 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                     // we compute the delta values to be added to Vinit if we want the post-fault voltage :
                     // [dVk_r] = [Vk_r] - [Vk_r_init] = - i_nf_r * [zknf_r] + i_nf_i * [zknf_i]
                     // [dVk_i] = [Vk_i] - [Vk_i_init] = - i_nf_r * [zknf_i] - i_nf_i * [zknf_Vr]
-                    int nbBusses = lfNetwork.getBuses().size();
-                    res.createEmptyFortescueVoltageVector(nbBusses);
+                    int nbBuses = lfNetwork.getBuses().size();
+                    res.createEmptyFortescueVoltageVector(nbBuses);
 
                     for (Map.Entry<Integer, Complex> zd : linearResolutionResult.getBusToZknf().entrySet()) {
                         int busNum = zd.getKey();

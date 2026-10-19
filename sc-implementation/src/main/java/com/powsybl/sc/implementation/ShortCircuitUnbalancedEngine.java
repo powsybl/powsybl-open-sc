@@ -235,15 +235,15 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         if (parameters.isVoltageUpdate()) {
             res.setLfNetwork(lfNetwork);
             res.setTrueVoltageProfileUpdate();
-            // The post-fault voltage values for the network busses are computed as follow :
+            // The post-fault voltage values for the network buses are computed as follow :
             // [ Vof ] = -inv(Yo) * M * [ Iof ]
             // [ Vdf ] = -inv(Yd) * M * [ Idf ] + [ V(init) ]
             // [ Vif ] = -inv(Yd) * M * [ Iif ]
             // dMo = inv(Yo) * M
             // dMd = inv(Yd) * M
 
-            int nbBusses = lfNetwork.getBuses().size();
-            res.createEmptyFortescueVoltageVector(nbBusses);
+            int nbBuses = lfNetwork.getBuses().size();
+            res.createEmptyFortescueVoltageVector(nbBuses);
 
             for (Map.Entry<Integer, Complex> zd : directResult.getBusToZknf().entrySet()) {
                 int busNum = zd.getKey();
@@ -294,15 +294,15 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         if (parameters.isVoltageUpdate()) {
             res.setLfNetwork(lfNetwork);
             res.setTrueVoltageProfileUpdate();
-            // The post-fault voltage values for the network busses are computed as follow :
+            // The post-fault voltage values for the network buses are computed as follow :
             // [ Vof ] = -inv(Yo) * M * [ Iof ]
             // [ Vdf ] = -inv(Yd) * M * [ Idf ] + [ V(init) ]
             // [ Vif ] = -inv(Yd) * M * [ Iif ]
             // dMo = inv(Yo) * M
             // dMd = inv(Yd) * M
 
-            int nbBusses = lfNetwork.getBuses().size();
-            res.createEmptyFortescueVoltageVector(nbBusses);
+            int nbBuses = lfNetwork.getBuses().size();
+            res.createEmptyFortescueVoltageVector(nbBuses);
 
             for (Map.Entry<Integer, Complex> zd : directResult.getBusToZknf().entrySet()) {
                 int busNum = zd.getKey();

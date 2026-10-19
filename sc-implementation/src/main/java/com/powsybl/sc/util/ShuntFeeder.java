@@ -7,9 +7,10 @@
  */
 package com.powsybl.sc.util;
 
+import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.openloadflow.network.LfBus;
-import com.powsybl.openloadflow.network.LfShunt;
 import org.apache.commons.math3.complex.Complex;
 
 /**
@@ -17,13 +18,16 @@ import org.apache.commons.math3.complex.Complex;
  */
 public class ShuntFeeder extends AbstractFeeder {
 
-    private final LfShunt shunt;
     private final LfBus bus;
     private final FeederType shuntType;
 
-    public ShuntFeeder(Complex zFeeder, String id, LfShunt shunt, LfBus bus, FeederType shuntType) {
+    // Note: strings used when LfShuntImpl/LfShunt ids are built in
+    // https://github.com/powsybl/powsybl-open-loadflow/blob/main/src/main/java/com/powsybl/openloadflow/network/impl/LfShuntImpl.java
+    private static final String SHUNT_ID_SUFFIX = "_shunt_compensators";
+    private static final String CONTROLLER_SHUNT_ID_SUFFIX = "_controller_shunt_compensators";
+
+    public ShuntFeeder(Complex zFeeder, String id, LfBus bus, FeederType shuntType) {
         super(zFeeder, id);
-        this.shunt = shunt;
         this.bus = bus;
         this.shuntType = shuntType;
     }
@@ -35,13 +39,35 @@ public class ShuntFeeder extends AbstractFeeder {
 
     @Override
     public Complex getInitialCurrentContribution(Network network) {
-        double v = bus.getV() * bus.getNominalV(); // kV
+        double v = bus.getV(); // pu
         double phi = bus.getAngle(); // Rad
 
-        // TODO HG: issue
-        double p = shunt.getP().eval();
-        double q = shunt.getQ().eval();
+        // TODO: Two current limitations:
+        //  1. We use the LfNetwork to build the feeders
+        //  2. LfShunt is not holding P and Q load flow results
+        //  We should use the Network to create the feeders
+        //  Reaching Bus through Feeder Id's is ugly and dangerous
+        String busId = getBusId();
+        Bus bus = network.getBusView().getBus(busId);
+
+        double p = 0.;
+        double q = 0.;
+        for (ShuntCompensator shunt : bus.getShuntCompensators()) {
+            p += shunt.getTerminal().getP();
+            q += shunt.getTerminal().getQ();
+        }
 
         return computeCurrent(v, phi, p, q);
+    }
+
+    private String getBusId() {
+        String suffix = "";
+        if (shuntType == FeederType.SHUNT) {
+            suffix = SHUNT_ID_SUFFIX;
+        } else if (shuntType == FeederType.CONTROLLER_SHUNT) {
+            suffix = CONTROLLER_SHUNT_ID_SUFFIX;
+        }
+
+        return id.substring(0, id.length() - suffix.length());
     }
 }

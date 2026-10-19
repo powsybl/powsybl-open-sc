@@ -18,8 +18,8 @@ public class LoadFeeder extends AbstractFeeder {
 
     private final LfBus bus;
 
-    public LoadFeeder(Complex zFeeder, String id, LfBus bus) {
-        super(zFeeder, id);
+    public LoadFeeder(Complex zFeeder, LfBus bus) {
+        super(zFeeder, bus.getId());
         this.bus = bus;
     }
 
@@ -30,10 +30,9 @@ public class LoadFeeder extends AbstractFeeder {
 
     @Override
     public Complex getInitialCurrentContribution(Network network) {
-        double v = bus.getV() * bus.getNominalV(); // kV
+        double v = bus.getV(); // pu
         double phi = bus.getAngle(); // Rad
 
-        // TODO HG: Seems ok
         double p = bus.getLoadTargetP();
         double q = bus.getLoadTargetQ();
 

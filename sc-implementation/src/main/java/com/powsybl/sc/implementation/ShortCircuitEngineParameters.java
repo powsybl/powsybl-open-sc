@@ -21,11 +21,6 @@ import java.util.Objects;
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class ShortCircuitEngineParameters {
-    public enum VoltageProfileType {
-        CALCULATED, // use the computed values at nodes to compute Zth and Eth
-        CONFIGURED, // use configured values per voltage ranges to compute Zth and Eth
-        NOMINAL // use the nominal voltage values at nodes to compute Zth and Eth
-    }
 
     public enum PeriodType {
         SUB_TRANSIENT, //uses subTransient parameters x"d
@@ -35,7 +30,7 @@ public class ShortCircuitEngineParameters {
 
     public enum AnalysisType {
         SELECTIVE, // short circuit analysis for List<ShortCircuitFault> faults in input
-        SYSTEMATIC // short circuit analysis for all busses of input grid
+        SYSTEMATIC // short circuit analysis for all buses of input grid
     }
 
     private final LoadFlowParameters loadFlowParameters;
@@ -44,7 +39,7 @@ public class ShortCircuitEngineParameters {
 
     private final MatrixFactory matrixFactory;
 
-    private final VoltageProfileType vProfile;
+    private final InitialVoltageProfileMode vProfile;
 
     private final List<VoltageRange> vConfiguredRanges;
 
@@ -69,7 +64,7 @@ public class ShortCircuitEngineParameters {
         this.voltageUpdate = scParameters.isWithVoltageResult();
         this.minVoltageDropProportional = scParameters.getMinVoltageDropProportionalThreshold();
         this.ignoreShunts = !scParameters.isWithShuntCompensators();
-        this.vProfile = toVoltageProfileType(scParameters.getInitialVoltageProfileMode());
+        this.vProfile = scParameters.getInitialVoltageProfileMode();
         this.vConfiguredRanges = scParameters.getVoltageRanges();
         this.analysisType = analysisType;
         this.periodType = toPeriodType(scParameters.getStudyType());
@@ -89,7 +84,7 @@ public class ShortCircuitEngineParameters {
         return matrixFactory;
     }
 
-    public VoltageProfileType getVoltageProfileType() {
+    public InitialVoltageProfileMode getVoltageProfileType() {
         return vProfile;
     }
 
@@ -127,14 +122,6 @@ public class ShortCircuitEngineParameters {
 
     public void setVoltageUpdate(boolean bool) {
         voltageUpdate = bool;
-    }
-
-    private static VoltageProfileType toVoltageProfileType(InitialVoltageProfileMode vMode) {
-        return switch (vMode) {
-            case CONFIGURED -> VoltageProfileType.CONFIGURED;
-            case NOMINAL -> VoltageProfileType.NOMINAL;
-            case PREVIOUS_VALUE -> VoltageProfileType.CALCULATED;
-        };
     }
 
     private static PeriodType toPeriodType(StudyType studyType) {

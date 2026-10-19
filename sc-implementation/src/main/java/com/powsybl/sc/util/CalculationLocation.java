@@ -18,7 +18,7 @@ public class CalculationLocation {
 
     private final String busLocation;
 
-    private final String bus2Location; // used in case computations need 2 busses in input: for example in biphased common support short circuit computations
+    private final String bus2Location; // used in case computations need 2 buses in input: for example in biphased common support short circuit computations
 
     private Pair<String, Integer > iidmBusInfo; // additional iidm info to make the correspondence between iidm info and lfNetwork info
 

@@ -91,8 +91,8 @@ public abstract class AbstractShortCircuitEngine {
                 if (scfe.getType() == ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
                     throw new IllegalArgumentException(" short circuit fault : " + busName + " must have a second voltage level defined because it is a common support fault");
                 }
-                Pair<String, Integer> branchFaultInfo = buildFaultBranchFromBusId(busName, network); // creates additional info for fault, identifying location through iidm branches instead of iidm busses to easily get lf busses
-                scfe.setIidmBusInfo(branchFaultInfo); // the short circuit fault info is now enriched with the couple iidmBranchId + iidmBranchSide and not only the iidm bus name in order to be able to identify the busses in the LfNetwork
+                Pair<String, Integer> branchFaultInfo = buildFaultBranchFromBusId(busName, network); // creates additional info for fault, identifying location through iidm branches instead of iidm buses to easily get lf buses
+                scfe.setIidmBusInfo(branchFaultInfo); // the short circuit fault info is now enriched with the couple iidmBranchId + iidmBranchSide and not only the iidm bus name in order to be able to identify the buses in the LfNetwork
                 faultList.add(scfe);
 
             } else {
@@ -126,7 +126,7 @@ public abstract class AbstractShortCircuitEngine {
     }
 
     protected static Pair<String, Integer > buildFaultDipoleFromBusId(String busId, Network tmpNetwork) {
-        // improve with direct correspondence between iidm busses and lfBusses when available in PowSyBl, because this loop is not very efficient
+        // improve with direct correspondence between iidm buses and lfBuses when available in PowSyBl, because this loop is not very efficient
         Bus bus = tmpNetwork.getBusBreakerView().getBus(busId);
         String branchId = "";
         int branchSide = 0;
@@ -155,7 +155,7 @@ public abstract class AbstractShortCircuitEngine {
     }
 
     protected static Pair<String, Integer> buildFaultT3WbranchFromBusId(String busId, Network tmpNetwork) {
-        // improve with direct correspondence between iidm busses and lfBusses when available in PowSyBl, because this loop is not very efficient
+        // improve with direct correspondence between iidm buses and lfBuses when available in PowSyBl, because this loop is not very efficient
         Bus bus = tmpNetwork.getBusBreakerView().getBus(busId);
         String branchId = "";
         int legNum = 0;
@@ -200,7 +200,7 @@ public abstract class AbstractShortCircuitEngine {
 
     private Complex computeBusInitialVoltage(LfBus bus) {
         return switch (parameters.getVoltageProfileType()) {
-            case CALCULATED -> ComplexUtils.polar2Complex(bus.getV(), bus.getAngle());
+            case PREVIOUS_VALUE -> ComplexUtils.polar2Complex(bus.getV(), bus.getAngle());
             case CONFIGURED -> computeVoltageUsingRanges(bus);
             case NOMINAL -> new Complex(1.);
         };

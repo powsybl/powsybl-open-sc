@@ -109,7 +109,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         ShortCircuitUnbalancedEngine scuEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
         scuEngine.run();
 
-        // the results per faults might be inconsistent if many busses per voltage level
+        // the results per faults might be inconsistent if many buses per voltage level
         // TODO : see how this could be improved by allowing results per electrical bus on the short circuit provider
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> scResult : scuEngine.resultsPerFault.entrySet()) {
             ShortCircuitFault scFault = scResult.getKey();
@@ -131,7 +131,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
         scbEngine.run();
 
-        // the results per faults might be inconsistent if many busses per voltage level
+        // the results per faults might be inconsistent if many buses per voltage level
         // TODO : see how this could be improved by allowing results per electrical bus on the short circuit provider
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> scFaultResult : scbEngine.resultsPerFault.entrySet()) {
             ShortCircuitFault scFault = scFaultResult.getKey();
@@ -164,7 +164,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 // 1000: kA to A
                 double unitToAmpere = SB * 1000 / Math.sqrt(3) / lfBus.getNominalV();
                 Complex iInitial = Complex.ZERO;
-                if (scbParameters.getVoltageProfileType() == ShortCircuitEngineParameters.VoltageProfileType.CALCULATED) {
+                if (scbParameters.getVoltageProfileType() == InitialVoltageProfileMode.PREVIOUS_VALUE) {
                     iInitial = feederResult.getFeeder().getInitialCurrentContribution(network).multiply(unitToAmpere);
                     if (iInitial.isNaN() || iInitial.isInfinite()) {
                         LOGGER.warn("Initial current for feeder '{}' on bus '{}' is NaN/Infinite, defaulting to 0.",

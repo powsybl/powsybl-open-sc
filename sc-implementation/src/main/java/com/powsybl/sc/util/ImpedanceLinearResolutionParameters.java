@@ -30,7 +30,7 @@ public class ImpedanceLinearResolutionParameters {
 
     private final List<CalculationLocation> calculationLocations; // stores all calculation locations where only one bus is required in input
 
-    private List<CalculationLocation> biphasedCalculationLocations; // stores all calculation locations where 2 busses are required in input
+    private List<CalculationLocation> biphasedCalculationLocations; // stores all calculation locations where 2 buses are required in input
 
     private final boolean ignoreShunts;
 

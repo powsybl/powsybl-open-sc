@@ -216,7 +216,7 @@ public class ShortCircuitResult {
 
     public void calculateCurrentPerBus(boolean isWithNeutralPosition) {
 
-        // For each branch, we build the sum of currents at busses from branches
+        // For each branch, we build the sum of currents at buses from branches
         // 1- Input is the voltage delta at each end of the branch
         // 2- Then we compute dI = [Ybranch].dV
         // 3- Then dI is added to the sum of current of bus
@@ -264,8 +264,8 @@ public class ShortCircuitResult {
                         zBranch = new Complex(branch.getPiModel().getR(), branch.getPiModel().getX());
                     }
 
-                    resultDirectBus1Feeders.getBusFeedersResult().add(new FeederResult(new BranchFeeder(zBranch, branch.getId(), branch, ThreeSides.ONE), di1));
-                    resultDirectBus2Feeders.getBusFeedersResult().add(new FeederResult(new BranchFeeder(zBranch, branch.getId(), branch, ThreeSides.TWO), di2));
+                    resultDirectBus1Feeders.getBusFeedersResult().add(new FeederResult(new BranchFeeder(zBranch, branch, ThreeSides.ONE), di1));
+                    resultDirectBus2Feeders.getBusFeedersResult().add(new FeederResult(new BranchFeeder(zBranch, branch, ThreeSides.TWO), di2));
                     continue;
                 }
 
@@ -592,9 +592,9 @@ public class ShortCircuitResult {
         isVoltageProfileUpdated = true;
     }
 
-    public void createEmptyFortescueVoltageVector(int nbBusses) {
+    public void createEmptyFortescueVoltageVector(int nbBuses) {
         List<FortescueValue> busNum2Dv = new ArrayList<>();
-        for (int i = 0; i < nbBusses; i++) {
+        for (int i = 0; i < nbBuses; i++) {
             FortescueValue mdV = new FortescueValue(0., 0.);
             busNum2Dv.add(mdV);
         }

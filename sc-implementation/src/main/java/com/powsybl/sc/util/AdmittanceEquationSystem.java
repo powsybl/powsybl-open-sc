@@ -60,12 +60,6 @@ public final class AdmittanceEquationSystem {
         }
     }
 
-    public enum AdmittanceVoltageProfileType {
-        CALCULATED, // use the computed values at nodes to compute Y elements
-        CONFIGURED, // use the configured values per voltage ranges to compute Y elements
-        NOMINAL // use the nominal voltage values at nodes to compute Y elements
-    }
-
     public enum AdmittanceType {
         ADM_INJ, // all external nodal injections that does not come from branches are considered as current injectors (including shunts elements)
         ADM_SHUNT, // all external  nodal injections that does not come from branches are considered as current injectors (but not shunt elements)
@@ -111,14 +105,14 @@ public final class AdmittanceEquationSystem {
         double tmpB = 0.;
         if (shunt != null) {
             tmpB += shunt.getB();
-            Feeder shuntFeeder = new ShuntFeeder(new Complex(0., shunt.getB()), shunt.getId(), shunt, bus, Feeder.FeederType.SHUNT);
+            Feeder shuntFeeder = new ShuntFeeder(new Complex(0., shunt.getB()), shunt.getId(), bus, Feeder.FeederType.SHUNT);
             feederList.add(shuntFeeder);
             //check if g will be implemented
         }
         LfShunt controllerShunt = bus.getControllerShunt().orElse(null);
         if (controllerShunt != null) {
             tmpB += controllerShunt.getB();
-            Feeder shuntFeeder = new ShuntFeeder(new Complex(0., controllerShunt.getB()), controllerShunt.getId(), controllerShunt, bus, Feeder.FeederType.CONTROLLER_SHUNT);
+            Feeder shuntFeeder = new ShuntFeeder(new Complex(0., controllerShunt.getB()), controllerShunt.getId(), bus, Feeder.FeederType.CONTROLLER_SHUNT);
             feederList.add(shuntFeeder);
             //check if g will be implemented
         }
@@ -151,7 +145,7 @@ public final class AdmittanceEquationSystem {
             if (z.abs() > epsilon) {
                 Complex yGen = z.reciprocal().multiply(vnomVl * vnomVl / SB);
                 tmpY = tmpY.add(yGen);
-                Feeder genFeeder = new GeneratorFeeder(yGen, lfgen.getId(), lfgen);
+                Feeder genFeeder = new GeneratorFeeder(yGen, lfgen);
                 feederList.add(genFeeder);
             }
         }
@@ -208,7 +202,7 @@ public final class AdmittanceEquationSystem {
         Complex yLoadEq = scLoad.ydEquivalent().divide(v.abs() * v.abs());
 
         if (yLoadEq.abs() > EPSILON) {
-            Feeder loadFeeder = new LoadFeeder(yLoadEq, bus.getId(), bus); // Currently only one feeder aggregating all the loads of the bus!
+            Feeder loadFeeder = new LoadFeeder(yLoadEq, bus); // Currently only one feeder aggregating all the loads of the bus!
             feederList.add(loadFeeder);
         }
 

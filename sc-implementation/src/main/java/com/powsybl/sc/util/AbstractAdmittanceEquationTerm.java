@@ -125,7 +125,6 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
         // Take the rho of the neutral position (model(0)) of tapChanger if isWithNeutralPosition set to True
         if (isWithNeutralPosition
-                && branch.getBranchType() == LfBranch.BranchType.TRANSFO_2 //TODO: TRANSFO_3
                 && piModel instanceof PiModelArray piModelArray) {
             rho = piModelArray.getModel(0).getR1();
             r = piModelArray.getModel(0).getR() * kTr;
@@ -135,13 +134,12 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
             r = piModel.getR() * kTr;
             x = piModel.getX() * kTx * freqCoef;
         }
-        if (piModel.getZ() == 0) {
+        double zk2 = r * r + x * x;
+        if (zk2 == 0) {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
         }
 
-        double zk = Math.sqrt(r * r + x * x);
-
-        zInvSquare = 1 / (zk * zk);
+        zInvSquare = 1 / zk2;
 
         double alpha = piModel.getA1();
         cosA = Math.cos(alpha);
