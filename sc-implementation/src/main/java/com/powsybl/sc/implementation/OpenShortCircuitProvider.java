@@ -189,22 +189,22 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         }
     }
 
-    private void fillBusResults(LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult, List<Complex> initialVoltages, double minVoltDropPercent) {
+    private void fillBusResults(LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult, List<Complex> initialVoltages, double minVoltDropProportional) {
         List<FortescueValue> dVoltages = scResult.getBusNum2Dv();
         for (LfBus lfBus : lfNetwork.getBuses()) {
             int num = lfBus.getNum();
             Complex initialVpu = initialVoltages.get(num);
             Complex dVpu = polar2Complex(dVoltages.get(num).getPositiveMagnitude(), dVoltages.get(num).getPositiveAngle());
-            double dropPercent = dVpu.abs() / initialVpu.abs();
+            double voltageDropProportional = dVpu.abs() / initialVpu.abs();
             Complex finalVpu = initialVpu.add(dVpu);
 
-            if (dropPercent >= minVoltDropPercent) {
+            if (voltageDropProportional >= minVoltDropProportional) {
                 String voltLevelId = lfBus.getVoltageLevelId();
                 String busId = lfBus.getId();
                 double nominalV = lfBus.getNominalV();
                 double initialV = nominalV * initialVpu.abs();
                 double finalV = nominalV * finalVpu.abs();
-                MagnitudeShortCircuitBusResults result = new MagnitudeShortCircuitBusResults(voltLevelId, busId, initialV, finalV, dropPercent);
+                MagnitudeShortCircuitBusResults result = new MagnitudeShortCircuitBusResults(voltLevelId, busId, initialV, finalV, voltageDropProportional);
                 busResults.add(result);
             }
         }

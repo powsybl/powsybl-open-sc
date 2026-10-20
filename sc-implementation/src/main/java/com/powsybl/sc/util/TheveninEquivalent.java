@@ -14,7 +14,6 @@ import com.powsybl.iidm.network.ThreeWindingsTransformer;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
-import com.powsybl.openloadflow.network.LfNetworkParameters;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
@@ -38,7 +37,7 @@ public class TheveninEquivalent {
     private final ImpedanceLinearResolution impedanceLinearResolution;
 
     public TheveninEquivalent(Network network, TheveninEquivalentParameters parameters) {
-        List<LfNetwork> lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), new LfNetworkParameters());
+        List<LfNetwork> lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), parameters.getAcLoadFlowParameters().getNetworkParameters());
         ShortCircuitExtensions.add(network, lfNetworks);
         LfNetwork lfNetwork = lfNetworks.getFirst();
         impedanceLinearResolution = new ImpedanceLinearResolution(lfNetwork, generateAdmittanceLinearResolutionParam(network, lfNetwork, parameters));
