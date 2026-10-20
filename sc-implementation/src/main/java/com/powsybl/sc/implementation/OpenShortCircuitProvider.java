@@ -10,8 +10,7 @@ package com.powsybl.sc.implementation;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Stopwatch;
 import com.powsybl.computation.ComputationManager;
-import com.powsybl.iidm.network.Bus;
-import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.*;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.loadflow.LoadFlowResult;
@@ -19,6 +18,7 @@ import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.openloadflow.network.LfBus;
+import com.powsybl.sc.util.CalculationLocation;
 import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.contingency.violations.LimitViolation;
 import com.powsybl.shortcircuit.*;
@@ -178,10 +178,6 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         for (Fault fault : faults) {
             ShortCircuitFault.ShortCircuitType scType = ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND; // Default type
-            if (fault.getType() == Fault.Type.BRANCH) {
-                LOGGER.warn("Short circuit of type BRANCH not yet supported, fault: {} is ignored", fault.getId());
-                continue;
-            }
 
             if (fault.getFaultType() == Fault.FaultType.SINGLE_PHASE) {
                 existUnbalancedFaults = true;
@@ -199,20 +195,103 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 continue;
             }
 
-            // TODO : see how to get lfBus from iidm Bus
-            String elementId = fault.getElementId();
-
-            Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
-            ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
-            Bus bus = network.getBusBreakerView().getBus(elementId);
-            String busId = bus.getId();
-            ShortCircuitFault sc = new ShortCircuitFault(busId, busId, scz, scType);
-            balancedFaultsList.add(sc);
-
-            // TODO improve:
-            scFaultToFault.put(sc, fault);
-
+            fillFaultLists(fault, network, scType, balancedFaultsList, scFaultToFault);
         }
+
         return new Pair<>(existBalancedFaults, existUnbalancedFaults);
+    }
+
+    private void checkForBranchNominalVoltageCoherency(Network network, String busId1, String busId2) {
+        // TODO: to remove when different nominal voltages at branch sides are correctly handled
+        Bus bus1 = network.getBusBreakerView().getBus(busId1);
+        Bus bus2 = network.getBusBreakerView().getBus(busId2);
+
+        double nominalV1 = bus1.getVoltageLevel().getNominalV();
+        double nominalV2 = bus2.getVoltageLevel().getNominalV();
+
+        if (nominalV1 != nominalV2) {
+            LOGGER.warn("Default on a Branch connecting two Buses of different nominal voltages: A fictitious ideal transformer is added at side 1 of the branch");
+        }
+    }
+
+    private void fillFaultLists(Fault fault, Network network, ShortCircuitFault.ShortCircuitType scType, List<ShortCircuitFault> balancedFaultsList, Map<ShortCircuitFault, Fault> scFaultToFault) {
+        Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
+        ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
+
+        ShortCircuitFault sc;
+        // TODO : see how to get lfBus from iidm Bus
+        String elementId = fault.getElementId();
+
+        if (fault instanceof BranchFault branchFault) { // Branch fault
+            Pair<String, String> branchBusIds = getBranchBusIdsFromElementId(elementId, fault.getId(), network);
+
+            if (branchBusIds == null) {
+                return;
+            }
+
+            CalculationLocation location = new CalculationLocation(branchBusIds.getKey(), branchBusIds.getValue(), branchFault.getProportionalLocation());
+            sc = new ShortCircuitFault(location, branchFault.getId(), elementId, scz, scType);
+            checkForBranchNominalVoltageCoherency(network, branchBusIds.getKey(), branchBusIds.getValue());
+        } else { //Bus fault
+            String busId = getBusId(elementId, fault.getId(), network);
+
+            if (busId == null) {
+                return;
+            }
+
+            sc = new ShortCircuitFault(busId, fault.getId(), elementId, scz, scType);
+        }
+
+        balancedFaultsList.add(sc);
+        scFaultToFault.put(sc, fault);
+    }
+
+    private static Pair<String, String> getBranchBusIdsFromElementId(String elementId, String faultId, Network network) {
+        Identifiable<?> element = network.getIdentifiable(elementId);
+
+        if (element == null) {
+            LOGGER.warn("Element '{}' not found in the network. Fault '{}' is ignored.", elementId, faultId);
+            return null;
+        }
+
+        if (!(element instanceof Branch<?> branch)) {
+            LOGGER.warn("Element '{}' is not a branch. Fault '{}' is ignored.", elementId, faultId);
+            return null;
+        }
+
+        Bus bus1 = branch.getTerminal1().getBusBreakerView().getBus();
+        Bus bus2 = branch.getTerminal2().getBusBreakerView().getBus();
+
+        if (bus1 == null) {
+            LOGGER.warn(
+                    "Terminal1 of branch '{}' is not connected to a bus. Fault '{}' is ignored.",
+                    elementId, faultId);
+            return null;
+        }
+
+        if (bus2 == null) {
+            LOGGER.warn(
+                    "Terminal2 of branch '{}' is not connected to a bus. Fault '{}' is ignored.",
+                    elementId, faultId);
+            return null;
+        }
+
+        return new Pair<>(bus1.getId(), bus2.getId());
+    }
+
+    private static String getBusId(String elementId, String faultId, Network network) {
+        Identifiable<?> element = network.getIdentifiable(elementId);
+
+        if (element == null) {
+            LOGGER.warn("Element '{}' not found in network. Fault '{}' is ignored.", elementId, faultId);
+            return null;
+        }
+
+        if (element instanceof Bus bus) {
+            return bus.getId();
+        }
+
+        LOGGER.warn("'{}' is not the id of a bus. Fault '{}' is ignored.", elementId, faultId);
+        return null;
     }
 }
