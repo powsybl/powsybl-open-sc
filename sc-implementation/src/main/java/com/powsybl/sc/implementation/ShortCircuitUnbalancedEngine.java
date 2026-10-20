@@ -167,9 +167,6 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                                 throw new IllegalArgumentException(" short circuit fault of type : " + scf.getBiphasedType() + " not yet handled");
                             }
 
-                            // biCsSc.computeCurrents();
-                            // biphasedCommonCalculator.computeVoltages();
-                            // LfBus lfBus2 = biphasedDirectResult.getBus2();
                             Complex v2dInit = biphasedDirectResult.getV2();
 
                             res = buildUnbalancedCommunSuppportResult(biCsSc.getId(), biCsSc.getIo(), biCsSc.getIi(),
