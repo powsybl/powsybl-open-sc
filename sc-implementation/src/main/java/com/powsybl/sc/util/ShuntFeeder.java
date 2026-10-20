@@ -13,6 +13,8 @@ import com.powsybl.iidm.network.ShuntCompensator;
 import com.powsybl.openloadflow.network.LfBus;
 import org.apache.commons.math3.complex.Complex;
 
+import static com.powsybl.openloadflow.util.PerUnit.SB;
+
 /**
  * @author Hadrien Godard <hadrien.godard at artelys.com>
  */
@@ -53,8 +55,8 @@ public class ShuntFeeder extends AbstractFeeder {
         double p = 0.;
         double q = 0.;
         for (ShuntCompensator shunt : bus.getShuntCompensators()) {
-            p += shunt.getTerminal().getP();
-            q += shunt.getTerminal().getQ();
+            p += shunt.getTerminal().getP() / SB;
+            q += shunt.getTerminal().getQ() / SB;
         }
 
         return computeCurrent(v, phi, p, q);

@@ -24,14 +24,14 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.powsybl.openloadflow.util.PerUnit.SB;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public final class AdmittanceEquationSystem {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdmittanceEquationSystem.class);
-
-    private static final double SB = 100.;
 
     private static final double EPSILON = 0.00000001;
 
