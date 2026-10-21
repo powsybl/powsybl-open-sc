@@ -17,6 +17,7 @@ import com.powsybl.sc.util.ImpedanceLinearResolutionParameters;
 import org.apache.commons.math3.complex.Complex;
 
 import java.util.Map;
+import static com.powsybl.sc.util.ShortCircuitHelper.isLfBusInInnerZone;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -87,7 +88,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                 Complex zth20hz = linearResolutionResult.getZthEq20Hz();
 
                 ShortCircuitResult res = new ShortCircuitResult(scf, bus, id, zth, vInit, dv, linearResolutionResult.getEqSysFeeders(), parameters.getNorm(), zth20hz);
-                if (parameters.isVoltageUpdate()) {
+                if (parameters.isVoltageUpdate() && isLfBusInInnerZone(bus, network, parameters.getInnerZoneBusIds())) {
                     //we get the lfNetwork to process the results
                     res.setLfNetwork(lfNetwork);
 

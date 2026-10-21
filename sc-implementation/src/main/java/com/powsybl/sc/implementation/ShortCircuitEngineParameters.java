@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.powsybl.sc.extensions.ShortCircuitConstants.*;
+import static com.powsybl.sc.util.ShortCircuitHelper.getOrDefaultOpenScParameters;
 import static com.powsybl.shortcircuit.ShortCircuitConstants.*;
 
 /**
@@ -46,11 +47,11 @@ public final class ShortCircuitEngineParameters {
     private InitialVoltageProfileMode vProfile = DEFAULT_INITIAL_VOLTAGE_PROFILE_MODE;
     private List<VoltageRange> vConfiguredRanges = Collections.emptyList();
     private StudyType studyType = DEFAULT_STUDY_TYPE;
-    private boolean ignoreShunts = !DEFAULT_WITH_SHUNT_COMPENSATORS;
-    private boolean ignoreLoads = !DEFAULT_WITH_LOADS;
-    private boolean ignoreCapacities = !DEFAULT_WITH_CAPACITIES;
-    private boolean ignoreResistances = !DEFAULT_WITH_RESISTANCES;
-    private boolean isWithNeutralPosition = DEFAULT_WITH_NEUTRAL_POSITION;
+    private boolean withShuntCompensators = DEFAULT_WITH_SHUNT_COMPENSATORS;
+    private boolean withLoads = DEFAULT_WITH_LOADS;
+    private boolean withCapacities = DEFAULT_WITH_CAPACITIES;
+    private boolean withResistances = DEFAULT_WITH_RESISTANCES;
+    private boolean withNeutralPosition = DEFAULT_WITH_NEUTRAL_POSITION;
     private Set<String> innerZoneBusIds = Collections.emptySet();
     private GeneratorSelectionMode innerZoneGeneratorSelectionMode = DEFAULT_INNER_ZONE_GENERATOR_SELECTION_MODE;
     private GeneratorSelectionMode outerZoneGeneratorSelectionMode = DEFAULT_OUTER_ZONE_GENERATOR_SELECTION_MODE;
@@ -75,22 +76,16 @@ public final class ShortCircuitEngineParameters {
                 .setVoltageProfileType(scParameters.getInitialVoltageProfileMode())
                 .setConfiguredVoltageRanges(scParameters.getVoltageRanges())
                 .setStudyType(scParameters.getStudyType())
-                .setIgnoreShunts(!scParameters.isWithShuntCompensators())
-                .setIgnoreLoads(!scParameters.isWithLoads())
-                .setIgnoreCapacities(!openScParameters.isWithCapacities())
-                .setIgnoreResistances(!openScParameters.isWithResistances())
+                .setWithShuntCompensators(scParameters.isWithShuntCompensators())
+                .setWithLoads(scParameters.isWithLoads())
+                .setWithCapacities(openScParameters.isWithCapacities())
+                .setWithResistances(openScParameters.isWithResistances())
                 .setWithNeutralPosition(scParameters.isWithNeutralPosition())
                 .setInnerZoneBusIds(openScParameters.getInnerZoneBusIds())
                 .setInnerZoneGeneratorSelectionMode(openScParameters.getInnerZoneGeneratorSelectionMode())
                 .setOuterZoneGeneratorSelectionMode(openScParameters.getOuterZoneGeneratorSelectionMode())
                 .setInnerZoneRunningGeneratorThreshold(openScParameters.getInnerZoneRunningGeneratorThreshold())
                 .setOuterZoneRunningGeneratorThreshold(openScParameters.getOuterZoneRunningGeneratorThreshold());
-    }
-
-    private static OpenShortCircuitParameters getOrDefaultOpenScParameters(ShortCircuitParameters scParameters) {
-        OpenShortCircuitParameters openScParameters = Objects.requireNonNull(scParameters)
-                .getExtension(OpenShortCircuitParameters.class);
-        return openScParameters != null ? openScParameters : new OpenShortCircuitParameters();
     }
 
     public LoadFlowParameters getLoadFlowParameters() {
@@ -163,48 +158,48 @@ public final class ShortCircuitEngineParameters {
         return this;
     }
 
-    public boolean isIgnoreShunts() {
-        return ignoreShunts;
+    public boolean isWithShuntCompensators() {
+        return withShuntCompensators;
     }
 
-    public ShortCircuitEngineParameters setIgnoreShunts(boolean ignoreShunts) {
-        this.ignoreShunts = ignoreShunts;
+    public ShortCircuitEngineParameters setWithShuntCompensators(boolean withShuntCompensators) {
+        this.withShuntCompensators = withShuntCompensators;
         return this;
     }
 
-    public boolean isIgnoreLoads() {
-        return ignoreLoads;
+    public boolean isWithLoads() {
+        return withLoads;
     }
 
-    public ShortCircuitEngineParameters setIgnoreLoads(boolean ignoreLoads) {
-        this.ignoreLoads = ignoreLoads;
+    public ShortCircuitEngineParameters setWithLoads(boolean withLoads) {
+        this.withLoads = withLoads;
         return this;
     }
 
-    public boolean isIgnoreCapacities() {
-        return ignoreCapacities;
+    public boolean isWithCapacities() {
+        return withCapacities;
     }
 
-    public ShortCircuitEngineParameters setIgnoreCapacities(boolean ignoreCapacities) {
-        this.ignoreCapacities = ignoreCapacities;
+    public ShortCircuitEngineParameters setWithCapacities(boolean withCapacities) {
+        this.withCapacities = withCapacities;
         return this;
     }
 
-    public boolean isIgnoreResistances() {
-        return ignoreResistances;
+    public boolean isWithResistances() {
+        return withResistances;
     }
 
-    public ShortCircuitEngineParameters setIgnoreResistances(boolean ignoreResistances) {
-        this.ignoreResistances = ignoreResistances;
+    public ShortCircuitEngineParameters setWithResistances(boolean withResistances) {
+        this.withResistances = withResistances;
         return this;
     }
 
     public boolean isWithNeutralPosition() {
-        return isWithNeutralPosition;
+        return withNeutralPosition;
     }
 
     public ShortCircuitEngineParameters setWithNeutralPosition(boolean withNeutralPosition) {
-        this.isWithNeutralPosition = withNeutralPosition;
+        this.withNeutralPosition = withNeutralPosition;
         return this;
     }
 

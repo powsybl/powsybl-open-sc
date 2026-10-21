@@ -7,7 +7,6 @@
  */
 package com.powsybl.sc.util;
 
-import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Generator;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openloadflow.ac.AcLoadFlowContext;
@@ -16,7 +15,6 @@ import com.powsybl.openloadflow.ac.AcloadFlowEngine;
 import com.powsybl.openloadflow.equations.EquationSystem;
 import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.*;
-import com.powsybl.openloadflow.util.PerUnit;
 import com.powsybl.sc.extensions.GeneratorSelectionMode;
 import com.powsybl.sc.util.extensions.ScGenerator;
 import com.powsybl.sc.util.extensions.ScLoad;
@@ -28,9 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
+import static com.powsybl.openloadflow.util.PerUnit.SB;
+import static com.powsybl.sc.util.ShortCircuitHelper.isLfBusInInnerZone;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -39,8 +38,6 @@ public final class AdmittanceEquationSystem {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdmittanceEquationSystem.class);
 
-    private static final double SB = 100.;
-
     private static final double EPSILON = 0.00000001;
 
     private AdmittanceEquationSystem() {
@@ -48,20 +45,20 @@ public final class AdmittanceEquationSystem {
 
     //Equations are created based on the branches connections
     private static void createImpedantBranch(VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
-                                             LfBranch branch, LfBus bus1, LfBus bus2, AdmittanceType admittanceType, boolean ignoreCapacities, boolean ignoreResistances, boolean isWithNeutralPosition, FrequencyType frequencyType) {
+                                             LfBranch branch, LfBus bus1, LfBus bus2, AdmittanceType admittanceType, boolean isWithCapacities, boolean isWithResistances, boolean isWithNeutralPosition, FrequencyType frequencyType) {
         if (bus1 != null && bus2 != null) {
             // Equation system Y*V = I (expressed in cartesian coordinates x,y)
             equationSystem.createEquation(bus1.getNum(), EquationType.BUS_YR)
-                    .addTerm(new AdmittanceEquationTermX1(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, ignoreResistances, isWithNeutralPosition, frequencyType));
+                    .addTerm(new AdmittanceEquationTermX1(branch, bus1, bus2, variableSet, admittanceType, isWithCapacities, isWithResistances, isWithNeutralPosition, frequencyType));
 
             equationSystem.createEquation(bus1.getNum(), EquationType.BUS_YI)
-                    .addTerm(new AdmittanceEquationTermY1(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, ignoreResistances, isWithNeutralPosition, frequencyType));
+                    .addTerm(new AdmittanceEquationTermY1(branch, bus1, bus2, variableSet, admittanceType, isWithCapacities, isWithResistances, isWithNeutralPosition, frequencyType));
 
             equationSystem.createEquation(bus2.getNum(), EquationType.BUS_YR)
-                    .addTerm(new AdmittanceEquationTermX2(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, ignoreResistances, isWithNeutralPosition, frequencyType));
+                    .addTerm(new AdmittanceEquationTermX2(branch, bus1, bus2, variableSet, admittanceType, isWithCapacities, isWithResistances, isWithNeutralPosition, frequencyType));
 
             equationSystem.createEquation(bus2.getNum(), EquationType.BUS_YI)
-                    .addTerm(new AdmittanceEquationTermY2(branch, bus1, bus2, variableSet, admittanceType, ignoreCapacities, ignoreResistances, isWithNeutralPosition, frequencyType));
+                    .addTerm(new AdmittanceEquationTermY2(branch, bus1, bus2, variableSet, admittanceType, isWithCapacities, isWithResistances, isWithNeutralPosition, frequencyType));
         }
     }
 
@@ -78,7 +75,7 @@ public final class AdmittanceEquationSystem {
         FREQ_50_HZ
     }
 
-    private static void createBranches(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem, AdmittanceType admittanceType, boolean ignoreCapacities, boolean ignoreResistances, boolean isWithNeutralPosition, FrequencyType frequencyType) {
+    private static void createBranches(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem, AdmittanceType admittanceType, boolean isWithCapacities, boolean isWithResistances, boolean isWithNeutralPosition, FrequencyType frequencyType) {
         for (LfBranch branch : network.getBranches()) {
             LfBus bus1 = branch.getBus1();
             LfBus bus2 = branch.getBus2();
@@ -89,7 +86,7 @@ public final class AdmittanceEquationSystem {
                             branch.getId());
                 }
             } else {
-                createImpedantBranch(variableSet, equationSystem, branch, bus1, bus2, admittanceType, ignoreCapacities, ignoreResistances, isWithNeutralPosition, frequencyType);
+                createImpedantBranch(variableSet, equationSystem, branch, bus1, bus2, admittanceType, isWithCapacities, isWithResistances, isWithNeutralPosition, frequencyType);
             }
         }
     }
@@ -121,10 +118,9 @@ public final class AdmittanceEquationSystem {
 
     private static Complex getYtransfromRdXdAndUpdateFeederList(Network network, LfBus bus, ImpedanceLinearResolutionParameters parameters, StudyType admittanceStudyType, List<Feeder> feederList, AdmittanceType admittanceType) {
         double vnomVl = bus.getNominalV();
-        Set<String> innerZoneLfBusIds = getLfBusIdsFromIidmBusId(network, parameters.getInnerZoneBusIds());
         Complex tmpY = new Complex(0.);
         for (LfGenerator lfgen : bus.getGenerators()) { //compute R'd or R"d from generators at bus
-            if (!isGeneratorSelected(lfgen, innerZoneLfBusIds, parameters, network)) {
+            if (!isGeneratorSelected(lfgen, parameters, network)) {
                 continue;
             }
             ScGenerator scGen = (ScGenerator) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
@@ -158,8 +154,8 @@ public final class AdmittanceEquationSystem {
     private static void createShunts(Network network, LfNetwork lfNetwork, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
                                      ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, FrequencyType frequencyType) {
         AdmittanceType admittanceType = parameters.getAdmittanceType();
-        boolean isShuntsIgnore = parameters.isTheveninIgnoreShunts();
-        boolean isLoadsIgnore = parameters.isTheveninIgnoreLoads();
+        boolean isWithShuntCompensators = parameters.isWithShuntCompensators();
+        boolean isWithLoads = parameters.isWithLoads();
         StudyType admittanceStudyType = parameters.getStudyType();
 
         for (LfBus bus : lfNetwork.getBuses()) {
@@ -172,11 +168,11 @@ public final class AdmittanceEquationSystem {
             boolean isBusPv = bus.isVoltageControlled();
 
             if (admittanceType == AdmittanceType.ADM_SHUNT) {
-                if (!isShuntsIgnore) {
+                if (isWithShuntCompensators) {
                     y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
                 }
             } else if (admittanceType == AdmittanceType.ADM_ADMIT) {
-                if (!isShuntsIgnore) {
+                if (isWithShuntCompensators) {
                     y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
                 }
 
@@ -197,12 +193,12 @@ public final class AdmittanceEquationSystem {
 
                 List<Feeder> feederList = new ArrayList<>();
 
-                if (!isShuntsIgnore) {
+                if (isWithShuntCompensators) {
                     // Handling shunts that physically exist
                     y = new Complex(0., getBfromShuntAndUpdateFeederList(bus, feederList)); // ! updates feederList
                 }
 
-                if (!isLoadsIgnore) {
+                if (isWithLoads) {
                     ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
                     yLoadEq = scLoad.ydEquivalent().divide(v.abs() * v.abs());
 
@@ -265,7 +261,7 @@ public final class AdmittanceEquationSystem {
             }
         }
 
-        createBranches(lfNetwork, variableSet, equationSystem, admittanceType, parameters.isTheveninIgnoreCapacities(), parameters.isTheveninIgnoreResistances(), isWithNeutralPosition, frequencyType);
+        createBranches(lfNetwork, variableSet, equationSystem, admittanceType, parameters.isWithCapacities(), parameters.isWithResistances(), isWithNeutralPosition, frequencyType);
         if (admittanceType != AdmittanceType.ADM_INJ) { //shunts created in the admittance matrix are only those that really exist in the network
             createShunts(network, lfNetwork, variableSet, equationSystem, parameters, feeders, frequencyType);
         }
@@ -273,26 +269,10 @@ public final class AdmittanceEquationSystem {
         return equationSystem;
     }
 
-    static Set<String> getLfBusIdsFromIidmBusId(Network network, Set<String> innerZoneBusIds) {
-        Set<String> lfBusIds = new HashSet<>();
-        for (String busId : innerZoneBusIds) {
-            Bus busBreakerBus = network.getBusBreakerView().getBus(busId);
-            if (busBreakerBus == null) {
-                LOGGER.warn("Inner zone bus {} not found in the network, it is ignored", busId);
-                continue;
-            }
-            Bus mergedBus = busBreakerBus.getVoltageLevel().getBusView().getMergedBus(busId);
-            if (mergedBus != null) {
-                lfBusIds.add(mergedBus.getId());
-            }
-        }
-        return lfBusIds;
-    }
-
-    static boolean isGeneratorSelected(LfGenerator generator, Set<String> innerZoneLfBusIds,
-                                       ImpedanceLinearResolutionParameters parameters, Network network) {
+    static boolean isGeneratorSelected(LfGenerator generator, ImpedanceLinearResolutionParameters parameters, Network network) {
         LfBus bus = generator.getBus();
-        boolean inInnerZone = parameters.getInnerZoneGeneratorSelectionMode().equals(GeneratorSelectionMode.ALL) || bus != null && innerZoneLfBusIds.contains(bus.getId());
+        // Note: if the set innerZoneBusIds is empty (by default), it is interpreted as the whole network
+        boolean inInnerZone = isLfBusInInnerZone(bus, network, parameters.getInnerZoneBusIds());
 
         GeneratorSelectionMode mode = inInnerZone
                 ? parameters.getInnerZoneGeneratorSelectionMode()
@@ -303,18 +283,21 @@ public final class AdmittanceEquationSystem {
 
         // Synchronous condensers always contribute to the fault current, whatever their active power
         Generator iidmGenerator = network.getGenerator(generator.getOriginalId());
-        if (iidmGenerator != null && iidmGenerator.isCondenser()) {
+        if (iidmGenerator == null) {
+            return false;
+        }
+        if (iidmGenerator.isCondenser()) {
             return true;
         }
 
         double threshold = inInnerZone
                 ? parameters.getInnerZoneRunningGeneratorThreshold()
                 : parameters.getOuterZoneRunningGeneratorThreshold();
-        double absTargetPMw = Math.abs(generator.getTargetP() * PerUnit.SB); // LF values are in per unit
-        boolean running = absTargetPMw > threshold;
+        double absGeneratorPMw = Math.abs(iidmGenerator.getTerminal().getP());
+        boolean running = absGeneratorPMw > threshold;
         if (!running) {
             LOGGER.info("Generator {} is not running (|P| = {} MW <= threshold {} MW) and is not taken into account",
-                    generator.getOriginalId(), absTargetPMw, threshold);
+                    generator.getOriginalId(), absGeneratorPMw, threshold);
         }
         return running;
     }

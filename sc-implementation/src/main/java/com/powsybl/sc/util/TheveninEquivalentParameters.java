@@ -36,11 +36,11 @@ public class TheveninEquivalentParameters {
     private boolean voltageUpdate = DEFAULT_WITH_VOLTAGE_RESULT;
     private InitialVoltageProfileMode theveninVoltageProfileType = DEFAULT_INITIAL_VOLTAGE_PROFILE_MODE;
     private StudyType theveninStudyType = DEFAULT_STUDY_TYPE;
-    private boolean theveninIgnoreShunts = !DEFAULT_WITH_SHUNT_COMPENSATORS;
-    private boolean theveninIgnoreLoads = !DEFAULT_WITH_LOADS;
-    private boolean theveninIgnoreCapacities = !DEFAULT_WITH_CAPACITIES;
-    private boolean theveninIgnoreResistances = !DEFAULT_WITH_RESISTANCES;
-    private boolean isWithNeutralPosition = DEFAULT_WITH_NEUTRAL_POSITION;
+    private boolean withShuntCompensators = DEFAULT_WITH_SHUNT_COMPENSATORS;
+    private boolean withLoads = DEFAULT_WITH_LOADS;
+    private boolean withCapacities = DEFAULT_WITH_CAPACITIES;
+    private boolean withResistances = DEFAULT_WITH_RESISTANCES;
+    private boolean withNeutralPosition = DEFAULT_WITH_NEUTRAL_POSITION;
     private Set<String> innerZoneBusIds = Collections.emptySet();
     private GeneratorSelectionMode innerZoneGeneratorSelectionMode = DEFAULT_INNER_ZONE_GENERATOR_SELECTION_MODE;
     private GeneratorSelectionMode outerZoneGeneratorSelectionMode = DEFAULT_OUTER_ZONE_GENERATOR_SELECTION_MODE;
@@ -93,48 +93,48 @@ public class TheveninEquivalentParameters {
         return this;
     }
 
-    public boolean isTheveninIgnoreShunts() {
-        return theveninIgnoreShunts;
+    public boolean isWithShuntCompensators() {
+        return withShuntCompensators;
     }
 
-    public TheveninEquivalentParameters setTheveninIgnoreShunts(boolean theveninIgnoreShunts) {
-        this.theveninIgnoreShunts = theveninIgnoreShunts;
+    public TheveninEquivalentParameters setWithShuntCompensators(boolean withShuntCompensators) {
+        this.withShuntCompensators = withShuntCompensators;
         return this;
     }
 
-    public boolean isTheveninIgnoreLoads() {
-        return theveninIgnoreLoads;
+    public boolean isWithLoads() {
+        return withLoads;
     }
 
-    public TheveninEquivalentParameters setTheveninIgnoreLoads(boolean theveninIgnoreLoads) {
-        this.theveninIgnoreLoads = theveninIgnoreLoads;
+    public TheveninEquivalentParameters setWithLoads(boolean withLoads) {
+        this.withLoads = withLoads;
         return this;
     }
 
-    public boolean isTheveninIgnoreCapacities() {
-        return theveninIgnoreCapacities;
+    public boolean isWithCapacities() {
+        return withCapacities;
     }
 
-    public TheveninEquivalentParameters setTheveninIgnoreCapacities(boolean theveninIgnoreCapacities) {
-        this.theveninIgnoreCapacities = theveninIgnoreCapacities;
+    public TheveninEquivalentParameters setWithCapacities(boolean withCapacities) {
+        this.withCapacities = withCapacities;
         return this;
     }
 
-    public boolean isTheveninIgnoreResistances() {
-        return theveninIgnoreResistances;
+    public boolean isWithResistances() {
+        return withResistances;
     }
 
-    public TheveninEquivalentParameters setTheveninIgnoreResistances(boolean theveninIgnoreResistances) {
-        this.theveninIgnoreResistances = theveninIgnoreResistances;
+    public TheveninEquivalentParameters setWithResistances(boolean withResistances) {
+        this.withResistances = withResistances;
         return this;
     }
 
     public boolean isWithNeutralPosition() {
-        return isWithNeutralPosition;
+        return withNeutralPosition;
     }
 
     public TheveninEquivalentParameters setWithNeutralPosition(boolean withNeutralPosition) {
-        this.isWithNeutralPosition = withNeutralPosition;
+        this.withNeutralPosition = withNeutralPosition;
         return this;
     }
 

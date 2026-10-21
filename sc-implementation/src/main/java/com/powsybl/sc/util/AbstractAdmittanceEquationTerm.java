@@ -58,7 +58,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
     protected double freqCoef;
 
-    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, boolean ignoreCapacities, boolean ignoreResistances, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
+    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, boolean isWithCapacities, boolean isWithResistances, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
         super(branch);
         Objects.requireNonNull(bus1);
         Objects.requireNonNull(bus2);
@@ -126,7 +126,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
         }
 
-        if (ignoreResistances) {
+        if (!isWithResistances) {
             r = 0.0;
         }
 
@@ -140,10 +140,10 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         cos2A = Math.cos(2 * alpha);
         sin2A = Math.sin(2 * alpha);
 
-        gPi1 = ignoreCapacities ? 0.0 : piModel.getG1() / kTr;
-        bPi1 = ignoreCapacities ? 0.0 : piModel.getB1() / kTx;
-        gPi2 = ignoreCapacities ? 0.0 : piModel.getG2() / kTr;
-        bPi2 = ignoreCapacities ? 0.0 : piModel.getB2() / kTx;
+        gPi1 = isWithCapacities ? piModel.getG1() / kTr : 0.0;
+        bPi1 = isWithCapacities ? piModel.getB1() / kTx : 0.0;
+        gPi2 = isWithCapacities ? piModel.getG2() / kTr : 0.0;
+        bPi2 = isWithCapacities ? piModel.getB2() / kTx : 0.0;
     }
 
     @Override

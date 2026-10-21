@@ -26,7 +26,7 @@ import static com.powsybl.shortcircuit.ShortCircuitConstants.*;
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
-public class ImpedanceLinearResolutionParameters {
+public final class ImpedanceLinearResolutionParameters {
 
     public static final double XSUBTRANSIENT = 0.2; //default value if data not available
 
@@ -39,11 +39,11 @@ public class ImpedanceLinearResolutionParameters {
     private List<CalculationLocation> biphasedCalculationLocations = Collections.emptyList(); // calculation locations where 2 buses are required in input
     private boolean voltageUpdate = DEFAULT_WITH_VOLTAGE_RESULT;
     private StudyType studyType = StudyType.SUB_TRANSIENT;
-    private boolean ignoreShunts = !DEFAULT_WITH_SHUNT_COMPENSATORS;
-    private boolean ignoreLoads = !DEFAULT_WITH_LOADS;
-    private boolean ignoreCapacities = !DEFAULT_WITH_CAPACITIES;
-    private boolean ignoreResistances = !DEFAULT_WITH_RESISTANCES;
-    private boolean isWithNeutralPosition = DEFAULT_WITH_NEUTRAL_POSITION;
+    private boolean withShuntCompensators = DEFAULT_WITH_SHUNT_COMPENSATORS;
+    private boolean withLoads = DEFAULT_WITH_LOADS;
+    private boolean withCapacities = DEFAULT_WITH_CAPACITIES;
+    private boolean withResistances = DEFAULT_WITH_RESISTANCES;
+    private boolean withNeutralPosition = DEFAULT_WITH_NEUTRAL_POSITION;
     private Set<String> innerZoneBusIds = Collections.emptySet();
     private GeneratorSelectionMode innerZoneGeneratorSelectionMode = DEFAULT_INNER_ZONE_GENERATOR_SELECTION_MODE;
     private GeneratorSelectionMode outerZoneGeneratorSelectionMode = DEFAULT_OUTER_ZONE_GENERATOR_SELECTION_MODE;
@@ -96,10 +96,10 @@ public class ImpedanceLinearResolutionParameters {
         Objects.requireNonNull(scParameters);
         setVoltageUpdate(scParameters.isVoltageUpdate())
                 .setStudyType(scParameters.getStudyType())
-                .setIgnoreShunts(scParameters.isIgnoreShunts())
-                .setIgnoreLoads(scParameters.isIgnoreLoads())
-                .setIgnoreCapacities(scParameters.isIgnoreCapacities())
-                .setIgnoreResistances(scParameters.isIgnoreResistances())
+                .setWithShuntCompensators(scParameters.isWithShuntCompensators())
+                .setWithLoads(scParameters.isWithLoads())
+                .setWithCapacities(scParameters.isWithCapacities())
+                .setWithResistances(scParameters.isWithResistances())
                 .setWithNeutralPosition(scParameters.isWithNeutralPosition())
                 .setInnerZoneBusIds(scParameters.getInnerZoneBusIds())
                 .setInnerZoneGeneratorSelectionMode(scParameters.getInnerZoneGeneratorSelectionMode())
@@ -112,10 +112,10 @@ public class ImpedanceLinearResolutionParameters {
         Objects.requireNonNull(thParameters);
         setVoltageUpdate(thParameters.isVoltageUpdate())
                 .setStudyType(thParameters.getTheveninStudyType())
-                .setIgnoreShunts(thParameters.isTheveninIgnoreShunts())
-                .setIgnoreLoads(thParameters.isTheveninIgnoreLoads())
-                .setIgnoreCapacities(thParameters.isTheveninIgnoreCapacities())
-                .setIgnoreResistances(thParameters.isTheveninIgnoreResistances())
+                .setWithShuntCompensators(thParameters.isWithShuntCompensators())
+                .setWithLoads(thParameters.isWithLoads())
+                .setWithCapacities(thParameters.isWithCapacities())
+                .setWithResistances(thParameters.isWithResistances())
                 .setWithNeutralPosition(thParameters.isWithNeutralPosition())
                 .setInnerZoneBusIds(thParameters.getInnerZoneBusIds())
                 .setInnerZoneGeneratorSelectionMode(thParameters.getInnerZoneGeneratorSelectionMode())
@@ -171,48 +171,48 @@ public class ImpedanceLinearResolutionParameters {
         return this;
     }
 
-    public boolean isTheveninIgnoreShunts() {
-        return ignoreShunts;
+    public boolean isWithShuntCompensators() {
+        return withShuntCompensators;
     }
 
-    public ImpedanceLinearResolutionParameters setIgnoreShunts(boolean ignoreShunts) {
-        this.ignoreShunts = ignoreShunts;
+    public ImpedanceLinearResolutionParameters setWithShuntCompensators(boolean withShuntCompensators) {
+        this.withShuntCompensators = withShuntCompensators;
         return this;
     }
 
-    public boolean isTheveninIgnoreLoads() {
-        return ignoreLoads;
+    public boolean isWithLoads() {
+        return withLoads;
     }
 
-    public ImpedanceLinearResolutionParameters setIgnoreLoads(boolean ignoreLoads) {
-        this.ignoreLoads = ignoreLoads;
+    public ImpedanceLinearResolutionParameters setWithLoads(boolean withLoads) {
+        this.withLoads = withLoads;
         return this;
     }
 
-    public boolean isTheveninIgnoreCapacities() {
-        return ignoreCapacities;
+    public boolean isWithCapacities() {
+        return withCapacities;
     }
 
-    public ImpedanceLinearResolutionParameters setIgnoreCapacities(boolean ignoreCapacities) {
-        this.ignoreCapacities = ignoreCapacities;
+    public ImpedanceLinearResolutionParameters setWithCapacities(boolean withCapacities) {
+        this.withCapacities = withCapacities;
         return this;
     }
 
-    public boolean isTheveninIgnoreResistances() {
-        return ignoreResistances;
+    public boolean isWithResistances() {
+        return withResistances;
     }
 
-    public ImpedanceLinearResolutionParameters setIgnoreResistances(boolean ignoreResistances) {
-        this.ignoreResistances = ignoreResistances;
+    public ImpedanceLinearResolutionParameters setWithResistances(boolean withResistances) {
+        this.withResistances = withResistances;
         return this;
     }
 
     public boolean isWithNeutralPosition() {
-        return isWithNeutralPosition;
+        return withNeutralPosition;
     }
 
     public ImpedanceLinearResolutionParameters setWithNeutralPosition(boolean withNeutralPosition) {
-        this.isWithNeutralPosition = withNeutralPosition;
+        this.withNeutralPosition = withNeutralPosition;
         return this;
     }
 

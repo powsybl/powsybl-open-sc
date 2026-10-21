@@ -66,8 +66,11 @@ public abstract class AbstractShortCircuitEngine {
         List<ShortCircuitFault> scfSystematic = new ArrayList<>();
         parameters.setVoltageUpdate(false);
         for (Bus bus : network.getBusBreakerView().getBuses()) {
-            ShortCircuitFault sc = new ShortCircuitFault(bus.getId(), bus.getId(), new ShortCircuitFaultImpedance(new Complex(0.)), type); //TODO : check validity of voltage levels if no connexity
-            scfSystematic.add(sc);
+            // Note: if the set innerZoneBusIds is empty (by default), it is interpreted as the whole network
+            if (parameters.getInnerZoneBusIds().isEmpty() || parameters.getInnerZoneBusIds().contains(bus.getId())) {
+                ShortCircuitFault sc = new ShortCircuitFault(bus.getId(), bus.getId(), new ShortCircuitFaultImpedance(new Complex(0.)), type); //TODO : check validity of voltage levels if no connexity
+                scfSystematic.add(sc);
+            }
         }
         parameters.setShortCircuitFaults(scfSystematic);
     }
@@ -88,7 +91,7 @@ public abstract class AbstractShortCircuitEngine {
                 if (scfe.getType() == ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
                     throw new IllegalArgumentException(" short circuit fault : " + busName + " must have a second voltage level defined because it is a common support fault");
                 }
-                Pair<String, Integer> branchFaultInfo = buildFaultBranchFromBusId(busName, network); // creates additional info for fault, identifying location through iidm branches instead of iidm busses to easily get lf busses
+                Pair<String, Integer> branchFaultInfo = buildFaultBranchFromBusId(busName, network); // creates additional info for fault, identifying location through iidm branches instead of iidm busses to easily get lf buses
                 scfe.setIidmBusInfo(branchFaultInfo); // the short circuit fault info is now enriched with the couple iidmBranchId + iidmBranchSide and not only the iidm bus name in order to be able to identify the busses in the LfNetwork
                 faultList.add(scfe);
 
@@ -115,7 +118,7 @@ public abstract class AbstractShortCircuitEngine {
 
     protected static Pair<String, Integer > buildFaultBranchFromBusId(String busId, Network tmpNetwork) {
         Pair<String, Integer > branchFaultInfo = buildFaultDipoleFromBusId(busId, tmpNetwork);
-        if (branchFaultInfo.getKey().equals("")) {
+        if (branchFaultInfo.getKey().isEmpty()) {
             // Bus not found in branches, try three windings transformers
             branchFaultInfo = buildFaultT3WbranchFromBusId(busId, tmpNetwork);
         }
@@ -123,7 +126,7 @@ public abstract class AbstractShortCircuitEngine {
     }
 
     protected static Pair<String, Integer > buildFaultDipoleFromBusId(String busId, Network tmpNetwork) {
-        // improve with direct correspondence between iidm busses and lfBusses when available in PowSyBl, because this loop is not very efficient
+        // improve with direct correspondence between iidm buses and lfBuses when available in PowSyBl, because this loop is not very efficient
         Bus bus = tmpNetwork.getBusBreakerView().getBus(busId);
         String branchId = "";
         int branchSide = 0;
@@ -152,7 +155,7 @@ public abstract class AbstractShortCircuitEngine {
     }
 
     protected static Pair<String, Integer> buildFaultT3WbranchFromBusId(String busId, Network tmpNetwork) {
-        // improve with direct correspondence between iidm busses and lfBusses when available in PowSyBl, because this loop is not very efficient
+        // improve with direct correspondence between iidm buses and lfBusses when available in PowSyBl, because this loop is not very efficient
         Bus bus = tmpNetwork.getBusBreakerView().getBus(busId);
         String branchId = "";
         int legNum = 0;

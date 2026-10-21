@@ -33,6 +33,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
+import static com.powsybl.sc.util.ShortCircuitHelper.getOrDefaultOpenScParameters;
+import static com.powsybl.sc.util.ShortCircuitHelper.isLfBusInInnerZone;
 import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
 
 /**
@@ -68,13 +70,15 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         Objects.requireNonNull(network);
         checkShortCircuitParametersConsistency(parameters);
+        OpenShortCircuitParameters openShortCircuitParameters = getOrDefaultOpenScParameters(parameters);
+        parameters.addExtension(OpenShortCircuitParameters.class, openShortCircuitParameters);
         Stopwatch stopwatch = Stopwatch.createStarted();
 
         // building of fault lists
         List<ShortCircuitFault> faultsList = new ArrayList<>();
         Map<ShortCircuitFault, Fault> scFaultToFault = new HashMap<>(); // for now we use this map to get the correspondence between short circuit provider and internal modelling of fault
 
-        Pair<Boolean, Boolean> faultTypes = buildFaultLists(network, faults, faultsList, scFaultToFault);
+        Pair<Boolean, Boolean> faultTypes = buildFaultLists(network, faults, faultsList, scFaultToFault, parameters);
         boolean existBalancedFaults = faultTypes.getKey();
         boolean existUnbalancedFaults = faultTypes.getValue();
 
@@ -144,7 +148,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
             List<ShortCircuitBusResults> busResults = new ArrayList<>();
             if (scbParameters.isVoltageUpdate()) {
-                fillBusResults(scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(), scbParameters.getMinVoltageDropPercent());
+                fillBusResults(network, scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(), scbParameters.getMinVoltageDropPercent(), scbParameters.getInnerZoneBusIds());
             }
             MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
@@ -186,32 +190,43 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         }
     }
 
-    private void fillBusResults(LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult, List<Complex> initialVoltages, double minVoltDropPercent) {
+    private void fillBusResults(Network network, LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult, List<Complex> initialVoltages, double minVoltDropPercent, Set<String> innerZoneBusIds) {
         List<FortescueValue> dVoltages = scResult.getBusNum2Dv();
         for (LfBus lfBus : lfNetwork.getBuses()) {
-            int num = lfBus.getNum();
-            Complex initialVpu = initialVoltages.get(num);
-            Complex dVpu = polar2Complex(dVoltages.get(num).getPositiveMagnitude(), dVoltages.get(num).getPositiveAngle());
-            double dropPercent = dVpu.abs() / initialVpu.abs();
-            Complex finalVpu = initialVpu.add(dVpu);
+            if (isLfBusInInnerZone(lfBus, network, innerZoneBusIds)) {
+                int num = lfBus.getNum();
+                Complex initialVpu = initialVoltages.get(num);
+                Complex dVpu = polar2Complex(dVoltages.get(num).getPositiveMagnitude(), dVoltages.get(num).getPositiveAngle());
+                double dropPercent = dVpu.abs() / initialVpu.abs();
+                Complex finalVpu = initialVpu.add(dVpu);
 
-            if (dropPercent >= minVoltDropPercent) {
-                String voltLevelId = lfBus.getVoltageLevelId();
-                String busId = lfBus.getId();
-                double nominalV = lfBus.getNominalV();
-                double initialV = nominalV * initialVpu.abs();
-                double finalV = nominalV * finalVpu.abs();
-                MagnitudeShortCircuitBusResults result = new MagnitudeShortCircuitBusResults(voltLevelId, busId, initialV, finalV, dropPercent);
-                busResults.add(result);
+                if (dropPercent >= minVoltDropPercent) {
+                    String voltLevelId = lfBus.getVoltageLevelId();
+                    String busId = lfBus.getId();
+                    double nominalV = lfBus.getNominalV();
+                    double initialV = nominalV * initialVpu.abs();
+                    double finalV = nominalV * finalVpu.abs();
+                    MagnitudeShortCircuitBusResults result = new MagnitudeShortCircuitBusResults(voltLevelId, busId, initialV, finalV, dropPercent);
+                    busResults.add(result);
+                }
             }
         }
     }
 
-    public Pair<Boolean, Boolean> buildFaultLists(Network network, List<Fault> faults, List<ShortCircuitFault> balancedFaultsList, Map<ShortCircuitFault, Fault> scFaultToFault) {
+    public Pair<Boolean, Boolean> buildFaultLists(Network network, List<Fault> faults, List<ShortCircuitFault> balancedFaultsList, Map<ShortCircuitFault, Fault> scFaultToFault, ShortCircuitParameters parameters) {
         boolean existBalancedFaults = false;
         boolean existUnbalancedFaults = false;
 
         for (Fault fault : faults) {
+            String elementId = fault.getElementId();
+            Bus bus = network.getBusBreakerView().getBus(elementId);
+
+            Set<String> innerZoneBusIds = parameters.getExtension(OpenShortCircuitParameters.class).getInnerZoneBusIds();
+
+            if (!innerZoneBusIds.isEmpty() && !innerZoneBusIds.contains(bus.getId())) {
+                continue;
+            }
+
             ShortCircuitFault.ShortCircuitType scType = ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND; // Default type
             if (fault.getType() == Fault.Type.BRANCH) {
                 LOGGER.warn("Short circuit of type BRANCH not yet supported, fault: {} is ignored", fault.getId());
@@ -235,11 +250,9 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             }
 
             // TODO : see how to get lfBus from iidm Bus
-            String elementId = fault.getElementId();
 
             Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
             ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
-            Bus bus = network.getBusBreakerView().getBus(elementId);
             String busId = bus.getId();
             ShortCircuitFault sc = new ShortCircuitFault(busId, busId, scz, scType);
             balancedFaultsList.add(sc);

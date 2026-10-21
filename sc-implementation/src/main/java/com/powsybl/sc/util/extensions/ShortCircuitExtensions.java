@@ -22,6 +22,7 @@ import org.apache.commons.math3.complex.Complex;
 import java.util.List;
 import java.util.Objects;
 
+import static com.powsybl.openloadflow.util.PerUnit.SB;
 import static com.powsybl.sc.extensions.FortescueConstants.*;
 import static com.powsybl.sc.extensions.ShortCircuitConstants.*;
 
@@ -34,8 +35,6 @@ public final class ShortCircuitExtensions {
     public static final String PROPERTY_HOMOPOLAR_MODEL = "HomopolarModel";
     public static final String PROPERTY_HOMOPOLAR_MODEL_20HZ = "HomopolarModel20hz";
     public static final String PROPERTY_SHORT_CIRCUIT_NORM = "ShortCircuitNorm";
-
-    private static final double SB = 100.;
 
     private static final double EPSILON = 0.00000001;
 
@@ -91,7 +90,7 @@ public final class ShortCircuitExtensions {
     }
 
     private static void addTransfo3Extension(Network network, LfBranch lfBranch, ShortCircuitNormExtensions shortCircuitNormExtensions) {
-        String t3wId = lfBranch.getOriginalIds().get(0);
+        String t3wId = lfBranch.getOriginalIds().getFirst();
         ThreeWindingsTransformer twt = network.getThreeWindingsTransformer(t3wId);
 
         double leg1Ro = twt.getLeg1().getR();
