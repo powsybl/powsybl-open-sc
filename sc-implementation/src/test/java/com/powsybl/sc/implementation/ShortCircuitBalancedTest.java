@@ -15,7 +15,6 @@ import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
-import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.sc.util.extensions.ThreeWindingsTransformerNorm;
@@ -35,11 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class ShortCircuitBalancedTest {
 
-    private LoadFlowParameters parameters;
-
     private MatrixFactory matrixFactory;
-
-    private LoadFlow.Runner loadFlowRunner;
 
     private static final double DELTA_I_A = 1e-2;
     private static final double DELTA_I_KA = DELTA_I_A / 1e3; // For tests not using Core API -> to be replaced
@@ -49,29 +44,38 @@ public class ShortCircuitBalancedTest {
 
     private LoadFlowParameters loadFlowParameters;
 
+    private ShortCircuitAnalysisProvider provider;
+
+    private ComputationManager cm;
+
+    private ShortCircuitParameters scp;
+
     @BeforeEach
     void setUp() {
-        parameters = new LoadFlowParameters();
         matrixFactory = new DenseMatrixFactory();
-        loadFlowParameters = LoadFlowParameters.load();
-        loadFlowParameters.setTwtSplitShuntAdmittance(true);
-        loadFlowRunner = new LoadFlow.Runner(new OpenLoadFlowProvider(matrixFactory));
+        loadFlowParameters = LoadFlowParameters.load()
+                .setTwtSplitShuntAdmittance(true);
+
+        provider = new OpenShortCircuitProvider(matrixFactory);
+
+        cm = LocalComputationManager.getDefault();
+
+        scp = new ShortCircuitParameters()
+                .setStudyType(StudyType.SUB_TRANSIENT);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
     }
 
     @Disabled
     @Test
     void computeIccTest() {
         Network nt2 = create2n(NetworkFactory.findDefault());
-        loadFlowRunner.run(nt2, parameters);
+        LoadFlow.run(nt2, loadFlowParameters);
 
         List<ShortCircuitFault> tmpV = new ArrayList<>();
         ShortCircuitFault sc2 = new ShortCircuitFault("B2", "sc2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         tmpV.add(sc2);
 
-        LoadFlowParameters loadFlowParameters = new LoadFlowParameters();
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+        scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
 
         ShortCircuitEngineParameters scbParameters =
                 new ShortCircuitEngineParameters(matrixFactory,
@@ -94,17 +98,9 @@ public class ShortCircuitBalancedTest {
     void openShortCircuitProvider2n() {
         Network nt2 = create2n(NetworkFactory.findDefault());
 
-        //set up ShortCircuitProvider info
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
-        ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
-
-        List<Fault> faults = new ArrayList<>();
-        BusFault bf1 = new BusFault("F1", "B1");
-        BusFault bf2 = new BusFault("F2", "B2");
-        faults.add(bf1);
-        faults.add(bf2);
+        List<Fault> faults = List.of(
+                new BusFault("F1", "B1"),
+                new BusFault("F2", "B2"));
 
         ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
 
@@ -132,12 +128,6 @@ public class ShortCircuitBalancedTest {
     void openShortCircuitProvider4n() {
         Network nt4 = create4nShunts(NetworkFactory.findDefault());
 
-        //set up ShortCircuitProvider info
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
-        ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
-
         ShortCircuitAnalysisResult scar = provider.run(nt4, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
 
         List<FaultResult> frs = scar.getFaultResults();
@@ -155,16 +145,8 @@ public class ShortCircuitBalancedTest {
         Network nt4 = create4nShunts(NetworkFactory.findDefault());
         LoadFlow.run(nt4, loadFlowParameters);
 
-        //set up ShortCircuitProvider info
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
-        ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setStudyType(StudyType.SUB_TRANSIENT)
-                .setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
-
+        scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
         ShortCircuitAnalysisResult scar = provider.run(nt4, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
-
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
@@ -178,17 +160,9 @@ public class ShortCircuitBalancedTest {
     void openShortCircuitProvider4nTfoLoadFlowInitialVoltages() {
         Network network4nTfo = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
         LoadFlow.run(network4nTfo, loadFlowParameters);
-
-        //set up ShortCircuitProvider info
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
-        ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setStudyType(StudyType.SUB_TRANSIENT)
-                .setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+        scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
 
         ShortCircuitAnalysisResult scar = provider.run(network4nTfo, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
-
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
@@ -200,23 +174,13 @@ public class ShortCircuitBalancedTest {
 
     @Test
     void openShortCircuitProvider2nTfo() {
-
         Network nt2 = create2nTfo(NetworkFactory.findDefault());
-        //set up ShortCircuitProvider info
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
-        ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
 
-        List<Fault> faults = new ArrayList<>();
-
-        BusFault bf1 = new BusFault("F1", "B1");
-        BusFault bf2 = new BusFault("F2", "B2");
-        faults.add(bf1);
-        faults.add(bf2);
+        List<Fault> faults = List.of(
+                new BusFault("F1", "B1"),
+                new BusFault("F2", "B2"));
 
         ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
-
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
@@ -227,26 +191,15 @@ public class ShortCircuitBalancedTest {
 
     @Test
     void openShortCircuitProvider2nTfoLoadFlowVoltages() {
-
         Network nt2Tfo = create2nTfo(NetworkFactory.findDefault());
         LoadFlow.run(nt2Tfo, loadFlowParameters);
-        //set up ShortCircuitProvider info
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
-        ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setStudyType(StudyType.SUB_TRANSIENT)
-                .setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+        scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
 
-        List<Fault> faults = new ArrayList<>();
-
-        BusFault bf1 = new BusFault("F1", "B1");
-        BusFault bf2 = new BusFault("F2", "B2");
-        faults.add(bf1);
-        faults.add(bf2);
+        List<Fault> faults = List.of(
+                new BusFault("F1", "B1"),
+                new BusFault("F2", "B2"));
 
         ShortCircuitAnalysisResult scar = provider.run(nt2Tfo, faults, scp, cm, Collections.emptyList()).join();
-
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs, new double[]{2945.155029296875, 1879.8883056640625});
@@ -264,23 +217,16 @@ public class ShortCircuitBalancedTest {
     void openShortCircuitProvider2nTfoConfiguredVoltages() {
         Network network2nTfo = create2nTfo(NetworkFactory.findDefault());
 
-        ComputationManager cm = LocalComputationManager.getDefault();
-        VoltageRange voltageRange1 = new VoltageRange(90, 110, 0.9);
-        VoltageRange voltageRange2 = new VoltageRange(140, 160, 1.1);
-        List<VoltageRange> configuredVoltageRanges = List.of(voltageRange1, voltageRange2);
+        scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.CONFIGURED)
+                .setVoltageRanges(List.of(
+                        new VoltageRange(90, 110, 0.9),
+                        new VoltageRange(140, 160, 1.1)));
 
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setInitialVoltageProfileMode(InitialVoltageProfileMode.CONFIGURED)
-                .setVoltageRanges(configuredVoltageRanges);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+        List<Fault> faults = List.of(
+                new BusFault("F1", "B1"),
+                new BusFault("F2", "B2"));
 
-        BusFault bf1 = new BusFault("F1", "B1");
-        BusFault bf2 = new BusFault("F2", "B2");
-        List<Fault> faults = List.of(bf1, bf2);
-
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ShortCircuitAnalysisResult scar = provider.run(network2nTfo, faults, scp, cm, Collections.emptyList()).join();
-
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
@@ -292,21 +238,14 @@ public class ShortCircuitBalancedTest {
 
     @Test
     void shortCircuitSystematic() {
+        Network network = create2n(NetworkFactory.findDefault());
+        List<ShortCircuitFault> faults = new ArrayList<>();
 
-        Network nt2 = create2n(NetworkFactory.findDefault());
-
-        MatrixFactory matrixFactory = new DenseMatrixFactory();
-
-        List<ShortCircuitFault> tmpV = new ArrayList<>();
-
-        ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
-        ShortCircuitParameters scp = new ShortCircuitParameters();
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC, tmpV, scp, shortCircuitNorm);
-        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(nt2, scbParameters);
-
+                ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC, faults, scp, new ShortCircuitNormNone());
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
         scbEngine.run();
+
         List<Double> val = new ArrayList<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
             val.add(res.getValue().getId().getReal());
@@ -319,34 +258,20 @@ public class ShortCircuitBalancedTest {
 
     @Test
     void shortCircuit8NodesIEC9094() {
-
         Network network = ReferenceNetwork.create8NodesIEC9094();
 
-        MatrixFactory matrixFactory = new DenseMatrixFactory();
-
-        Complex zFaultToGround = new Complex(0.);
-        ShortCircuitFaultImpedance scFaultz = new ShortCircuitFaultImpedance(zFaultToGround);
-        List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B1", "sc1", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B2", "sc2", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault("B3", "sc3", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault("B4", "sc4", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc4);
-        ShortCircuitFault sc5 = new ShortCircuitFault("B5", "sc5", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc5);
-        ShortCircuitFault sc6 = new ShortCircuitFault("B6", "sc6", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc6);
-        ShortCircuitFault sc7 = new ShortCircuitFault("B7", "sc7", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc7);
-        ShortCircuitFault sc8 = new ShortCircuitFault("B8", "sc8", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc8);
+        List<ShortCircuitFault> faultList = List.of(
+                createZeroImpedanceTriphasedGroundFault("sc1", "B1"),
+                createZeroImpedanceTriphasedGroundFault("sc2", "B2"),
+                createZeroImpedanceTriphasedGroundFault("sc3", "B3"),
+                createZeroImpedanceTriphasedGroundFault("sc4", "B4"),
+                createZeroImpedanceTriphasedGroundFault("sc5", "B5"),
+                createZeroImpedanceTriphasedGroundFault("sc6", "B6"),
+                createZeroImpedanceTriphasedGroundFault("sc7", "B7"),
+                createZeroImpedanceTriphasedGroundFault("sc8", "B8"));
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitParameters scp = new ShortCircuitParameters();
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+        scp.setStudyType(StudyType.TRANSIENT);
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, shortCircuitNormIec);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
@@ -437,22 +362,14 @@ public class ShortCircuitBalancedTest {
 
     @Test
     void shortCircuit6NodesIEC9094subtransient() {
-
         Network network = ReferenceNetwork.create6NodesIec9094();
 
-        MatrixFactory matrixFactory = new DenseMatrixFactory();
-
-        List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "F2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault("B6", "F3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc3);
+        List<ShortCircuitFault> faultList = List.of(
+                createZeroImpedanceTriphasedGroundFault("F1", "B3"),
+                createZeroImpedanceTriphasedGroundFault("F2", "B4"),
+                createZeroImpedanceTriphasedGroundFault("F3", "B6"));
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitParameters scp = new ShortCircuitParameters();
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, shortCircuitNormIec);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
@@ -479,25 +396,15 @@ public class ShortCircuitBalancedTest {
 
     @Test
     void shortCircuitSubTransientReference() {
-
         Network network = ReferenceNetwork.createShortCircuitReference();
 
-        MatrixFactory matrixFactory = new DenseMatrixFactory();
+        List<ShortCircuitFault> faultList = List.of(
+                createZeroImpedanceTriphasedGroundFault("sc1", "B7"),
+                createTriphasedGroundFault("sc2", "B7", new Complex(0.0001, 0.0002)));
 
-        List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B7", "sc1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc1);
-
-        ShortCircuitFault sc2 = new ShortCircuitFault("B7", "sc2", new ShortCircuitFaultImpedance(new Complex(0.0001, 0.0002)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc2);
-
-        ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setStudyType(StudyType.SUB_TRANSIENT)
-                .setWithNeutralPosition(true);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+        scp.setWithNeutralPosition(true);
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, shortCircuitNorm);
+                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormNone());
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -526,16 +433,7 @@ public class ShortCircuitBalancedTest {
         network4nTfo.getTwoWindingsTransformer("TFO_B3_B4").getRatioTapChanger().remove();
         LoadFlow.run(network4nTfo, loadFlowParameters);
 
-        //set up ShortCircuitProvider info
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
-        ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters();
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
-
-        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(network4Tfo, scp, cm);
-
         ShortCircuitAnalysisResult scar = provider.run(network4nTfo, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
-
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
@@ -552,16 +450,8 @@ public class ShortCircuitBalancedTest {
     void openShortCircuitProvider4nRatioTapChangerNeutralPosition() {
         Network network4nRtc = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
 
-        //set up ShortCircuitProvider info
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
-        ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters().setWithNeutralPosition(true);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
-
-        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(network4Tfo, scp, cm);
-
+        scp.setWithNeutralPosition(true);
         ShortCircuitAnalysisResult scar = provider.run(network4nRtc, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
-
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
@@ -579,16 +469,8 @@ public class ShortCircuitBalancedTest {
     void openShortCircuitProvider4nRatioTapChangerPredefinedPosition() {
         Network network4nRtc = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
 
-        //set up ShortCircuitProvider info
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
-        ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters().setWithNeutralPosition(false);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
-
-        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(network4Tfo, scp, cm);
-
+        scp.setWithNeutralPosition(false);
         ShortCircuitAnalysisResult scar = provider.run(network4nRtc, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
-
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
@@ -604,19 +486,12 @@ public class ShortCircuitBalancedTest {
     void openShortCircuitProvider4nTapChangerConfiguredVoltages() {
         Network network4nTfo = create4nTfoRatioTapChanger(NetworkFactory.findDefault());
 
-        ComputationManager cm = LocalComputationManager.getDefault();
-        VoltageRange voltageRange1 = new VoltageRange(90, 110, 0.9);
-        VoltageRange voltageRange2 = new VoltageRange(140, 160, 1.1);
-        List<VoltageRange> configuredVoltageRanges = List.of(voltageRange1, voltageRange2);
+        scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.CONFIGURED)
+                .setVoltageRanges(List.of(
+                        new VoltageRange(90, 110, 0.9),
+                        new VoltageRange(140, 160, 1.1)));
 
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setInitialVoltageProfileMode(InitialVoltageProfileMode.CONFIGURED)
-                .setVoltageRanges(configuredVoltageRanges);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
-
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
         ShortCircuitAnalysisResult scar = provider.run(network4nTfo, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
-
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
@@ -633,6 +508,15 @@ public class ShortCircuitBalancedTest {
                 new BusFault("F3", "B3"),
                 new BusFault("F4", "B4")
         );
+    }
+
+    private static ShortCircuitFault createZeroImpedanceTriphasedGroundFault(String id, String busId) {
+        return createTriphasedGroundFault(id, busId, Complex.ZERO);
+    }
+
+    private static ShortCircuitFault createTriphasedGroundFault(String id, String busId, Complex impedance) {
+        return new ShortCircuitFault(busId, id, new ShortCircuitFaultImpedance(impedance),
+                ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
     }
 
     private static void assertMagnitudeCurrents(List<FaultResult> faultResults, double[] expected) {

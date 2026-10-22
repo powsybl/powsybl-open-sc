@@ -18,6 +18,7 @@ import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
 import org.apache.commons.math3.complex.Complex;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -31,39 +32,36 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class ShortCircuitOnaLineTest {
 
+    private MatrixFactory matrixFactory;
+
+    private ShortCircuitParameters scp;
+
+    @BeforeEach
+    void setUp() {
+        matrixFactory = new DenseMatrixFactory();
+        LoadFlowParameters loadFlowParameters = new LoadFlowParameters().setTwtSplitShuntAdmittance(true);
+        scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+    }
+
     @Test
     void shortCircuitIec31NodePlus() {
 
         // This test shows the possibility to compute the Thevenin impedance in the middle of a line, knowing Zth at each end of the line
-        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
-        loadFlowParameters.setTwtSplitShuntAdmittance(true);
-
         Network network = ReferenceNetwork.create6NodeIec9094Plus();
 
-        MatrixFactory matrixFactory = new DenseMatrixFactory();
+        ShortCircuitFault sc1 = createZeroImpedanceTriphasedGroundFault("F1", "B3");
+        List<ShortCircuitFault> faultList = new ArrayList<>(List.of(
+                sc1,
+                createZeroImpedanceTriphasedGroundFault("F2", "B4"),
+                createZeroImpedanceTriphasedGroundFault("F3", "B6"),
+                createZeroImpedanceTriphasedGroundFault("F4", "B5"),
+                createZeroImpedanceTriphasedGroundFault("F5", "B55"),
+                createZeroImpedanceTriphasedGroundFault("F6", "B25"),
+                createZeroImpedanceTriphasedGroundFault("F7", "B2")));
 
-        List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "F2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault("B6", "F3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault("B5", "F4", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc4);
-        ShortCircuitFault sc5 = new ShortCircuitFault("B55", "F5", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc5);
-        ShortCircuitFault sc6 = new ShortCircuitFault("B25", "F6", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc6);
-        ShortCircuitFault sc7 = new ShortCircuitFault("B2", "F7", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc7);
-
-        ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, shortCircuitNormIec);
+                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -148,35 +146,20 @@ public class ShortCircuitOnaLineTest {
     void shortCircuitIec31NodePlusUnbalanced() {
 
         // This test shows the possibility to compute the Thevenin impedance in the middle of a line, knowing Zth at each end of the line
-        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
-        loadFlowParameters.setTwtSplitShuntAdmittance(true);
-
         Network network = ReferenceNetwork.create6NodeIec9094Plus();
 
-        MatrixFactory matrixFactory = new DenseMatrixFactory();
+        ShortCircuitFault sc1 = createZeroImpedanceMonophasedFault("F1", "B3");
+        List<ShortCircuitFault> faultList = new ArrayList<>(List.of(
+                sc1,
+                createZeroImpedanceMonophasedFault("F2", "B4"),
+                createZeroImpedanceMonophasedFault("F3", "B6"),
+                createZeroImpedanceMonophasedFault("F4", "B5"),
+                createZeroImpedanceMonophasedFault("F5", "B55"),
+                createZeroImpedanceMonophasedFault("F6", "B25"),
+                createZeroImpedanceMonophasedFault("F7", "B2")));
 
-        List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "F2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault("B6", "F3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault("B5", "F4", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc4);
-        ShortCircuitFault sc5 = new ShortCircuitFault("B55", "F5", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc5);
-        ShortCircuitFault sc6 = new ShortCircuitFault("B25", "F6", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc6);
-        ShortCircuitFault sc7 = new ShortCircuitFault("B2", "F7", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc7);
-
-        ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, shortCircuitNormIec);
+                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -208,6 +191,14 @@ public class ShortCircuitOnaLineTest {
         assertEquals(71.86772021431725, val.get(0) * coefPeakc.get(0) * Math.sqrt(2.), 0.00001); // use of general forumla to compute Kc
         assertEquals(68.63980536534321, val.get(1) * coefPeakc.get(1) * Math.sqrt(2.), 0.00001);
         assertEquals(7.284963377037304, val.get(2) * coefPeakc.get(2) * Math.sqrt(2.), 0.00001);
+    }
+
+    private static ShortCircuitFault createZeroImpedanceMonophasedFault(String id, String busId) {
+        return new ShortCircuitFault(busId, id, new ShortCircuitFaultImpedance(Complex.ZERO), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+    }
+
+    private static ShortCircuitFault createZeroImpedanceTriphasedGroundFault(String id, String busId) {
+        return new ShortCircuitFault(busId, id, new ShortCircuitFaultImpedance(Complex.ZERO), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
     }
 
     public static Complex getZa(Complex zth1, Complex zth2, Complex zl) {

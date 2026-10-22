@@ -45,18 +45,16 @@ class ShortCircuitBiphasedGroundTest {
 
         Network network = ReferenceNetwork.create6NodesIec9094();
 
-        List<ShortCircuitFault> faultList = new ArrayList<>();
         ShortCircuitFaultImpedance scZ1 = new ShortCircuitFaultImpedance(new Complex(0.));
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "sc1", scZ1, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
-        faultList.add(sc1);
+        ShortCircuitFault sc1 = createBiphasedGroundFault("sc1", "B3", scZ1);
 
         ShortCircuitFaultImpedance scZ2 = new ShortCircuitFaultImpedance(new Complex(0.), new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
-        ShortCircuitFault sc2 = new ShortCircuitFault("B3", "sc2", scZ2, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
-        faultList.add(sc2);
+        ShortCircuitFault sc2 = createBiphasedGroundFault("sc2", "B3", scZ2);
 
         ShortCircuitFaultImpedance scZ3 = new ShortCircuitFaultImpedance(new Complex(0.000007, 0.00005), new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
-        ShortCircuitFault sc3 = new ShortCircuitFault("B3", "sc3", scZ3, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
-        faultList.add(sc3);
+        ShortCircuitFault sc3 = createBiphasedGroundFault("sc3", "B3", scZ3);
+
+        List<ShortCircuitFault> faultList = List.of(sc1, sc2, sc3);
 
         ShortCircuitParameters scp = new ShortCircuitParameters()
                 .setStudyType(StudyType.SUB_TRANSIENT)
@@ -77,6 +75,10 @@ class ShortCircuitBiphasedGroundTest {
         assertEquals(36.83269305365278, val.get(1), 0.00001);
         assertEquals(36.831803523930354, val.get(2), 0.00001);
 
+    }
+
+    private static ShortCircuitFault createBiphasedGroundFault(String id, String busId, ShortCircuitFaultImpedance impedance) {
+        return new ShortCircuitFault(busId, id, impedance, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
     }
 }
 

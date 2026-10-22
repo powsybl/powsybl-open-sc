@@ -46,16 +46,16 @@ class ShortCircuitBiphasedTest {
 
         Network network = ReferenceNetwork.create6NodesIec9094();
 
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "sc1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.BIPHASED);
+        ShortCircuitFault sc1 = createBiphasedFault("sc1", "B3", new ShortCircuitFaultImpedance(Complex.ZERO));
 
         ShortCircuitFaultImpedance scZ2 = new ShortCircuitFaultImpedance(new Complex(0.), new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
-        ShortCircuitFault sc2 = new ShortCircuitFault("B3", "sc1", scZ2, ShortCircuitFault.ShortCircuitType.BIPHASED);
+        ShortCircuitFault sc2 = createBiphasedFault("sc2", "B3", scZ2);
 
         ShortCircuitFaultImpedance scZ3 = new ShortCircuitFaultImpedance(new Complex(0.), new Complex(0.0001, 0.0002), new Complex(0., 0.));
-        ShortCircuitFault sc3 = new ShortCircuitFault("B3", "sc1", scZ3, ShortCircuitFault.ShortCircuitType.BIPHASED);
+        ShortCircuitFault sc3 = createBiphasedFault("sc3", "B3", scZ3);
 
         ShortCircuitFaultImpedance scZ4 = new ShortCircuitFaultImpedance(new Complex(0.0003, 0.0004), new Complex(0.0001, 0.0002), new Complex(0., 0.));
-        ShortCircuitFault sc4 = new ShortCircuitFault("B3", "sc1", scZ4, ShortCircuitFault.ShortCircuitType.BIPHASED);
+        ShortCircuitFault sc4 = createBiphasedFault("sc4", "B3", scZ4);
 
         List<ShortCircuitFault> faultList = List.of(sc1, sc2, sc3, sc4);
 
@@ -79,6 +79,10 @@ class ShortCircuitBiphasedTest {
         assertEquals(29.98450280547588, val.get(2), 0.00001);
         assertEquals(29.98450280547588, val.get(3), 0.00001);
 
+    }
+
+    private static ShortCircuitFault createBiphasedFault(String id, String busId, ShortCircuitFaultImpedance impedance) {
+        return new ShortCircuitFault(busId, id, impedance, ShortCircuitFault.ShortCircuitType.BIPHASED);
     }
 
 }

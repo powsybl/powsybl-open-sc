@@ -13,7 +13,6 @@ import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
-import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.cgmes.CgmesShortCircuitImportPostProcessor;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
@@ -32,19 +31,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class ShortCircuitFromCgmesTest {
 
-    private Map<String, String> busNameToId;
+    private static final Complex FAULT_IMPEDANCE_TRIPHASED = new Complex(0.0002, 0.0005);
+    private static final Complex FAULT_IMPEDANCE_MONOPHASED = new Complex(0.0001, 0.0003);
 
-    private LoadFlow.Runner loadFlowRunner;
+    private Map<String, String> busNameToId;
 
     private LoadFlowParameters parametersLf;
 
     private MatrixFactory matrixFactory;
 
+    private ShortCircuitParameters scp;
+
     @BeforeEach
     void setUp() {
-        parametersLf = new LoadFlowParameters();
+        parametersLf = new LoadFlowParameters().setTwtSplitShuntAdmittance(true);
         matrixFactory = new DenseMatrixFactory();
-        loadFlowRunner = new LoadFlow.Runner(new OpenLoadFlowProvider(matrixFactory));
+        scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(parametersLf));
         busNameToId = new HashMap<>();
         busNameToId.put("Bus1", "adee76cd-b2b9-48ac-8fd4-0d205a435f59");
         busNameToId.put("Bus9", "87c0d153-e308-4b2b-92a4-4fad53ab1ff9");
@@ -90,10 +93,6 @@ class ShortCircuitFromCgmesTest {
         //double kG1 = 0.99597;
         //double kG2 = 0.876832;
 
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(new LoadFlowParameters()));
-
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE, buildTriphasedFaultList(), scp, shortCircuitNormIec);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
@@ -132,10 +131,6 @@ class ShortCircuitFromCgmesTest {
         //  keeping the values provided in input, short circuit at bus2 varies from 15.9722 kA ( = the reference) to 15.981 kA
         //  if we want to keep the reference result, we need to modify the ratio of ro_b/r_b and ro_c/r_c equal to : double coeffRoT4 = 0.107281 / (rT4b + rT4c) 120. /120. ;
 
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(new LoadFlowParameters()));
-
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE, buildMonophasedFaultList(), scp, shortCircuitNormIec);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
@@ -160,15 +155,12 @@ class ShortCircuitFromCgmesTest {
     void triphasedTestLoadFlow() {
         // This test shows the differences using voltage computed by load flow instead of uniform IEC norm
         Network network = getCgmesNetwork();
-        loadFlowRunner.run(network, parametersLf);
+        LoadFlow.run(network, parametersLf);
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
         shortCircuitNormIec.applyNormToNetwork(network); // this modifies the characteristics of some iidm equipments
 
-        ShortCircuitParameters scp = new ShortCircuitParameters()
-                .setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE)
-                .setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(new LoadFlowParameters()));
+        scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
 
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE, buildTriphasedFaultList(), scp, shortCircuitNormIec);
@@ -192,61 +184,29 @@ class ShortCircuitFromCgmesTest {
     }
 
     public List<ShortCircuitFault> buildTriphasedFaultList() {
-
-        Complex zFault = new Complex(0.);
-        ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFault);
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault(busNameToId.get("Bus1"), "sc1", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault(busNameToId.get("Bus2"), "sc2", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault(busNameToId.get("Bus3"), "sc3", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault(busNameToId.get("Bus4"), "sc4", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc4);
-        ShortCircuitFault sc5 = new ShortCircuitFault(busNameToId.get("Bus5"), "sc5", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc5);
-        ShortCircuitFault sc6 = new ShortCircuitFault(busNameToId.get("Bus6"), "sc6", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc6);
-        ShortCircuitFault sc7 = new ShortCircuitFault(busNameToId.get("Bus7"), "sc7", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc7);
-        ShortCircuitFault sc8 = new ShortCircuitFault(busNameToId.get("Bus8"), "sc8", scz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc8);
-
-        Complex zFault2 = new Complex(0.0002, 0.0005);
-        ShortCircuitFaultImpedance scz2 = new ShortCircuitFaultImpedance(zFault2);
-        ShortCircuitFault sc7z = new ShortCircuitFault(busNameToId.get("Bus7"), "sc7z", scz2, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc7z);
-        ShortCircuitFault sc8z = new ShortCircuitFault(busNameToId.get("Bus8"), "sc8z", scz2, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
-        faultList.add(sc8z);
-
+        for (int i = 1; i <= 8; i++) {
+            faultList.add(createFault("sc" + i, "Bus" + i, Complex.ZERO, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND));
+        }
+        faultList.add(createFault("sc7z", "Bus7", FAULT_IMPEDANCE_TRIPHASED, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND));
+        faultList.add(createFault("sc8z", "Bus8", FAULT_IMPEDANCE_TRIPHASED, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND));
         return faultList;
     }
 
     public List<ShortCircuitFault> buildMonophasedFaultList() {
-        Complex zFault = new Complex(0.);
-        ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFault);
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault(busNameToId.get("Bus2"), "sc1", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault(busNameToId.get("Bus3"), "sc2", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault(busNameToId.get("Bus4"), "sc3", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault(busNameToId.get("Bus5"), "sc4", scz, ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc4);
-        zFault = new Complex(0.0001, 0.0003);
-        ShortCircuitFaultImpedance sczImpedant = new ShortCircuitFaultImpedance(zFault);
-        ShortCircuitFault sc1z = new ShortCircuitFault(busNameToId.get("Bus2"), "sc1z", sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc1z);
-        ShortCircuitFault sc2z = new ShortCircuitFault(busNameToId.get("Bus3"), "sc2z", sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc2z);
-        ShortCircuitFault sc3z = new ShortCircuitFault(busNameToId.get("Bus4"), "sc3z", sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc3z);
-        ShortCircuitFault sc4z = new ShortCircuitFault(busNameToId.get("Bus5"), "sc4z", sczImpedant, ShortCircuitFault.ShortCircuitType.MONOPHASED);
-        faultList.add(sc4z);
-
+        for (int i = 1; i <= 4; i++) {
+            faultList.add(createFault("sc" + i, "Bus" + (i + 1), Complex.ZERO, ShortCircuitFault.ShortCircuitType.MONOPHASED));
+        }
+        for (int i = 1; i <= 4; i++) {
+            faultList.add(createFault("sc" + i + "z", "Bus" + (i + 1), FAULT_IMPEDANCE_MONOPHASED, ShortCircuitFault.ShortCircuitType.MONOPHASED));
+        }
         return faultList;
+    }
+
+    private ShortCircuitFault createFault(String id, String busName, Complex impedance, ShortCircuitFault.ShortCircuitType type) {
+        String busId = Objects.requireNonNull(busNameToId.get(busName), () -> "Unknown bus name: " + busName);
+        return new ShortCircuitFault(busId, id, new ShortCircuitFaultImpedance(impedance), type);
     }
 
     public Map<String, Double> getRunResultUnbalanced(ShortCircuitUnbalancedEngine scbEngine) {
