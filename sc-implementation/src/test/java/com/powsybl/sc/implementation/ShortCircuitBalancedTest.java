@@ -18,7 +18,6 @@ import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
-import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.sc.util.extensions.ThreeWindingsTransformerNorm;
 import com.powsybl.shortcircuit.*;
@@ -164,8 +163,8 @@ public class ShortCircuitBalancedTest {
         MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F1");
         MagnitudeFaultResult m4 = (MagnitudeFaultResult) scar.getFaultResult("F4");
 
-        assertEquals(2.945047378902121, m1.getCurrent(), 0.00001);
-        assertEquals(2.916471923828125, m4.getCurrent(), 0.00001);
+        assertEquals(2945.047378902121, m1.getCurrent(), DELTA_I_A);
+        assertEquals(2916.471923828125, m4.getCurrent(), DELTA_I_A);
 
     }
 
@@ -192,8 +191,8 @@ public class ShortCircuitBalancedTest {
         MagnitudeFaultResult m0 = (MagnitudeFaultResult) scar.getFaultResult("F1");
         MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F2");
 
-        assertEquals(2.916471923828125, m0.getCurrent(), 0.00001);
-        assertEquals(2.75623681640625, m1.getCurrent(), 0.00001);
+        assertEquals(2916.471923828125, m0.getCurrent(), DELTA_I_A);
+        assertEquals(2756.23681640625, m1.getCurrent(), DELTA_I_A);
     }
 
     @Test
@@ -220,8 +219,8 @@ public class ShortCircuitBalancedTest {
         MagnitudeFaultResult m0 = (MagnitudeFaultResult) scar.getFaultResult("F1");
         MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F2");
 
-        assertEquals(2.932280029296875, m0.getCurrent(), 0.00001);
-        assertEquals(2.85796875, m1.getCurrent(), 0.00001);
+        assertEquals(2932.280029296875, m0.getCurrent(), DELTA_I_A);
+        assertEquals(2857.96875, m1.getCurrent(), DELTA_I_A);
     }
 
     @Test
@@ -249,11 +248,11 @@ public class ShortCircuitBalancedTest {
 
         ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
 
-        assertEquals(2.945047378902121, getCurrentResult(scar, "F1"), 0.00001);
-        assertEquals(2.68267577453832, getCurrentResult(scar, "F2"), 0.00001);
-        assertEquals(2.945047378902121, getCurrentResult(scar, "F3"), 0.00001);
-        assertEquals(2.68267577453832, getCurrentResult(scar, "F4"), 0.00001);
-        assertEquals(2.75623681640625, getCurrentResult(scar, "F5"), 0.00001);
+        assertEquals(2945.047378902121, getCurrentResult(scar, "F1"), DELTA_I_A);
+        assertEquals(2682.67577453832, getCurrentResult(scar, "F2"), DELTA_I_A);
+        assertEquals(2945.047378902121, getCurrentResult(scar, "F3"), DELTA_I_A);
+        assertEquals(2682.67577453832, getCurrentResult(scar, "F4"), DELTA_I_A);
+        assertEquals(2756.23681640625, getCurrentResult(scar, "F5"), DELTA_I_A);
     }
 
     @Test
@@ -304,13 +303,13 @@ public class ShortCircuitBalancedTest {
 
         ShortCircuitAnalysisResult scar = provider.run(nt4, faults, scp, cm, Collections.emptyList()).join();
 
-        assertEquals(3.5471650598424766, getCurrentResult(scar, "F1"), 0.00001);
-        assertEquals(3.5471650598424766, getCurrentResult(scar, "F2"), 0.00001);
-        assertEquals(3.569175048828125, getCurrentResult(scar, "F3"), 0.00001);
-        assertEquals(3.497883544921875, getCurrentResult(scar, "F4"), 0.00001);
-        assertEquals(3.459245849609375, getCurrentResult(scar, "F5"), 0.00001);
-        assertEquals(3.673041748046875, getCurrentResult(scar, "F6"), 0.00001);
-        assertEquals(3.505940673828125, getCurrentResult(scar, "F7"), 0.00001);
+        assertEquals(3547.1650598424766, getCurrentResult(scar, "F1"), DELTA_I_A);
+        assertEquals(3547.1650598424766, getCurrentResult(scar, "F2"), DELTA_I_A);
+        assertEquals(3569.175048828125, getCurrentResult(scar, "F3"), DELTA_I_A);
+        assertEquals(3497.883544921875, getCurrentResult(scar, "F4"), DELTA_I_A);
+        assertEquals(3459.245849609375, getCurrentResult(scar, "F5"), DELTA_I_A);
+        assertEquals(3673.041748046875, getCurrentResult(scar, "F6"), DELTA_I_A);
+        assertEquals(3505.940673828125, getCurrentResult(scar, "F7"), DELTA_I_A);
 
     }
 
@@ -710,8 +709,8 @@ public class ShortCircuitBalancedTest {
         MagnitudeFaultResult m0 = (MagnitudeFaultResult) frs.getFirst();
         MagnitudeFaultResult m1 = (MagnitudeFaultResult) frs.get(1);
 
-        assertEquals(2.80005127, m0.getCurrent(), 0.00001);
-        assertEquals(2.41203491, m1.getCurrent(), 0.00001);
+        assertEquals(2800.05127, m0.getCurrent(), DELTA_I_A);
+        assertEquals(2412.03491, m1.getCurrent(), DELTA_I_A);
     }
 
     @Test

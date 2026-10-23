@@ -16,7 +16,6 @@ import org.apache.commons.math3.complex.Complex;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -123,7 +122,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
         updateVoltageProfileIfNeeded(res, lfNetwork, id, linearResolutionResult.getBusToZknf());
 
-        res.updateFeedersResult(); // feeders are updated only if voltageUpdate is made
+        res.updateFeedersResult(parameters.isWithNeutralPosition()); // feeders are updated only if voltageUpdate is made
         resultsPerFault.put(shortCircuitFault, res);
     }
 
