@@ -44,8 +44,8 @@ public class TheveninEquivalentParameters {
     private Set<String> innerZoneBusIds = Collections.emptySet();
     private GeneratorSelectionMode innerZoneGeneratorSelectionMode = DEFAULT_INNER_ZONE_GENERATOR_SELECTION_MODE;
     private GeneratorSelectionMode outerZoneGeneratorSelectionMode = DEFAULT_OUTER_ZONE_GENERATOR_SELECTION_MODE;
-    private double innerZoneRunningGeneratorThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
-    private double outerZoneRunningGeneratorThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
+    private double innerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
+    private double outerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
 
     public TheveninEquivalentParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory,
                                         List<CalculationLocation> locations) {
@@ -165,21 +165,21 @@ public class TheveninEquivalentParameters {
         return this;
     }
 
-    public double getInnerZoneRunningGeneratorThreshold() {
-        return innerZoneRunningGeneratorThreshold;
+    public double getInnerZoneGeneratorPowerThreshold() {
+        return innerZoneGeneratorPowerThreshold;
     }
 
-    public TheveninEquivalentParameters setInnerZoneRunningGeneratorThreshold(double threshold) {
-        this.innerZoneRunningGeneratorThreshold = threshold;
+    public TheveninEquivalentParameters setInnerZoneGeneratorPowerThreshold(double threshold) {
+        this.innerZoneGeneratorPowerThreshold = threshold;
         return this;
     }
 
-    public double getOuterZoneRunningGeneratorThreshold() {
-        return outerZoneRunningGeneratorThreshold;
+    public double getOuterZoneGeneratorPowerThreshold() {
+        return outerZoneGeneratorPowerThreshold;
     }
 
-    public TheveninEquivalentParameters setOuterZoneRunningGeneratorThreshold(double threshold) {
-        this.outerZoneRunningGeneratorThreshold = threshold;
+    public TheveninEquivalentParameters setOuterZoneGeneratorPowerThreshold(double threshold) {
+        this.outerZoneGeneratorPowerThreshold = threshold;
         return this;
     }
 }

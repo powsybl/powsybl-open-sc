@@ -20,8 +20,8 @@ public class OpenShortCircuitParameters extends AbstractExtension<ShortCircuitPa
     private Set<String> innerZoneBusIds = Collections.emptySet();
     private GeneratorSelectionMode innerZoneGeneratorSelectionMode = DEFAULT_INNER_ZONE_GENERATOR_SELECTION_MODE;
     private GeneratorSelectionMode outerZoneGeneratorSelectionMode = DEFAULT_OUTER_ZONE_GENERATOR_SELECTION_MODE;
-    private double innerZoneRunningGeneratorThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
-    private double outerZoneRunningGeneratorThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
+    private double innerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
+    private double outerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
 
     public OpenShortCircuitParameters() {
         this(new LoadFlowParameters());
@@ -59,8 +59,7 @@ public class OpenShortCircuitParameters extends AbstractExtension<ShortCircuitPa
     /**
      * Whether the series resistance of each branch should be taken into account
      * when building the admittance matrix.
-     * If false, the series resistance R of each branch is considered to be set to 0,
-     * so that only the series reactance X is used.
+     * If false, the series resistance R of each branch is considered to be set to 0.
      */
     public boolean isWithResistances() {
         return withResistances;
@@ -108,21 +107,21 @@ public class OpenShortCircuitParameters extends AbstractExtension<ShortCircuitPa
         return this;
     }
 
-    public double getInnerZoneRunningGeneratorThreshold() {
-        return innerZoneRunningGeneratorThreshold;
+    public double getInnerZoneGeneratorPowerThreshold() {
+        return innerZoneGeneratorPowerThreshold;
     }
 
-    public OpenShortCircuitParameters setInnerZoneRunningGeneratorThreshold(double threshold) {
-        this.innerZoneRunningGeneratorThreshold = checkThreshold(threshold);
+    public OpenShortCircuitParameters setInnerZoneGeneratorPowerThreshold(double threshold) {
+        this.innerZoneGeneratorPowerThreshold = checkThreshold(threshold);
         return this;
     }
 
-    public double getOuterZoneRunningGeneratorThreshold() {
-        return outerZoneRunningGeneratorThreshold;
+    public double getOuterZoneGeneratorPowerThreshold() {
+        return outerZoneGeneratorPowerThreshold;
     }
 
-    public OpenShortCircuitParameters setOuterZoneRunningGeneratorThreshold(double threshold) {
-        this.outerZoneRunningGeneratorThreshold = checkThreshold(threshold);
+    public OpenShortCircuitParameters setOuterZoneGeneratorPowerThreshold(double threshold) {
+        this.outerZoneGeneratorPowerThreshold = checkThreshold(threshold);
         return this;
     }
 

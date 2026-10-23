@@ -853,7 +853,7 @@ public final class Networks {
                 .setQ0(q0l2)
                 .add();
 
-        TwoWindingsTransformer t2w = substation1.newTwoWindingsTransformer()
+        substation1.newTwoWindingsTransformer()
                 .setId("B1_B2")
                 .setVoltageLevel1(vl1.getId())
                 .setBus1(bus1.getId())

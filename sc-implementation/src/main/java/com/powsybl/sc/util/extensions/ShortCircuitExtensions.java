@@ -36,8 +36,6 @@ public final class ShortCircuitExtensions {
     public static final String PROPERTY_HOMOPOLAR_MODEL_20HZ = "HomopolarModel20hz";
     public static final String PROPERTY_SHORT_CIRCUIT_NORM = "ShortCircuitNorm";
 
-    private static final double EPSILON = 0.00000001;
-
     private ShortCircuitExtensions() {
     }
 

@@ -35,20 +35,20 @@ public class ShortCircuitFault extends CalculationLocation {
         BIPHASED,
         BIPHASED_GROUND,
         BIPHASED_COMMON_SUPPORT,
-        MONOPHASED;
+        MONOPHASED
     }
 
     public enum ShortCircuitBiphasedType {
         C1_C2,
         C1_B2,
-        C1_A2;
+        C1_A2
     }
 
-    private String faultId;
+    private final String faultId;
 
-    private ShortCircuitFaultImpedance zf; // the short circuit impedance Zf
+    private final ShortCircuitFaultImpedance zf; // the short circuit impedance Zf
 
-    private ShortCircuitType type;
+    private final ShortCircuitType type;
 
     private ShortCircuitBiphasedType biphasedType;
 

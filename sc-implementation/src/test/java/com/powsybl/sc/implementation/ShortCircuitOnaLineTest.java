@@ -76,7 +76,7 @@ public class ShortCircuitOnaLineTest {
             coefPeakb.add(res.getValue().getPeakCoefb());
             coefPeakc.add(res.getValue().getPeakCoefcDirect());
             zth.add(res.getValue().getZd());
-            rOverX.add(res.getValue().getMaxRoverX());
+            rOverX.add(res.getValue().getMaxROverX());
         }
 
         // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
@@ -174,7 +174,7 @@ public class ShortCircuitOnaLineTest {
             coefPeakb.add(res.getValue().getPeakCoefb());
             coefPeakc.add(res.getValue().getPeakCoefc());
             zth.add(res.getValue().getZd());
-            rOverX.add(res.getValue().getMaxRoverX());
+            rOverX.add(res.getValue().getMaxROverX());
         }
 
         // and I"k = 1/sqrt(3) * cmax * Un /(Zeq) and expected I"k = 35.64 kA with some approximations on the impedance values

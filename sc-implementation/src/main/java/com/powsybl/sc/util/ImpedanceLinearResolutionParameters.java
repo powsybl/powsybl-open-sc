@@ -47,8 +47,8 @@ public final class ImpedanceLinearResolutionParameters {
     private Set<String> innerZoneBusIds = Collections.emptySet();
     private GeneratorSelectionMode innerZoneGeneratorSelectionMode = DEFAULT_INNER_ZONE_GENERATOR_SELECTION_MODE;
     private GeneratorSelectionMode outerZoneGeneratorSelectionMode = DEFAULT_OUTER_ZONE_GENERATOR_SELECTION_MODE;
-    private double innerZoneRunningGeneratorThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
-    private double outerZoneRunningGeneratorThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
+    private double innerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
+    private double outerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
 
     public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory,
                                                List<CalculationLocation> calculationLocations,
@@ -104,8 +104,8 @@ public final class ImpedanceLinearResolutionParameters {
                 .setInnerZoneBusIds(scParameters.getInnerZoneBusIds())
                 .setInnerZoneGeneratorSelectionMode(scParameters.getInnerZoneGeneratorSelectionMode())
                 .setOuterZoneGeneratorSelectionMode(scParameters.getOuterZoneGeneratorSelectionMode())
-                .setInnerZoneRunningGeneratorThreshold(scParameters.getInnerZoneRunningGeneratorThreshold())
-                .setOuterZoneRunningGeneratorThreshold(scParameters.getOuterZoneRunningGeneratorThreshold());
+                .setInnerZoneGeneratorPowerThreshold(scParameters.getInnerZoneGeneratorPowerThreshold())
+                .setOuterZoneGeneratorPowerThreshold(scParameters.getOuterZoneGeneratorPowerThreshold());
     }
 
     private void copyFrom(TheveninEquivalentParameters thParameters) {
@@ -120,8 +120,8 @@ public final class ImpedanceLinearResolutionParameters {
                 .setInnerZoneBusIds(thParameters.getInnerZoneBusIds())
                 .setInnerZoneGeneratorSelectionMode(thParameters.getInnerZoneGeneratorSelectionMode())
                 .setOuterZoneGeneratorSelectionMode(thParameters.getOuterZoneGeneratorSelectionMode())
-                .setInnerZoneRunningGeneratorThreshold(thParameters.getInnerZoneRunningGeneratorThreshold())
-                .setOuterZoneRunningGeneratorThreshold(thParameters.getOuterZoneRunningGeneratorThreshold());
+                .setInnerZoneGeneratorPowerThreshold(thParameters.getInnerZoneGeneratorPowerThreshold())
+                .setOuterZoneGeneratorPowerThreshold(thParameters.getOuterZoneGeneratorPowerThreshold());
     }
 
     public AcLoadFlowParameters getAcLoadFlowParameters() {
@@ -243,21 +243,21 @@ public final class ImpedanceLinearResolutionParameters {
         return this;
     }
 
-    public double getInnerZoneRunningGeneratorThreshold() {
-        return innerZoneRunningGeneratorThreshold;
+    public double getInnerZoneGeneratorPowerThreshold() {
+        return innerZoneGeneratorPowerThreshold;
     }
 
-    public ImpedanceLinearResolutionParameters setInnerZoneRunningGeneratorThreshold(double threshold) {
-        this.innerZoneRunningGeneratorThreshold = threshold;
+    public ImpedanceLinearResolutionParameters setInnerZoneGeneratorPowerThreshold(double threshold) {
+        this.innerZoneGeneratorPowerThreshold = threshold;
         return this;
     }
 
-    public double getOuterZoneRunningGeneratorThreshold() {
-        return outerZoneRunningGeneratorThreshold;
+    public double getOuterZoneGeneratorPowerThreshold() {
+        return outerZoneGeneratorPowerThreshold;
     }
 
-    public ImpedanceLinearResolutionParameters setOuterZoneRunningGeneratorThreshold(double threshold) {
-        this.outerZoneRunningGeneratorThreshold = threshold;
+    public ImpedanceLinearResolutionParameters setOuterZoneGeneratorPowerThreshold(double threshold) {
+        this.outerZoneGeneratorPowerThreshold = threshold;
         return this;
     }
 }

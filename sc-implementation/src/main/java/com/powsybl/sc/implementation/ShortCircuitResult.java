@@ -19,6 +19,9 @@ import org.apache.commons.math3.util.FastMath;
 
 import java.util.*;
 
+import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+import static com.powsybl.sc.implementation.ShortCircuitFault.ShortCircuitType.*;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -27,17 +30,17 @@ public class ShortCircuitResult {
     public enum FortescueType {
         DIRECT,
         HOMOPOLAR,
-        INVERSE;
+        INVERSE
     }
 
     public class CommonSupportResult {
 
-        private LfBus lfBus2; // FIXME : might be wrongly overwritten in the "resultsPerFault" presentation
+        private final LfBus lfBus2; // FIXME : might be wrongly overwritten in the "resultsPerFault" presentation
 
-        private Complex eth2;
+        private final Complex eth2;
 
-        private FortescueValue i2Fortescue; //fortescue vector of currents
-        private FortescueValue v2Fortescue; //fortescue vector of voltages
+        private final FortescueValue i2Fortescue; //fortescue vector of currents
+        private final FortescueValue v2Fortescue; //fortescue vector of voltages
 
         CommonSupportResult(LfBus lfBus2, Complex eth2,
                             Complex i2d, Complex i2o, Complex i2i,
@@ -53,36 +56,36 @@ public class ShortCircuitResult {
         }
     }
 
-    private LfBus lfBus; // FIXME : might be wrongly overwritten in the "resultsPerFault" presentation
+    private final LfBus lfBus; // FIXME : might be wrongly overwritten in the "resultsPerFault" presentation
 
     private LfNetwork lfNetwork;
 
-    private ShortCircuitNorm norm;
+    private final ShortCircuitNorm norm;
 
-    private Complex zd; // equivalent direct impedance
-    private Complex zi; // equivalent inverse impedance
-    private Complex zh; // equivalent homopolar impedance
-    private Complex zd20hz;
-    private Complex zh20hz;
+    private final Complex zd; // equivalent direct impedance
+    private final Complex zi; // equivalent inverse impedance
+    private final Complex zh; // equivalent homopolar impedance
+    private final Complex zd20hz;
+    private final Complex zh20hz;
 
-    private Complex eth;
+    private final Complex eth;
 
-    private FortescueValue iFortescue; //fortescue vector of currents
-    private FortescueValue vFortescue; //fortescue vector of voltages
+    private final FortescueValue iFortescue; //fortescue vector of currents
+    private final FortescueValue vFortescue; //fortescue vector of voltages
 
     private boolean isVoltageProfileUpdated;
     private List<FortescueValue> busNum2Dv;
     private Map<LfBranch, FortescueValue> branchDi1;
     private Map<LfBranch, FortescueValue> branchDi2;
 
-    private FeedersAtNetwork eqSysFeedersDirect; // This contains the equivalent admittance of feeders's injectors, they are built when the AdmittanceEquationSystem is built and put in input of the sc result
+    private final FeedersAtNetwork eqSysFeedersDirect; // This contains the equivalent admittance of feeders's injectors, they are built when the AdmittanceEquationSystem is built and put in input of the sc result
     private FeedersAtNetwork eqSysFeedersHomopolar;
 
     private Map<LfBus, FeedersAtBusResult> feedersResultDirect; // For each feeder in eqSysFeedersDirect, this map contains the results
     private Map<LfBus, FeedersAtBusResult> feedersResultsHomopolar;
     private Map<LfBus, FeedersAtBusResult> feedersResultsInverse;
 
-    private ShortCircuitFault shortCircuitFault;
+    private final ShortCircuitFault shortCircuitFault;
 
     private CommonSupportResult commonSupportResult; // used only for biphased with common support faults
 
@@ -228,7 +231,7 @@ public class ShortCircuitResult {
             FeedersAtBusResult feedersAtBusResultDirect = new FeedersAtBusResult(busFeedersDirect);
             feedersResultDirect.put(bus, feedersAtBusResultDirect);
 
-            if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+            if (shortCircuitFault.getType() == TRIPHASED_GROUND) {
                 continue;
             }
 
@@ -279,7 +282,7 @@ public class ShortCircuitResult {
                 resultDirectBus1Feeders.addItofeedersSum(di1);
                 resultDirectBus2Feeders.addItofeedersSum(di2);
 
-                if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+                if (shortCircuitFault.getType() == TRIPHASED_GROUND) {
                     branchDi1.put(branch, new FortescueValue(di1.abs(), di1.getArgument()));
                     branchDi2.put(branch, new FortescueValue(di2.abs(), di2.getArgument()));
 
@@ -336,7 +339,7 @@ public class ShortCircuitResult {
             FeedersAtBusResult busFeedersDirect = feedersResultDirect.get(bus);
             busFeedersDirect.updateContributions();
 
-            if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+            if (shortCircuitFault.getType() == TRIPHASED_GROUND) {
                 continue;
             }
 
@@ -472,29 +475,14 @@ public class ShortCircuitResult {
     }
 
     public Complex getIk() {
-
         ShortCircuitFault.ShortCircuitType faultType = shortCircuitFault.getType();
-        Complex ik;
-
-        switch (faultType) {
-
-            case ShortCircuitFault.ShortCircuitType.MONOPHASED:
-                ik = getIk1pp();
-                break;
-            case ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND:
-                ik = getIkpp();
-                break;
-            case ShortCircuitFault.ShortCircuitType.BIPHASED:
-                ik = getIk2pp();
-                break;
-            case ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND:
-                ik = getIke2epp();
-                break;
-            default:
-                ik = getIk();
-        }
-
-        return ik;
+        return switch (faultType) {
+            case MONOPHASED -> getIk1pp();
+            case TRIPHASED_GROUND -> getIkpp();
+            case BIPHASED -> getIk2pp();
+            case BIPHASED_GROUND -> getIke2epp();
+            default -> throw new UnsupportedOperationException("Ik not available for fault type " + faultType);
+        };
     }
 
     public Complex getIkpp() {
@@ -555,8 +543,7 @@ public class ShortCircuitResult {
         // IccBase = sqrt(3) * Eth(pu) / Zth(pu) * SB(MVA) * 10e6 / (VB(kV) * 10e3)
         double magnitudeIccBase = Math.sqrt(3.) * iFortescue.getPositiveMagnitude() * 1000. * 100. / lfBus.getNominalV();
         double angleIcc = iFortescue.getPositiveAngle();
-        double magnitudeIcc = magnitudeIccBase;
-        Complex val = ComplexUtils.polar2Complex(magnitudeIcc, angleIcc);
+        Complex val = ComplexUtils.polar2Complex(magnitudeIccBase, angleIcc);
 
         // Ik = c * Un / (sqrt(3) * Zk) = c / sqrt(3) * Eth(pu) / Zth(pu) * Sb / Vb
         return val.multiply(norm.getCmaxVoltageFactor(lfBus.getNominalV()) / 1000.);
@@ -567,21 +554,20 @@ public class ShortCircuitResult {
         return getIk().multiply(Math.sqrt(3) * lfBus.getV() * lfBus.getNominalV());
     }
 
-    public double getMaxRoverX() {
-        double ratio = 0.0;
-        double epsilon = 0.000001;
+    public double getMaxROverX() {
+        double maxRatio = 0.0;
+        Map<LfBranch, FortescueValue> branchDi1 = getBranchDi1();
+        Map<LfBranch, FortescueValue> branchDi2 = getBranchDi2();
         for (LfBranch branch : getLfNetwork().getBranches()) {
-            Complex zBranch = new Complex(branch.getPiModel().getR(), branch.getPiModel().getX());
-            FortescueValue di1 = getBranchDi1().get(branch);
-            FortescueValue di2 = getBranchDi2().get(branch);
-            if (zBranch.getImaginary() < epsilon) {
-                continue;
-            } else if (di1.getPositiveMagnitude() > epsilon || di2.getPositiveMagnitude() > epsilon) {
-                // we only look at ratio for branches with significant short circuit currents
-                ratio = Math.max(ratio, zBranch.getReal() / zBranch.getImaginary());
+            PiModel piModel = branch.getPiModel();
+            // we only look at ratio for branches with significant short circuit currents
+            if (piModel.getX() >= EPSILON
+                    && (branchDi1.get(branch).getPositiveMagnitude() > EPSILON
+                    || branchDi2.get(branch).getPositiveMagnitude() > EPSILON)) {
+                maxRatio = Math.max(maxRatio, piModel.getR() / piModel.getX());
             }
         }
-        return ratio;
+        return maxRatio;
     }
 
     public void setTrueVoltageProfileUpdate() {

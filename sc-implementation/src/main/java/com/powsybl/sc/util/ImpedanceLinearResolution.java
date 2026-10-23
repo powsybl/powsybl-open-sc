@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -205,16 +207,14 @@ public class ImpedanceLinearResolution {
     }
 
     public static void checkMatrixExtractionConsistency(Complex z1, Complex z2, LfBus lfBus1, LfBus lfBus2) {
-        double epsilon = 0.00001;
-
         String bus1Id = lfBus1.getId();
         String bus2Id = lfBus2.getId();
 
-        if (Math.abs(z1.getReal() - z2.getReal()) > epsilon) {
+        if (Math.abs(z1.getReal() - z2.getReal()) > EPSILON) {
             throw new IllegalArgumentException("Impedance block values rth : z11 and Z22 of nodes Bus1 = {" + bus1Id + "} and Bus2 = {" + bus2Id + "} have inconsitant values z11= " + z1.getReal() + " y1i2i=" + z2.getReal());
         }
 
-        if (Math.abs(z2.getImaginary() - z1.getImaginary()) > epsilon) {
+        if (Math.abs(z2.getImaginary() - z1.getImaginary()) > EPSILON) {
             throw new IllegalArgumentException("Impedance block values xth : z12 and Z21 of nodes Bus1 = {" + bus1Id + "} and Bus2 = {" + bus2Id + "} have inconsitant values z12= " + z1.getImaginary() + " z21=" + z2.getImaginary());
         }
     }

@@ -16,6 +16,8 @@ public final class ShortCircuitConstants {
     private ShortCircuitConstants() {
     }
 
+    public static final double EPSILON = 1e-6;
+
     public static final double DEFAULT_TRANS_RD = 0;
     public static final double DEFAULT_SUB_TRANS_RD = 0;
     public static final double DEFAULT_COEFF_K = 1;
@@ -34,6 +36,6 @@ public final class ShortCircuitConstants {
     public static final boolean DEFAULT_WITH_RESISTANCES = true;
 
     public static final GeneratorSelectionMode DEFAULT_INNER_ZONE_GENERATOR_SELECTION_MODE = GeneratorSelectionMode.ALL;
-    public static final GeneratorSelectionMode DEFAULT_OUTER_ZONE_GENERATOR_SELECTION_MODE = GeneratorSelectionMode.RUNNING_ONLY;
+    public static final GeneratorSelectionMode DEFAULT_OUTER_ZONE_GENERATOR_SELECTION_MODE = GeneratorSelectionMode.ABOVE_POWER_THRESHOLD;
     public static final double DEFAULT_RUNNING_GENERATOR_THRESHOLD = 0.0;
 }

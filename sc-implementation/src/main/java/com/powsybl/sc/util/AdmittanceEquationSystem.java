@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
+import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
 import static com.powsybl.sc.util.ShortCircuitHelper.isLfBusInInnerZone;
 
 /**
@@ -37,8 +38,6 @@ import static com.powsybl.sc.util.ShortCircuitHelper.isLfBusInInnerZone;
 public final class AdmittanceEquationSystem {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdmittanceEquationSystem.class);
-
-    private static final double EPSILON = 0.00000001;
 
     private AdmittanceEquationSystem() {
     }
@@ -139,8 +138,7 @@ public final class AdmittanceEquationSystem {
                 }
             }
 
-            double epsilon = 0.0000001;
-            if (z.abs() > epsilon) {
+            if (z.abs() > EPSILON) {
                 Complex yGen = z.reciprocal().multiply(vnomVl * vnomVl / SB);
                 tmpY = tmpY.add(yGen);
                 Feeder shuntFeeder = new Feeder(yGen, lfgen.getId(), Feeder.FeederType.GENERATOR);
@@ -291,8 +289,8 @@ public final class AdmittanceEquationSystem {
         }
 
         double threshold = inInnerZone
-                ? parameters.getInnerZoneRunningGeneratorThreshold()
-                : parameters.getOuterZoneRunningGeneratorThreshold();
+                ? parameters.getInnerZoneGeneratorPowerThreshold()
+                : parameters.getOuterZoneGeneratorPowerThreshold();
         double absGeneratorPMw = Math.abs(iidmGenerator.getTerminal().getP());
         boolean running = absGeneratorPMw > threshold;
         if (!running) {

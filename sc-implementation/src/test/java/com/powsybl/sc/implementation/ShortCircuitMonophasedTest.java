@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
+import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -179,8 +180,8 @@ public class ShortCircuitMonophasedTest {
 
         //assertEquals(2.8286512112174034, scunbEngine.results.get(sc1).getIox() / Math.sqrt(3), 0.000001); // results changed with modification of input data
         //assertEquals(1.6331225382399293, scunbEngine.results.get(sc1).getIoy() / Math.sqrt(3), 0.000001);
-        assertEquals(2.7099928109273916, scunbEngine.resultsPerFault.get(sc1).getIo().getReal() / Math.sqrt(3), 0.000001);
-        assertEquals(1.5646150788908801, scunbEngine.resultsPerFault.get(sc1).getIo().getImaginary() / Math.sqrt(3), 0.000001);
+        assertEquals(2.7099928109273916, scunbEngine.resultsPerFault.get(sc1).getIo().getReal() / Math.sqrt(3), EPSILON);
+        assertEquals(1.5646150788908801, scunbEngine.resultsPerFault.get(sc1).getIo().getImaginary() / Math.sqrt(3), EPSILON);
 
     }
 

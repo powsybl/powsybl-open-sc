@@ -12,18 +12,18 @@ import org.apache.commons.math3.complex.Complex;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class FeedersAtBusResult {
 
-    private static final double EPSILON = 0.000001;
-
     private Complex iFeedersSum; //sum of currents coming from branches, which is also the sum of currents from injector feeders at the same LfBus
 
-    private List<FeederResult> busFeedersResult; // output data of feeders at bus
+    private final List<FeederResult> busFeedersResult; // output data of feeders at bus
 
-    private FeedersAtBus feedersAtBus;
+    private final FeedersAtBus feedersAtBus;
 
     public FeedersAtBusResult(FeedersAtBus feedersAtBus) {
         this.iFeedersSum = new Complex(0.);

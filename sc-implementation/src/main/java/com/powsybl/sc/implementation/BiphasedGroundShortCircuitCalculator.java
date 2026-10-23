@@ -12,6 +12,9 @@ import com.powsybl.math.matrix.DenseMatrix;
 import com.powsybl.math.matrix.LUDecomposition;
 import org.apache.commons.math3.complex.Complex;
 
+import static com.powsybl.sc.extensions.FortescueConstants.FORTESCUE_A;
+import static com.powsybl.sc.extensions.FortescueConstants.FORTESCUE_A2;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -138,25 +141,25 @@ public class BiphasedGroundShortCircuitCalculator extends AbstractShortCircuitCa
         //             (              [-Zi -Zi])
 
         ComplexMatrix zbcg = new ComplexMatrix(2, 2);
-        zbcg.set(0, 0, zfault.getZb().add(zfault.getZg()));
-        zbcg.set(1, 0, zfault.getZg());
-        zbcg.set(0, 1, zfault.getZg());
-        zbcg.set(1, 1, zfault.getZc().add(zfault.getZg()));
+        zbcg.set(0, 0, zfault.zb().add(zfault.zg()));
+        zbcg.set(1, 0, zfault.zg());
+        zbcg.set(0, 1, zfault.zg());
+        zbcg.set(1, 1, zfault.zc().add(zfault.zg()));
 
         ComplexMatrix mF1 = new ComplexMatrix(2, 2);
         Complex third = new Complex(1. / 3.);
         mF1.set(0, 0, third);
-        mF1.set(1, 0, third.multiply(geta()));
+        mF1.set(1, 0, third.multiply(FORTESCUE_A));
         mF1.set(0, 1, third);
-        mF1.set(1, 1, third.multiply(geta2()));
+        mF1.set(1, 1, third.multiply(FORTESCUE_A2));
 
         ComplexMatrix mF2 = new ComplexMatrix(2, 3);
         mF2.set(0, 0, new Complex(1.));
         mF2.set(1, 0, new Complex(1.));
-        mF2.set(0, 1, geta2());
-        mF2.set(1, 1, geta());
-        mF2.set(0, 2, geta());
-        mF2.set(1, 2, geta2());
+        mF2.set(0, 1, FORTESCUE_A2);
+        mF2.set(1, 1, FORTESCUE_A);
+        mF2.set(0, 2, FORTESCUE_A);
+        mF2.set(1, 2, FORTESCUE_A2);
 
         ComplexMatrix zoZdZi = new ComplexMatrix(3, 2);
         zoZdZi.set(0, 0, zof);
@@ -240,13 +243,13 @@ public class BiphasedGroundShortCircuitCalculator extends AbstractShortCircuitCa
         mSystem.set(0, 1, c1);
         mSystem.set(0, 2, c1);
         mSystem.set(1, 6, c1);
-        mSystem.set(1, 7, zfault.getZg().multiply(-1.));
+        mSystem.set(1, 7, zfault.zg().multiply(-1.));
         mSystem.set(2, 6, mc1);
         mSystem.set(2, 9, c1);
-        mSystem.set(2, 11, zfault.getZb().multiply(-1.));
+        mSystem.set(2, 11, zfault.zb().multiply(-1.));
         mSystem.set(3, 6, mc1);
         mSystem.set(3, 10, c1);
-        mSystem.set(3, 12, zfault.getZc().multiply(-1.));
+        mSystem.set(3, 12, zfault.zc().multiply(-1.));
         mSystem.set(4, 7, mc1);
         mSystem.set(4, 11, c1);
         mSystem.set(4, 12, c1);
@@ -255,19 +258,19 @@ public class BiphasedGroundShortCircuitCalculator extends AbstractShortCircuitCa
         mSystem.set(5, 5, c1);
         mSystem.set(5, 8, mc1);
         mSystem.set(6, 3, c1);
-        mSystem.set(6, 4, geta2());
-        mSystem.set(6, 5, geta());
+        mSystem.set(6, 4, FORTESCUE_A2);
+        mSystem.set(6, 5, FORTESCUE_A);
         mSystem.set(6, 9, mc1);
         mSystem.set(7, 3, c1);
-        mSystem.set(7, 4, geta());
-        mSystem.set(7, 5, geta2());
+        mSystem.set(7, 4, FORTESCUE_A);
+        mSystem.set(7, 5, FORTESCUE_A2);
         mSystem.set(7, 10, mc1);
         mSystem.set(8, 0, mc1);
         mSystem.set(8, 11, c1.multiply(1. / 3.));
         mSystem.set(8, 12, c1.multiply(1. / 3.));
         mSystem.set(9, 1, mc1);
-        mSystem.set(9, 11, c1.multiply(1. / 3.).multiply(geta()));
-        mSystem.set(9, 12, c1.multiply(1. / 3.).multiply(geta2()));
+        mSystem.set(9, 11, c1.multiply(1. / 3.).multiply(FORTESCUE_A));
+        mSystem.set(9, 12, c1.multiply(1. / 3.).multiply(FORTESCUE_A2));
         mSystem.set(10, 0, zof.multiply(-1.));
         mSystem.set(10, 3, mc1);
         mSystem.set(11, 1, zdf.multiply(-1.));

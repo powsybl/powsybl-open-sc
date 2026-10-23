@@ -34,18 +34,13 @@ public class TheveninEquivalent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TheveninEquivalent.class);
 
-    private final List<LfNetwork> lfNetworks;
-
-    private final TheveninEquivalentParameters parameters;
-
     private final ImpedanceLinearResolution impedanceLinearResolution;
 
-    public TheveninEquivalent(Network network, TheveninEquivalentParameters parameters) {
-        lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), new LfNetworkParameters());
+    public TheveninEquivalent(Network network, TheveninEquivalentParameters theveninParameters) {
+        List<LfNetwork> lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), new LfNetworkParameters());
         ShortCircuitExtensions.add(network, lfNetworks);
-        this.parameters = Objects.requireNonNull(parameters);
         LfNetwork lfNetwork = lfNetworks.getFirst();
-        impedanceLinearResolution = new ImpedanceLinearResolution(network, lfNetwork, generateAdmittanceLinearResolutionParam(network, lfNetwork, parameters));
+        impedanceLinearResolution = new ImpedanceLinearResolution(network, lfNetwork, generateAdmittanceLinearResolutionParam(network, lfNetwork, theveninParameters));
     }
 
     public ImpedanceLinearResolution getImpedanceLinearResolution() {
@@ -119,16 +114,16 @@ public class TheveninEquivalent {
         return new Pair<>(branchId, legNum);
     }
 
-    private static ImpedanceLinearResolutionParameters generateAdmittanceLinearResolutionParam(Network network, LfNetwork lfNetwork, TheveninEquivalentParameters parameters) {
-
-        AcLoadFlowParameters acLoadFlowParameters = parameters.getAcLoadFlowParameters();
+    private static ImpedanceLinearResolutionParameters generateAdmittanceLinearResolutionParam(Network network, LfNetwork lfNetwork, TheveninEquivalentParameters theveninParameters) {
+        Objects.requireNonNull(theveninParameters);
+        AcLoadFlowParameters acLoadFlowParameters = theveninParameters.getAcLoadFlowParameters();
 
         List<CalculationLocation> locations = new ArrayList<>();
-        for (CalculationLocation calculationLocation : parameters.getLocations()) {
+        for (CalculationLocation calculationLocation : theveninParameters.getLocations()) {
             String busName = calculationLocation.getBusLocation();
             Pair<String, Integer> branchFaultInfo = buildFaultBranchFromBusId(busName, network);
 
-            if (branchFaultInfo.getKey().equals("")) {
+            if (branchFaultInfo.getKey().isEmpty()) {
                 // Bus not found in branches, try three windings transformers
                 branchFaultInfo = buildFaultT3WbranchFromBusId(busName, network);
             }
@@ -138,7 +133,7 @@ public class TheveninEquivalent {
         }
 
         List<Complex> initialVoltages = new ArrayList<>();
-        switch (parameters.getTheveninVoltageProfileType()) {
+        switch (theveninParameters.getTheveninVoltageProfileType()) {
             case NOMINAL -> {
                 for (LfBus ignored : lfNetwork.getBuses()) {
                     initialVoltages.add(Complex.ONE);
@@ -151,7 +146,7 @@ public class TheveninEquivalent {
             }
         }
 
-        return new ImpedanceLinearResolutionParameters(acLoadFlowParameters, parameters.getMatrixFactory(),
-                locations, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN, initialVoltages);
+        return new ImpedanceLinearResolutionParameters(acLoadFlowParameters, theveninParameters.getMatrixFactory(),
+                locations, theveninParameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN, initialVoltages);
     }
 }

@@ -13,7 +13,6 @@ import java.util.Objects;
  * i.e. the current flowing through the feeder before the fault is applied,
  * derived from the network's current working state (bus V/angle and terminal
  * P/Q, typically populated by a prior load flow run).
- *
  * Note: {@code Feeder.getId()} means different things depending on the feeder
  * type, mirroring how elements are represented in LfNetwork:
  * - BRANCH: id of the IIDM branch / three-winding transformer

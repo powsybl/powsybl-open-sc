@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at gmail.com>
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -41,8 +43,6 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
     }
 
     private final QueryCatalog queryCatalog = new QueryCatalog("short-circuit.sparql");
-
-    public static final double EPSILON = 0.000001;
 
     private void processExternalNetworkInjection(Network network, TripleStore tripleStore) {
         for (PropertyBag propertyBag : tripleStore.query(queryCatalog.get("externalNetworkInjectionShortCircuit"))) {

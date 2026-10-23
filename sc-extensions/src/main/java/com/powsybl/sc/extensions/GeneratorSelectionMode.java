@@ -11,5 +11,5 @@ public enum GeneratorSelectionMode {
      * Only generators of the zone whose target active power is greater than or equal
      * to the zone's running generator threshold are taken into account.
      */
-    RUNNING_ONLY
+    ABOVE_POWER_THRESHOLD
 }

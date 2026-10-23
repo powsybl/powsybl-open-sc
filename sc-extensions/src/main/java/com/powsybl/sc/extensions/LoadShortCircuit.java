@@ -12,12 +12,12 @@ import com.powsybl.commons.extensions.AbstractExtension;
 import com.powsybl.iidm.network.Load;
 import org.apache.commons.math3.complex.Complex;
 
+import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class LoadShortCircuit extends AbstractExtension<Load> {
-
-    public static final double EPSILON = 0.000001;
 
     public static class AsynchronousMachineLoadData {
 

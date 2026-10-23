@@ -55,8 +55,8 @@ public final class ShortCircuitEngineParameters {
     private Set<String> innerZoneBusIds = Collections.emptySet();
     private GeneratorSelectionMode innerZoneGeneratorSelectionMode = DEFAULT_INNER_ZONE_GENERATOR_SELECTION_MODE;
     private GeneratorSelectionMode outerZoneGeneratorSelectionMode = DEFAULT_OUTER_ZONE_GENERATOR_SELECTION_MODE;
-    private double innerZoneRunningGeneratorThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
-    private double outerZoneRunningGeneratorThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
+    private double innerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
+    private double outerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
 
     public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory,
                                         AnalysisType analysisType, List<ShortCircuitFault> faults, ShortCircuitNorm norm) {
@@ -84,8 +84,8 @@ public final class ShortCircuitEngineParameters {
                 .setInnerZoneBusIds(openScParameters.getInnerZoneBusIds())
                 .setInnerZoneGeneratorSelectionMode(openScParameters.getInnerZoneGeneratorSelectionMode())
                 .setOuterZoneGeneratorSelectionMode(openScParameters.getOuterZoneGeneratorSelectionMode())
-                .setInnerZoneRunningGeneratorThreshold(openScParameters.getInnerZoneRunningGeneratorThreshold())
-                .setOuterZoneRunningGeneratorThreshold(openScParameters.getOuterZoneRunningGeneratorThreshold());
+                .setInnerZoneGeneratorPowerThreshold(openScParameters.getInnerZoneGeneratorPowerThreshold())
+                .setOuterZoneGeneratorPowerThreshold(openScParameters.getOuterZoneGeneratorPowerThreshold());
     }
 
     public LoadFlowParameters getLoadFlowParameters() {
@@ -230,21 +230,21 @@ public final class ShortCircuitEngineParameters {
         return this;
     }
 
-    public double getInnerZoneRunningGeneratorThreshold() {
-        return innerZoneRunningGeneratorThreshold;
+    public double getInnerZoneGeneratorPowerThreshold() {
+        return innerZoneGeneratorPowerThreshold;
     }
 
-    public ShortCircuitEngineParameters setInnerZoneRunningGeneratorThreshold(double threshold) {
-        this.innerZoneRunningGeneratorThreshold = threshold;
+    public ShortCircuitEngineParameters setInnerZoneGeneratorPowerThreshold(double threshold) {
+        this.innerZoneGeneratorPowerThreshold = threshold;
         return this;
     }
 
-    public double getOuterZoneRunningGeneratorThreshold() {
-        return outerZoneRunningGeneratorThreshold;
+    public double getOuterZoneGeneratorPowerThreshold() {
+        return outerZoneGeneratorPowerThreshold;
     }
 
-    public ShortCircuitEngineParameters setOuterZoneRunningGeneratorThreshold(double threshold) {
-        this.outerZoneRunningGeneratorThreshold = threshold;
+    public ShortCircuitEngineParameters setOuterZoneGeneratorPowerThreshold(double threshold) {
+        this.outerZoneGeneratorPowerThreshold = threshold;
         return this;
     }
 }

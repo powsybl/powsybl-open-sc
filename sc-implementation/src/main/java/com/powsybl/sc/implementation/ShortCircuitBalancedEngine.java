@@ -76,7 +76,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                     continue;
                 }
 
-                Complex zfToGround = scf.getZf().getZg();
+                Complex zfToGround = scf.getZf().zg();
                 Complex ztotal = zfToGround.add(zth);
 
                 Complex id = vInit.divide(ztotal);
