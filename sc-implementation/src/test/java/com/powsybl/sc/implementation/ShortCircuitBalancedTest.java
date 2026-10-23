@@ -18,6 +18,7 @@ import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.sc.util.extensions.ThreeWindingsTransformerNorm;
 import com.powsybl.shortcircuit.*;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -63,7 +65,7 @@ public class ShortCircuitBalancedTest {
         loadFlowRunner.run(nt2, loadFlowParameters);
 
         List<ShortCircuitFault> tmpV = new ArrayList<>();
-        ShortCircuitFault sc2 = new ShortCircuitFault("B2", "sc2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B2", "sc2", "B2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         tmpV.add(sc2);
         ShortCircuitEngineParameters.AnalysisType at = ShortCircuitEngineParameters.AnalysisType.SELECTIVE;
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
@@ -93,21 +95,21 @@ public class ShortCircuitBalancedTest {
         ShortCircuitParameters scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
         scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
 
-        List<Fault> faults = new ArrayList<>();
+        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
         BusFault bf1 = new BusFault("F1", "B1");
         BusFault bf2 = new BusFault("F2", "B2");
-        faults.add(bf1);
-        faults.add(bf2);
+
+        List<Fault> faults = List.of(bf1, bf2);
 
         ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
-
-        List<FaultResult> frs = scar.getFaultResults();
 
         String providerName = provider.getName();
         String providerVersion = provider.getVersion();
 
-        MagnitudeFaultResult m0 = (MagnitudeFaultResult) frs.get(0);
-        MagnitudeFaultResult m1 = (MagnitudeFaultResult) frs.get(1);
+        assertEquals(2, scar.getFaultResults().size());
+
+        MagnitudeFaultResult m0 = (MagnitudeFaultResult) scar.getFaultResult("F1");
+        MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F2");
 
         assertEquals(2945.047378902121, m0.getCurrent(), DELTA_I_A);
         assertEquals(2682.67577453832, m1.getCurrent(), DELTA_I_A);
@@ -119,6 +121,139 @@ public class ShortCircuitBalancedTest {
         assertEquals(9.090909090909093, ((MagnitudeShortCircuitBusResults) m1.getShortCircuitBusResults().getFirst()).getVoltage(), DELTA_V);
         assertEquals("OpenShortCircuit", providerName);
         assertEquals("0.1", providerVersion);
+    }
+
+    /**
+     * Verifies handling of:
+     * - unknown elements
+     * - bus faults on a branch element
+     * - branch faults on non-branch element
+     */
+    @Test
+    void openShortCircuitProvider2nInvalidElementId() {
+
+        //set up LF info
+        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
+        loadFlowParameters.setTwtSplitShuntAdmittance(true);
+        Network nt2 = create2n(NetworkFactory.findDefault());
+        LoadFlow.run(nt2, loadFlowParameters);
+
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters();
+
+        //CompletableFuture<ShortCircuitAnalysisResult> scar = provider.run(nt2, scp, cm);
+        BusFault bf1 = new BusFault("F1", "B1");
+        BusFault bf2 = new BusFault("F2", "UNKNOWN_BUS");
+        BusFault bf3 = new BusFault("F3", "B1_B2");
+        BranchFault bf4 = new BranchFault("F4", "B1_B2", 10);
+        BranchFault bf5 = new BranchFault("F5", "UNKNOWN_BRANCH", 10);
+        BranchFault bf6 = new BranchFault("F6", "B1", 10);
+
+        List<Fault> faults = List.of(bf1, bf2, bf3, bf4, bf5, bf6);
+
+        ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
+
+        assertEquals(2, scar.getFaultResults().size());
+        assertNull(scar.getFaultResult("F2"));
+        assertNull(scar.getFaultResult("F3"));
+        assertNull(scar.getFaultResult("F5"));
+        assertNull(scar.getFaultResult("F6"));
+
+        MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F1");
+        MagnitudeFaultResult m4 = (MagnitudeFaultResult) scar.getFaultResult("F4");
+
+        assertEquals(2.945047378902121, m1.getCurrent(), 0.00001);
+        assertEquals(2.916471923828125, m4.getCurrent(), 0.00001);
+
+    }
+
+    @Test
+    void openShortCircuitProvider2nFaultsOnLine() {
+        //set up LF info
+        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
+        loadFlowParameters.setTwtSplitShuntAdmittance(true);
+        Network nt2 = create2n(NetworkFactory.findDefault());
+        LoadFlow.run(nt2, loadFlowParameters);
+
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters();
+
+        BranchFault bf1 = new BranchFault("F1", "B1_B2", 10);
+        BranchFault bf2 = new BranchFault("F2", "B1_B2", 70);
+
+        List<Fault> faults = List.of(bf1, bf2);
+
+        ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
+
+        MagnitudeFaultResult m0 = (MagnitudeFaultResult) scar.getFaultResult("F1");
+        MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F2");
+
+        assertEquals(2.916471923828125, m0.getCurrent(), 0.00001);
+        assertEquals(2.75623681640625, m1.getCurrent(), 0.00001);
+    }
+
+    @Test
+    void openShortCircuitProvider2nFaultsOnTransformer() {
+
+        //set up LF info
+        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
+        loadFlowParameters.setTwtSplitShuntAdmittance(true);
+        Network nt2 = create2nTfo(NetworkFactory.findDefault());
+        LoadFlow.run(nt2, loadFlowParameters);
+
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters();
+
+        BranchFault bf1 = new BranchFault("F1", "B1_B2", 10);
+        BranchFault bf2 = new BranchFault("F2", "B1_B2", 70);
+
+        List<Fault> faults = List.of(bf1, bf2);
+
+        ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
+
+        MagnitudeFaultResult m0 = (MagnitudeFaultResult) scar.getFaultResult("F1");
+        MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F2");
+
+        assertEquals(2.932280029296875, m0.getCurrent(), 0.00001);
+        assertEquals(2.85796875, m1.getCurrent(), 0.00001);
+    }
+
+    @Test
+    void openShortCircuitProviderBusAndBranchFaults2n() {
+        //set up LF info
+        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
+        loadFlowParameters.setTwtSplitShuntAdmittance(true);
+        Network nt2 = create2n(NetworkFactory.findDefault());
+        LoadFlow.run(nt2, loadFlowParameters);
+
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters();
+
+        BusFault bf1 = new BusFault("F1", "B1");
+        BusFault bf2 = new BusFault("F2", "B2");
+
+        BranchFault bf3 = new BranchFault("F3", "B1_B2", 0);
+        BranchFault bf4 = new BranchFault("F4", "B1_B2", 100);
+
+        BranchFault bf5 = new BranchFault("F5", "B1_B2", 70);
+
+        List<Fault> faults = List.of(bf1, bf2, bf3, bf4, bf5);
+
+        ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
+
+        assertEquals(2.945047378902121, getCurrentResult(scar, "F1"), 0.00001);
+        assertEquals(2.68267577453832, getCurrentResult(scar, "F2"), 0.00001);
+        assertEquals(2.945047378902121, getCurrentResult(scar, "F3"), 0.00001);
+        assertEquals(2.68267577453832, getCurrentResult(scar, "F4"), 0.00001);
+        assertEquals(2.75623681640625, getCurrentResult(scar, "F5"), 0.00001);
     }
 
     @Test
@@ -140,6 +275,43 @@ public class ShortCircuitBalancedTest {
         );
         // assertFeederCurrents(frs, new double[]{2700.28195, 2886.75122, 2725.79395, 2586.51782}, "G2"); TODO: Add with next Core release
         assertBusVoltages(frs, new double[]{6.46059465, 0.0, 5.57589579, 10.400857}, 1);
+    }
+
+    @Test
+    void openShortCircuitProviderBusAndBranchFaults4n() {
+
+        //set up LF info
+        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
+        loadFlowParameters.setTwtSplitShuntAdmittance(true);
+        Network nt4 = create4n(NetworkFactory.findDefault());
+        LoadFlow.run(nt4, loadFlowParameters);
+
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters();
+
+        BusFault bf1 = new BusFault("F1", "B1");
+
+        BranchFault bf2 = new BranchFault("F2", "B1_B2", 0);
+        BranchFault bf3 = new BranchFault("F3", "B1_B2", 30);
+        BranchFault bf4 = new BranchFault("F4", "B1_B3", 30);
+        BranchFault bf5 = new BranchFault("F5", "B1_B4", 30);
+        BranchFault bf6 = new BranchFault("F6", "B2_B3", 30);
+        BranchFault bf7 = new BranchFault("F7", "B3_B4", 30);
+
+        List<Fault> faults = List.of(bf1, bf2, bf3, bf4, bf5, bf6, bf7);
+
+        ShortCircuitAnalysisResult scar = provider.run(nt4, faults, scp, cm, Collections.emptyList()).join();
+
+        assertEquals(3.5471650598424766, getCurrentResult(scar, "F1"), 0.00001);
+        assertEquals(3.5471650598424766, getCurrentResult(scar, "F2"), 0.00001);
+        assertEquals(3.569175048828125, getCurrentResult(scar, "F3"), 0.00001);
+        assertEquals(3.497883544921875, getCurrentResult(scar, "F4"), 0.00001);
+        assertEquals(3.459245849609375, getCurrentResult(scar, "F5"), 0.00001);
+        assertEquals(3.673041748046875, getCurrentResult(scar, "F6"), 0.00001);
+        assertEquals(3.505940673828125, getCurrentResult(scar, "F7"), 0.00001);
+
     }
 
     @Test
@@ -316,21 +488,21 @@ public class ShortCircuitBalancedTest {
         Complex zFaultToGround = new Complex(0.);
         ShortCircuitFaultImpedance scFaultz = new ShortCircuitFaultImpedance(zFaultToGround);
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B1", "sc1", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B1", "sc1", "B1", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B2", "sc2", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B2", "sc2", "B2", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault("B3", "sc3", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc3 = new ShortCircuitFault("B3", "sc3", "B3", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc3);
-        ShortCircuitFault sc4 = new ShortCircuitFault("B4", "sc4", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc4 = new ShortCircuitFault("B4", "sc4", "B4", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc4);
-        ShortCircuitFault sc5 = new ShortCircuitFault("B5", "sc5", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc5 = new ShortCircuitFault("B5", "sc5", "B5", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc5);
-        ShortCircuitFault sc6 = new ShortCircuitFault("B6", "sc6", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc6 = new ShortCircuitFault("B6", "sc6", "B6", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc6);
-        ShortCircuitFault sc7 = new ShortCircuitFault("B7", "sc7", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc7 = new ShortCircuitFault("B7", "sc7", "B7", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc7);
-        ShortCircuitFault sc8 = new ShortCircuitFault("B8", "sc8", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc8 = new ShortCircuitFault("B8", "sc8", "B8", scFaultz, ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc8);
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
@@ -341,41 +513,41 @@ public class ShortCircuitBalancedTest {
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
-        List<Double> valuesIk = new ArrayList<>();
-        List<Complex> valuesZd = new ArrayList<>();
-        List<Complex> valuesId = new ArrayList<>();
-        List<Complex> valuesVd = new ArrayList<>();
-        List<Complex> valuesEth = new ArrayList<>();
+        Map<ShortCircuitFault, Double> valuesIk = new HashMap<>();
+        Map<ShortCircuitFault, Complex> valuesZd = new HashMap<>();
+        Map<ShortCircuitFault, Complex> valuesId = new HashMap<>();
+        Map<ShortCircuitFault, Complex> valuesVd = new HashMap<>();
+        Map<ShortCircuitFault, Complex> valuesEth = new HashMap<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            valuesIk.add(res.getValue().getIk().abs());
-            valuesZd.add(res.getValue().getZd());
-            valuesId.add(res.getValue().getId());
-            valuesVd.add(res.getValue().getVd());
-            valuesEth.add(res.getValue().getEth());
+            valuesIk.put(res.getKey(), res.getValue().getIk().abs());
+            valuesZd.put(res.getKey(), res.getValue().getZd());
+            valuesId.put(res.getKey(), res.getValue().getId());
+            valuesVd.put(res.getKey(), res.getValue().getVd());
+            valuesEth.put(res.getKey(), res.getValue().getEth());
         }
 
         // I"k = 1/sqrt(3) * cmax * Un /(Zeq)
-        assertEquals(40.64478476116188, valuesIk.get(0), 100 * DELTA_I_KA); // bus 1 : expected in doc = 40.6447 kA
-        assertEquals(31.783052222534174, valuesIk.get(1), 100 * DELTA_I_KA); // bus 2 : expected in doc =  31.7831 kA
-        assertEquals(19.672955775750143, valuesIk.get(2), 100 * DELTA_I_KA); // bus 3 : expected in doc =  19.673 kA
-        assertEquals(16.227655866910894, valuesIk.get(3), 100 * DELTA_I_KA); // bus 4 : expected in doc =  16.2277 kA
-        assertEquals(33.18941481677016, valuesIk.get(4), 100 * DELTA_I_KA); // bus 5 : expected in doc =  33.1894 kA
-        assertEquals(37.56287899040728, valuesIk.get(5), 100 * DELTA_I_KA); // bus 6 : expected in doc =  37.5629 kA
-        assertEquals(25.589463480212533, valuesIk.get(6), 100 * DELTA_I_KA); // bus 7 : expected in doc =  25.5895 kA
-        assertEquals(13.577771545200052, valuesIk.get(7), 100 * DELTA_I_KA); // bus 8 : expected in doc =  13.5778 kA
+        assertEquals(40.64478476116188, valuesIk.get(sc1), 100 * DELTA_I_KA); // bus 1 : expected in doc = 40.6447 kA
+        assertEquals(31.783052222534174, valuesIk.get(sc2), 100 * DELTA_I_KA); // bus 2 : expected in doc =  31.7831 kA
+        assertEquals(19.672955775750143, valuesIk.get(sc3), 100 * DELTA_I_KA); // bus 3 : expected in doc =  19.673 kA
+        assertEquals(16.227655866910894, valuesIk.get(sc4), 100 * DELTA_I_KA); // bus 4 : expected in doc =  16.2277 kA
+        assertEquals(33.18941481677016, valuesIk.get(sc5), 100 * DELTA_I_KA); // bus 5 : expected in doc =  33.1894 kA
+        assertEquals(37.56287899040728, valuesIk.get(sc6), 100 * DELTA_I_KA); // bus 6 : expected in doc =  37.5629 kA
+        assertEquals(25.589463480212533, valuesIk.get(sc7), 100 * DELTA_I_KA); // bus 7 : expected in doc =  25.5895 kA
+        assertEquals(13.577771545200052, valuesIk.get(sc8), 100 * DELTA_I_KA); // bus 8 : expected in doc =  13.5778 kA
 
-        assertEquals(0.004092194811702985, valuesZd.get(0).getImaginary(), DELTA_Z);
-        assertEquals(0.017334559734154213, valuesZd.get(4).getImaginary(), DELTA_Z);
-        assertEquals(0.2377979119689316, valuesZd.get(6).getImaginary(), DELTA_Z);
+        assertEquals(0.004092194811702985, valuesZd.get(sc1).getImaginary(), DELTA_Z);
+        assertEquals(0.017334559734154213, valuesZd.get(sc5).getImaginary(), DELTA_Z);
+        assertEquals(0.2377979119689316, valuesZd.get(sc7).getImaginary(), DELTA_Z);
 
-        assertEquals(1.153344202949403, valuesId.get(6).getReal(), DELTA_I_KA / 10);
-        assertEquals(-242.02989930029395, valuesId.get(0).getImaginary(), DELTA_I_KA / 10);
+        assertEquals(1.153344202949403, valuesId.get(sc7).getReal(), DELTA_I_KA / 10);
+        assertEquals(-242.02989930029395, valuesId.get(sc1).getImaginary(), DELTA_I_KA / 10);
 
-        assertEquals(0., valuesVd.get(5).getReal(), DELTA_V);
-        assertEquals(0., valuesVd.get(1).getImaginary(), DELTA_V);
+        assertEquals(0., valuesVd.get(sc6).getReal(), DELTA_V);
+        assertEquals(0., valuesVd.get(sc2).getImaginary(), DELTA_V);
 
-        assertEquals(1., valuesEth.get(5).getReal(), DELTA_V);
-        assertEquals(0., valuesEth.get(1).getImaginary(), DELTA_V);
+        assertEquals(1., valuesEth.get(sc6).getReal(), DELTA_V);
+        assertEquals(0., valuesEth.get(sc2).getImaginary(), DELTA_V);
 
         //assertEquals(4039.8610235151364, values.get(8), 0.1); // T3 U0 node : for check only
         //assertEquals(4039.8610235151364, values.get(8), 0.1); // T4 U0 node : for check only
@@ -421,7 +593,6 @@ public class ShortCircuitBalancedTest {
         Generator g1 = network.getGenerator("G1");
         double kg = shortCircuitNormIec.getKg(g1);
         assertEquals(1.0015680959819921, kg, DELTA_K);
-
     }
 
     @Test
@@ -432,11 +603,11 @@ public class ShortCircuitBalancedTest {
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "F1", "B3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc1);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "F2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "F2", "B4", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc2);
-        ShortCircuitFault sc3 = new ShortCircuitFault("B6", "F3", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc3 = new ShortCircuitFault("B6", "F3", "B6", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc3);
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
@@ -448,23 +619,23 @@ public class ShortCircuitBalancedTest {
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
-        List<Double> val = new ArrayList<>();
-        List<Double> coefPeakb = new ArrayList<>();
+        Map<ShortCircuitFault, Double> val = new HashMap<>();
+        Map<ShortCircuitFault, Double> coefPeakb = new HashMap<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            val.add(res.getValue().getIk().abs());
-            coefPeakb.add(res.getValue().getPeakCoefb());
+            val.put(res.getKey(), res.getValue().getIk().abs());
+            coefPeakb.put(res.getKey(), res.getValue().getPeakCoefb());
         }
 
         // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
         // and I"k = 1/sqrt(3) * cmax * Un /(Zeq) and expected I"k = 34.62 kA
-        assertEquals(34.62398968800272, val.get(0), DELTA_I_KA); // F1 expected value in the document: 34.62 kA
-        assertEquals(34.1162841954478, val.get(1), DELTA_I_KA); // F2 expected value in the document: 34.12 kA
-        assertEquals(6.945173672144295, val.get(2), DELTA_I_KA); // F3 expected value in the document: 6.95 kA
+        assertEquals(34.62398968800272, val.get(sc1), DELTA_I_KA); // F1 expected value in the document: 34.62 kA
+        assertEquals(34.1162841954478, val.get(sc2), DELTA_I_KA); // F2 expected value in the document: 34.12 kA
+        assertEquals(6.945173672144295, val.get(sc3), DELTA_I_KA); // F3 expected value in the document: 6.95 kA
 
         // Peak current method b
-        assertEquals(70.73492731970777, val.get(0) * coefPeakb.get(0) * Math.sqrt(2.), DELTA_I_KA); // FIXME: expected 81.36 kA but factor 1.15 not triggered: check R/X ratio of all lines
-        assertEquals(69.04648240748665, val.get(1) * coefPeakb.get(1) * Math.sqrt(2.), DELTA_I_KA);
-        assertEquals(11.922267036509417, val.get(2) * coefPeakb.get(2) * Math.sqrt(2.), DELTA_I_KA);
+        assertEquals(70.73492731970777, val.get(sc1) * coefPeakb.get(sc1) * Math.sqrt(2.), DELTA_I_KA); // FIXME: expected 81.36 kA but factor 1.15 not triggered: check R/X ratio of all lines
+        assertEquals(69.04648240748665, val.get(sc2) * coefPeakb.get(sc2) * Math.sqrt(2.), DELTA_I_KA);
+        assertEquals(11.922267036509417, val.get(sc3) * coefPeakb.get(sc3) * Math.sqrt(2.), DELTA_I_KA);
     }
 
     @Test
@@ -475,10 +646,10 @@ public class ShortCircuitBalancedTest {
         MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         List<ShortCircuitFault> faultList = new ArrayList<>();
-        ShortCircuitFault sc1 = new ShortCircuitFault("B7", "sc1", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B7", "sc1", "B7", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc1);
 
-        ShortCircuitFault sc2 = new ShortCircuitFault("B7", "sc2", new ShortCircuitFaultImpedance(new Complex(0.0001, 0.0002)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
+        ShortCircuitFault sc2 = new ShortCircuitFault("B7", "sc2", "B7", new ShortCircuitFaultImpedance(new Complex(0.0001, 0.0002)), ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         faultList.add(sc2);
 
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
@@ -490,17 +661,57 @@ public class ShortCircuitBalancedTest {
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
-        List<Double> val = new ArrayList<>();
+        Map<ShortCircuitFault, Double> val = new HashMap<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
-            val.add(res.getValue().getIk().abs());
+            val.put(res.getKey(), res.getValue().getIk().abs());
         }
 
         // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
         // and Idocumentation = Ib*Eth(pu)/Zth(pu15) then Idocumentation = Icc * Ib * sqrt(3) * Vb / (1000 * Sb15)  with Ib = 18.064
         // in the documentation, expected Idocumentation ~ 35.656 kA
-        assertEquals(35.69309945355154, val.get(0) * 18.064 * 0.277 * Math.sqrt(3) / 15., DELTA_I_KA);
-        assertEquals(35.69084362105586, val.get(1) * 18.064 * 0.277 * Math.sqrt(3) / 15., DELTA_I_KA);
+        assertEquals(35.69309945355154, val.get(sc1) * 18.064 * 0.277 * Math.sqrt(3) / 15., DELTA_I_KA);
+        assertEquals(35.69084362105586, val.get(sc2) * 18.064 * 0.277 * Math.sqrt(3) / 15., DELTA_I_KA);
 
+    }
+
+    private static double getCurrentResult(ShortCircuitAnalysisResult scar, String faultId) {
+        return ((MagnitudeFaultResult) scar.getFaultResult(faultId)).getCurrent();
+    }
+
+    /**
+     * Verifies short-circuit current calculations on a 2-node network for
+     * bus faults with fault impedance modeled using both series and parallel
+     * connection types.
+     */
+    @Test
+    void openShortCircuitProvider2nWithFaultImpedance() {
+
+        //set up LF info
+        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
+        loadFlowParameters.setTwtSplitShuntAdmittance(true);
+        Network nt2 = create2n(NetworkFactory.findDefault());
+        LoadFlow.run(nt2, loadFlowParameters);
+
+        //set up ShortCircuitProvider info
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters();
+
+        List<Fault> faults = new ArrayList<>();
+        BusFault bf1 = new BusFault("F1", "B1", 0.5, 1, Fault.ConnectionType.SERIES, Fault.FaultType.THREE_PHASE);
+        BusFault bf2 = new BusFault("F2", "B2", 5, 10, Fault.ConnectionType.PARALLEL, Fault.FaultType.THREE_PHASE);
+        faults.add(bf1);
+        faults.add(bf2);
+
+        ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
+
+        List<FaultResult> frs = scar.getFaultResults();
+
+        MagnitudeFaultResult m0 = (MagnitudeFaultResult) frs.getFirst();
+        MagnitudeFaultResult m1 = (MagnitudeFaultResult) frs.get(1);
+
+        assertEquals(2.80005127, m0.getCurrent(), 0.00001);
+        assertEquals(2.41203491, m1.getCurrent(), 0.00001);
     }
 
     @Test

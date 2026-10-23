@@ -9,8 +9,8 @@ package com.powsybl.sc.util;
 
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
-import com.powsybl.sc.implementation.ShortCircuitEngineParameters;
 import org.apache.commons.math3.complex.Complex;
+import com.powsybl.sc.implementation.ShortCircuitEngineParameters;
 
 import java.util.List;
 import java.util.Objects;
@@ -20,17 +20,13 @@ import java.util.Objects;
  */
 public class ImpedanceLinearResolutionParameters {
 
-    public static final double XSUBTRANSIENT = 0.2; //default value if data not available
-
     private final boolean voltageUpdate;
 
     private final AcLoadFlowParameters acLoadFlowParameters;
 
     private final MatrixFactory matrixFactory;
 
-    private final List<CalculationLocation> calculationLocations; // stores all calculation locations where only one bus is required in input
-
-    private List<CalculationLocation> biphasedCalculationLocations; // stores all calculation locations where 2 buses are required in input
+    private final List<CalculationLocation> calculationLocations; // stores all calculation locations (BUS, LINE, and BIPHASED_COMMON_SUPPORT)
 
     private final boolean ignoreShunts;
 
@@ -53,12 +49,6 @@ public class ImpedanceLinearResolutionParameters {
         this.admittanceType = admittanceType;
         this.initialVoltages = initialVoltages;
         this.isWithNeutralPosition = scParameters.isWithNeutralPosition();
-    }
-
-    public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> calculationLocations, ShortCircuitEngineParameters scParameters,
-                                               AdmittanceEquationSystem.AdmittanceType admittanceType, List<CalculationLocation> biphasedVoltageLevelLocation, List<Complex> initialVoltages) {
-        this(acLoadFlowParameters, matrixFactory, calculationLocations, scParameters, admittanceType, initialVoltages);
-        this.biphasedCalculationLocations = biphasedVoltageLevelLocation;
     }
 
     public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> calculationLocations, TheveninEquivalentParameters thParameters,
@@ -92,10 +82,6 @@ public class ImpedanceLinearResolutionParameters {
 
     public boolean isTheveninIgnoreShunts() {
         return ignoreShunts;
-    }
-
-    public List<CalculationLocation> getBiphasedCalculationLocations() {
-        return biphasedCalculationLocations;
     }
 
     public AdmittanceEquationSystem.AdmittancePeriodType getTheveninPeriodType() {
