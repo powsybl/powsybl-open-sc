@@ -31,6 +31,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.powsybl.openloadflow.util.PerUnit.SB;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -189,12 +191,6 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 continue;
             }
 
-            // TODO : transform parallel input into a series input
-            if (fault.getConnectionType() == Fault.ConnectionType.PARALLEL) {
-                LOGGER.warn("Short circuit connection of type PARALLEL not yet supported, fault: {} is ignored", fault.getId());
-                continue;
-            }
-
             fillFaultLists(fault, network, scType, balancedFaultsList, scFaultToFault);
         }
 
@@ -215,8 +211,18 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     }
 
     private void fillFaultLists(Fault fault, Network network, ShortCircuitFault.ShortCircuitType scType, List<ShortCircuitFault> balancedFaultsList, Map<ShortCircuitFault, Fault> scFaultToFault) {
-        Complex zFaultToGround = new Complex(fault.getRToGround(), fault.getXToGround());
-        ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
+        double rFault = fault.getRToGround();
+        double xFault = fault.getXToGround();
+        Complex zFaultToGround;
+        if (fault.getConnectionType() == Fault.ConnectionType.SERIES) {
+            // Zf = r + jx
+            zFaultToGround = new Complex(rFault, xFault);
+        } else {
+            // Zf = (r*jx)/(r+jx) for ConnectionType.PARALLEL
+            zFaultToGround = new Complex(rFault, 0)
+                    .multiply(new Complex(0, xFault))
+                    .divide(new Complex(rFault, xFault));
+        }
 
         ShortCircuitFault sc;
         // TODO : see how to get lfBus from iidm Bus
@@ -230,6 +236,9 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             }
 
             CalculationLocation location = new CalculationLocation(branchBusIds.getKey(), branchBusIds.getValue(), branchFault.getProportionalLocation());
+            // Convert fault impedance from Ohm into PerUnit
+            Complex zFaultToGroundPerUnit = zFaultToGround.divide(new Complex(getZPerUnitForBranch(fault, network), 0));
+            ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGroundPerUnit);
             sc = new ShortCircuitFault(location, branchFault.getId(), elementId, scz, scType);
             checkForBranchNominalVoltageCoherency(network, branchBusIds.getKey(), branchBusIds.getValue());
         } else { //Bus fault
@@ -238,7 +247,9 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             if (busId == null) {
                 return;
             }
-
+            // Convert fault impedance from Ohm into PerUnit
+            Complex zFaultToGroundPerUnit = zFaultToGround.divide(new Complex(getZPerUnitForBus(fault, network), 0));
+            ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGroundPerUnit);
             sc = new ShortCircuitFault(busId, fault.getId(), elementId, scz, scType);
         }
 
@@ -293,5 +304,19 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         LOGGER.warn("'{}' is not the id of a bus. Fault '{}' is ignored.", elementId, faultId);
         return null;
+    }
+
+    private double getZPerUnitForBus(Fault fault, Network network) {
+        String elementId = fault.getElementId();
+        Bus bus = network.getBusBreakerView().getBus(elementId);
+        double vNomVl = bus.getVoltageLevel().getNominalV();
+        return vNomVl * vNomVl / SB;
+    }
+
+    private double getZPerUnitForBranch(Fault fault, Network network) {
+        String elementId = fault.getElementId();
+        Branch<?> branch = network.getBranch(elementId);
+        double vNomVl2 = branch.getTerminal2().getVoltageLevel().getNominalV();
+        return vNomVl2 * vNomVl2 / SB; // Fix me: What if vNomVl2 != vNomVl1?
     }
 }
