@@ -9,6 +9,10 @@ package com.powsybl.sc.implementation;
 
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.MatrixFactory;
+import com.powsybl.shortcircuit.InitialVoltageProfileMode;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
+import com.powsybl.shortcircuit.StudyType;
+import com.powsybl.shortcircuit.VoltageRange;
 
 import java.util.List;
 import java.util.Objects;
@@ -17,20 +21,16 @@ import java.util.Objects;
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class ShortCircuitEngineParameters {
-    public enum VoltageProfileType {
-        CALCULATED, // use the computed values at nodes to compute Zth and Eth
-        NOMINAL; // use the nominal voltage values at nodes to get Zth and Eth
-    }
 
     public enum PeriodType {
         SUB_TRANSIENT, //uses subTransient parameters x"d
         TRANSIENT,     //uses transient parameters x'd
-        STEADY_STATE;
+        STEADY_STATE
     }
 
     public enum AnalysisType {
         SELECTIVE, // short circuit analysis for List<ShortCircuitFault> faults in input
-        SYSTEMATIC; // short circuit analysis for all busses of input grid
+        SYSTEMATIC // short circuit analysis for all buses of input grid
     }
 
     private final LoadFlowParameters loadFlowParameters;
@@ -39,7 +39,9 @@ public class ShortCircuitEngineParameters {
 
     private final MatrixFactory matrixFactory;
 
-    private final VoltageProfileType vProfile;
+    private final InitialVoltageProfileMode vProfile;
+
+    private final List<VoltageRange> vConfiguredRanges;
 
     private final boolean ignoreShunts;
 
@@ -47,20 +49,27 @@ public class ShortCircuitEngineParameters {
 
     private boolean voltageUpdate;
 
-    private PeriodType periodType;
+    private final double minVoltageDropProportional;
 
-    private ShortCircuitNorm norm;
+    private final PeriodType periodType;
 
-    public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, boolean isVoltageExport, VoltageProfileType vProfile, boolean ignoreShunts, PeriodType periodType, ShortCircuitNorm norm) {
+    private final ShortCircuitNorm norm;
+
+    private final boolean isWithNeutralPosition;
+
+    public ShortCircuitEngineParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory, AnalysisType analysisType, List<ShortCircuitFault> faults, ShortCircuitParameters scParameters, ShortCircuitNorm norm) {
         this.loadFlowParameters = Objects.requireNonNull(loadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.shortCircuitFaults = Objects.requireNonNull(faults);
-        this.voltageUpdate = isVoltageExport;
-        this.ignoreShunts = ignoreShunts;
-        this.vProfile = vProfile;
+        this.voltageUpdate = scParameters.isWithVoltageResult();
+        this.minVoltageDropProportional = scParameters.getMinVoltageDropProportionalThreshold();
+        this.ignoreShunts = !scParameters.isWithShuntCompensators();
+        this.vProfile = scParameters.getInitialVoltageProfileMode();
+        this.vConfiguredRanges = scParameters.getVoltageRanges();
         this.analysisType = analysisType;
-        this.periodType = periodType;
+        this.periodType = toPeriodType(scParameters.getStudyType());
         this.norm = norm;
+        this.isWithNeutralPosition = scParameters.isWithNeutralPosition();
     }
 
     public LoadFlowParameters getLoadFlowParameters() {
@@ -75,8 +84,12 @@ public class ShortCircuitEngineParameters {
         return matrixFactory;
     }
 
-    public VoltageProfileType getVoltageProfileType() {
+    public InitialVoltageProfileMode getVoltageProfileType() {
         return vProfile;
+    }
+
+    public List<VoltageRange> getConfiguredVoltageRanges() {
+        return vConfiguredRanges;
     }
 
     public boolean isIgnoreShunts() {
@@ -103,7 +116,23 @@ public class ShortCircuitEngineParameters {
         return voltageUpdate;
     }
 
+    public double getMinVoltageDropProportional() {
+        return minVoltageDropProportional;
+    }
+
     public void setVoltageUpdate(boolean bool) {
         voltageUpdate = bool;
+    }
+
+    private static PeriodType toPeriodType(StudyType studyType) {
+        return switch (studyType) {
+            case STEADY_STATE -> PeriodType.STEADY_STATE;
+            case SUB_TRANSIENT -> PeriodType.SUB_TRANSIENT;
+            case TRANSIENT -> PeriodType.TRANSIENT;
+        };
+    }
+
+    public boolean isWithNeutralPosition() {
+        return isWithNeutralPosition;
     }
 }

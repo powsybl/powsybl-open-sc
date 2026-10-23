@@ -30,8 +30,8 @@ public class AdmittanceEquationTermX2 extends AbstractAdmittanceEquationTerm {
     private final double b2b21sum;
 
     public AdmittanceEquationTermX2(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet,
-                                    AdmittanceEquationSystem.AdmittanceType admittanceType, AdmittanceEquationSystem.FrequencyType frequencyType) {
-        super(branch, bus1, bus2, variableSet, frequencyType);
+                                    AdmittanceEquationSystem.AdmittanceType admittanceType, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
+        super(branch, bus1, bus2, variableSet, isWithNeutralPosition, frequencyType);
         // Direct component:
         // I2x = -g21 * V1x + b21 * V1y + (g2 + g21)V2x - (b2 + b21)V2y
         if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {

@@ -9,6 +9,7 @@ package com.powsybl.sc.util;
 
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
+import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 
 import java.util.List;
 import java.util.Objects;
@@ -17,11 +18,6 @@ import java.util.Objects;
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class TheveninEquivalentParameters {
-
-    public enum TheveninVoltageProfileType {
-        CALCULATED, // use the computed values at nodes to compute Zth and Eth
-        NOMINAL; // use the nominal voltage values at nodes to get Zth and Eth
-    }
 
     public enum TheveninPeriodType {
         THEVENIN_SUB_TRANSIENT, //uses subTransient parameters x"d
@@ -41,18 +37,21 @@ public class TheveninEquivalentParameters {
 
     private final boolean theveninIgnoreShunts;
 
-    private final TheveninVoltageProfileType theveninVoltageProfileType;
+    private final InitialVoltageProfileMode theveninVoltageProfileType;
 
     private final TheveninPeriodType theveninPeriodType;
 
-    public TheveninEquivalentParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> voltageLevels, boolean voltageUpdate, TheveninVoltageProfileType theveninVoltageProfileType, TheveninPeriodType theveninPeriodType, boolean theveninIgnoreShunts) {
+    private final boolean isWithNeutralPosition;
+
+    public TheveninEquivalentParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> voltageLevels, InitialVoltageProfileMode theveninVoltageProfileType, TheveninPeriodType theveninPeriodType) {
         this.acLoadFlowParameters = Objects.requireNonNull(acLoadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.theveninCalculationLocation = Objects.requireNonNull(voltageLevels);
-        this.voltageUpdate = voltageUpdate;
-        this.theveninIgnoreShunts = theveninIgnoreShunts;
         this.theveninVoltageProfileType = theveninVoltageProfileType;
         this.theveninPeriodType = theveninPeriodType;
+        this.voltageUpdate = true;
+        this.theveninIgnoreShunts = false;
+        this.isWithNeutralPosition = true;
     }
 
     public AcLoadFlowParameters getAcLoadFlowParameters() {
@@ -75,7 +74,7 @@ public class TheveninEquivalentParameters {
         return theveninIgnoreShunts;
     }
 
-    public TheveninVoltageProfileType getTheveninVoltageProfileType() {
+    public InitialVoltageProfileMode getTheveninVoltageProfileType() {
         return theveninVoltageProfileType;
     }
 
@@ -83,4 +82,7 @@ public class TheveninEquivalentParameters {
         return theveninPeriodType;
     }
 
+    public boolean isWithNeutralPosition() {
+        return isWithNeutralPosition;
+    }
 }

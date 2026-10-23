@@ -29,6 +29,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
     @Override
     public void run() {
         LfNetwork lfNetwork = lfNetworks.getFirst();
+        fillInitialVoltages();
 
         if (parameters.getAnalysisType() == ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC) {
             buildSystematicList(ShortCircuitFault.ShortCircuitType.MONOPHASED); // TODO : by default it is monophased, could be changed to choose type of systematic default
@@ -42,14 +43,10 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         List<CalculationLocation> solverLocationList = solverFaultList.stream().map(ShortCircuitFault::getCalculationLocation).toList();
 
         ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersHomopolar = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
-                parameters.getMatrixFactory(), solverLocationList, parameters.isVoltageUpdate(),
-                getAdmittanceVoltageProfileTypeFromParam(), getAdmittancePeriodTypeFromParam(), AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR,
-                parameters.isIgnoreShunts());
+                parameters.getMatrixFactory(), solverLocationList, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR, initialVoltages);
 
         ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersDirect = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
-                parameters.getMatrixFactory(), solverLocationList, parameters.isVoltageUpdate(),
-                getAdmittanceVoltageProfileTypeFromParam(), getAdmittancePeriodTypeFromParam(), AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN,
-                parameters.isIgnoreShunts());
+                parameters.getMatrixFactory(), solverLocationList, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN, initialVoltages);
 
         ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(lfNetwork, admittanceLinearResolutionParametersDirect);
         ImpedanceLinearResolution homopolarResolution = new ImpedanceLinearResolution(lfNetwork, admittanceLinearResolutionParametersHomopolar);
@@ -128,7 +125,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                             directResult, homopolarResult,
                             scf, lfBus1, v1dInit, lfNetwork);
 
-                    res.updateFeedersResult(); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
+                    res.updateFeedersResult(false); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
                     resultsPerFault.put(scf, res);
 
                 } else if (shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
@@ -178,7 +175,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                                     lfBus1, v1dInit, lfNetwork,
                                     lfBus2, v2dInit, biphasedDirectResult, biphasedHomopolarResult);
 
-                            res.updateFeedersResult(); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
+                            res.updateFeedersResult(false); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
                             resultsPerFault.put(scf, res);
 
                         } else {
@@ -218,15 +215,15 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         if (parameters.isVoltageUpdate()) {
             res.setLfNetwork(lfNetwork);
             res.setTrueVoltageProfileUpdate();
-            // The post-fault voltage values for the network busses are computed as follow :
+            // The post-fault voltage values for the network buses are computed as follow :
             // [ Vof ] = -inv(Yo) * M * [ Iof ]
             // [ Vdf ] = -inv(Yd) * M * [ Idf ] + [ V(init) ]
             // [ Vif ] = -inv(Yd) * M * [ Iif ]
             // dMo = inv(Yo) * M
             // dMd = inv(Yd) * M
 
-            int nbBusses = lfNetwork.getBuses().size();
-            res.createEmptyFortescueVoltageVector(nbBusses);
+            int nbBuses = lfNetwork.getBuses().size();
+            res.createEmptyFortescueVoltageVector(nbBuses);
 
             for (Map.Entry<Integer, Complex> zd : directResult.getBusToZknf().entrySet()) {
                 int busNum = zd.getKey();
@@ -277,15 +274,15 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         if (parameters.isVoltageUpdate()) {
             res.setLfNetwork(lfNetwork);
             res.setTrueVoltageProfileUpdate();
-            // The post-fault voltage values for the network busses are computed as follow :
+            // The post-fault voltage values for the network buses are computed as follow :
             // [ Vof ] = -inv(Yo) * M * [ Iof ]
             // [ Vdf ] = -inv(Yd) * M * [ Idf ] + [ V(init) ]
             // [ Vif ] = -inv(Yd) * M * [ Iif ]
             // dMo = inv(Yo) * M
             // dMd = inv(Yd) * M
 
-            int nbBusses = lfNetwork.getBuses().size();
-            res.createEmptyFortescueVoltageVector(nbBusses);
+            int nbBuses = lfNetwork.getBuses().size();
+            res.createEmptyFortescueVoltageVector(nbBuses);
 
             for (Map.Entry<Integer, Complex> zd : directResult.getBusToZknf().entrySet()) {
                 int busNum = zd.getKey();
