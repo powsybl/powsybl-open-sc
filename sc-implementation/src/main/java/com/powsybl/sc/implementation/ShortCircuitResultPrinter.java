@@ -72,7 +72,7 @@ public class ShortCircuitResultPrinter {
         LOGGER.info("Short Circuit Voltage at Bus (Pu) = {} : V = {}", shortCircuitResult.getLfBus().getId(), getStringFortescueValue(shortCircuitResult.getvFortescue()));
     }
 
-    public void printDvAtBussesPu() {
+    public void printDvAtBusesPu() {
         LOGGER.info("---Bus voltage deltas :  ");
         for (LfBus bus : shortCircuitResult.getLfNetwork().getBuses()) {
             int busNum = bus.getNum();
@@ -133,7 +133,7 @@ public class ShortCircuitResultPrinter {
         printSk();
         printIpeakc();
         if (shortCircuitResult.isVoltageProfileUpdated()) {
-            printDvAtBussesPu();
+            printDvAtBusesPu();
             printDIAtBranchPu();
             printFeedersPu();
         }

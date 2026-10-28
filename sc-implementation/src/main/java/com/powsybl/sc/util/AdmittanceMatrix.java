@@ -27,9 +27,9 @@ public class AdmittanceMatrix implements AutoCloseable {
     public class AdmittanceSystem {
 
         //created to extract a subset of the equationSystem to easily create admittance subMatrices for the reduction problem while keeping consistency on the global equation system
-        private Set<Integer> numRowBusses;
+        private Set<Integer> numRowBuses;
 
-        private Set<Integer> numColBusses;
+        private Set<Integer> numColBuses;
 
         public Map<Equation<VariableType, EquationType>, Integer> eqToRowNum;
 
@@ -39,40 +39,40 @@ public class AdmittanceMatrix implements AutoCloseable {
 
         AdmittanceSystem() {
 
-            numRowBusses = new HashSet<>();
-            numColBusses = new HashSet<>();
+            numRowBuses = new HashSet<>();
+            numColBuses = new HashSet<>();
 
             eqToRowNum = new HashMap<>();
             varToColNum = new HashMap<>();
 
-            //Convert rowBusses and columnBusses Sets into eq number Sets
-            if (rowBusses != null) {
-                for (LfBus b : rowBusses) {
-                    numRowBusses.add(b.getNum());
+            //Convert rowBuses and columnBuses Sets into eq number Sets
+            if (rowBuses != null) {
+                for (LfBus b : rowBuses) {
+                    numRowBuses.add(b.getNum());
                 }
             }
 
-            if (columnBusses != null) {
-                for (LfBus b : columnBusses) {
-                    numColBusses.add(b.getNum());
+            if (columnBuses != null) {
+                for (LfBus b : columnBuses) {
+                    numColBuses.add(b.getNum());
                 }
             }
 
-            isSubAdmittance = !numRowBusses.isEmpty() || !numColBusses.isEmpty(); //if false then build the full admittance system based on the equationSystem infos
+            isSubAdmittance = !numRowBuses.isEmpty() || !numColBuses.isEmpty(); //if false then build the full admittance system based on the equationSystem infos
 
             if (isSubAdmittance) {
                 int nbRow = 0;
                 int nbCol = 0;
                 for (var eq : equationSystem.getIndex().getSortedSingleEquationsToSolve()) {
                     int numBusEq = eq.getElementNum();
-                    if (numRowBusses.contains(numBusEq)) {
+                    if (numRowBuses.contains(numBusEq)) {
                         eqToRowNum.put(eq, nbRow++);
                     }
                 }
 
                 for (Variable<VariableType> v : equationSystem.getIndex().getSortedVariablesToFind()) {
                     int numBusVar = v.getElementNum();
-                    if (numColBusses.contains(numBusVar)) {
+                    if (numColBuses.contains(numBusVar)) {
                         varToColNum.put(v, nbCol++);
                     }
                 }
@@ -90,9 +90,9 @@ public class AdmittanceMatrix implements AutoCloseable {
 
     private LUDecomposition lu;
 
-    private Set<LfBus> rowBusses;
+    private Set<LfBus> rowBuses;
 
-    private Set<LfBus> columnBusses;
+    private Set<LfBus> columnBuses;
 
     private AdmittanceSystem admSys;
 
@@ -109,11 +109,11 @@ public class AdmittanceMatrix implements AutoCloseable {
         initAdmittanceSystem();
     }
 
-    public AdmittanceMatrix(EquationSystem<VariableType, EquationType> equationSystem, MatrixFactory matrixFactory, Set<LfBus> rowBusses, Set<LfBus> columnBusses, LfNetwork network) {
+    public AdmittanceMatrix(EquationSystem<VariableType, EquationType> equationSystem, MatrixFactory matrixFactory, Set<LfBus> rowBuses, Set<LfBus> columnBuses, LfNetwork network) {
         this.equationSystem = Objects.requireNonNull(equationSystem);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
-        this.rowBusses = Objects.requireNonNull(rowBusses);
-        this.columnBusses = Objects.requireNonNull(columnBusses);
+        this.rowBuses = Objects.requireNonNull(rowBuses);
+        this.columnBuses = Objects.requireNonNull(columnBuses);
         this.admSys = new AdmittanceSystem();
         this.lfNetwork = Objects.requireNonNull(network);
         initAdmittanceSystem();
@@ -163,7 +163,7 @@ public class AdmittanceMatrix implements AutoCloseable {
     }
 
     private void initAdmittanceSystem() {
-        //if if no busses specified in input, we build the admittance of the full system
+        //if if no buses specified in input, we build the admittance of the full system
         int rowCount = getRowCount();
         int columnCount = getColCount();
 
@@ -237,11 +237,11 @@ public class AdmittanceMatrix implements AutoCloseable {
         for (Variable<VariableType> v : equationSystem.getIndex().getSortedVariablesToFind()) {
             switch (v.getType()) {
                 case BUS_VR:
-                    x[v.getRow()] = initializer.getMagnitude(network.getBus(v.getElementNum())) * Math.cos(Math.toRadians(initializer.getAngle(network.getBus(v.getElementNum()))));
+                    x[v.getRow()] = initializer.getMagnitude(network.getBus(v.getElementNum())) * Math.cos(initializer.getAngle(network.getBus(v.getElementNum())));
                     break;
 
                 case BUS_VI:
-                    x[v.getRow()] = initializer.getMagnitude(network.getBus(v.getElementNum())) * Math.sin(Math.toRadians(initializer.getAngle(network.getBus(v.getElementNum()))));
+                    x[v.getRow()] = initializer.getMagnitude(network.getBus(v.getElementNum())) * Math.sin(initializer.getAngle(network.getBus(v.getElementNum())));
                     break;
 
                 default:
@@ -252,7 +252,7 @@ public class AdmittanceMatrix implements AutoCloseable {
     }
 
     private Matrix initVoltageVector(LfNetwork network, VoltageInitializer voltageInitializer) {
-        //if if no busses specified in input, we build the voltage vector of the full system
+        //if if no buses specified in input, we build the voltage vector of the full system
         int columnCount = getColCount();
 
         double[] sv = createStateVector(network, voltageInitializer);

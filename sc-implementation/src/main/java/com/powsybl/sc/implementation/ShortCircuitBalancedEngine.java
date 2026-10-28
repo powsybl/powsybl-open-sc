@@ -30,6 +30,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
     @Override
     public void run() { //can handle both selective and systematic analysis with one single matrix inversion
         LfNetwork lfNetwork = lfNetworks.getFirst();
+        fillInitialVoltages();
 
         // building a contingency list with all voltage levels
         if (parameters.getAnalysisType() == ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC) {
@@ -40,8 +41,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         List<CalculationLocation> solverLocationList = solverFaultList.stream().map(ShortCircuitFault::getCalculationLocation).toList();
 
         ImpedanceLinearResolutionParameters linearResolutionParameters = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
-                parameters.getMatrixFactory(), solverLocationList, parameters.isVoltageUpdate(), getAdmittanceVoltageProfileTypeFromParam(),
-                getAdmittancePeriodTypeFromParam(), AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN, parameters.isIgnoreShunts());
+                parameters.getMatrixFactory(), solverLocationList, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN, initialVoltages);
 
         ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(lfNetwork, linearResolutionParameters);
 
@@ -122,7 +122,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
         updateVoltageProfileIfNeeded(res, lfNetwork, id, linearResolutionResult.getBusToZknf());
 
-        res.updateFeedersResult(); // feeders are updated only if voltageUpdate is made
+        res.updateFeedersResult(parameters.isWithNeutralPosition()); // feeders are updated only if voltageUpdate is made
         resultsPerFault.put(shortCircuitFault, res);
     }
 
@@ -207,7 +207,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         }
         updateVoltageProfileIfNeeded(res, lfNetwork, id, combinedBusToZknf);
 
-        res.updateFeedersResult(); // feeders are updated only if voltageUpdate is made
+        res.updateFeedersResult(parameters.isWithNeutralPosition()); // feeders are updated only if voltageUpdate is made
         resultsPerFault.put(shortCircuitFault, res);
     }
 
