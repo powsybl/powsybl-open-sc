@@ -32,12 +32,8 @@ public class ShortCircuitHelper {
     public static Set<String> getLfBusIdsFromIidmBusId(Network network, Set<String> innerZoneBusIds) {
         Set<String> lfBusIds = new HashSet<>();
         for (String busId : innerZoneBusIds) {
-            Bus busBreakerBus = network.getBusBreakerView().getBus(busId);
-            if (busBreakerBus == null) {
-                LOGGER.warn("Inner zone bus {} not found in the network, it is ignored", busId);
-                continue;
-            }
-            Bus mergedBus = busBreakerBus.getVoltageLevel().getBusView().getMergedBus(busId);
+            Bus mergedBus = network.getBusBreakerView().getBus(busId)
+                    .getVoltageLevel().getBusView().getMergedBus(busId);
             if (mergedBus != null) {
                 lfBusIds.add(mergedBus.getId());
             }

@@ -9,6 +9,7 @@ package com.powsybl.sc.implementation;
 
 import com.google.auto.service.AutoService;
 import com.google.common.base.Stopwatch;
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.*;
 import com.powsybl.math.matrix.MatrixFactory;
@@ -30,6 +31,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
 import static com.powsybl.sc.util.ShortCircuitHelper.isLfBusInInnerZone;
@@ -68,7 +70,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         Objects.requireNonNull(network);
         Objects.requireNonNull(parameters);
-        checkShortCircuitParametersConsistency(parameters);
+        checkShortCircuitParametersConsistency(network, parameters);
         Stopwatch stopwatch = Stopwatch.createStarted();
 
         // building of fault lists
@@ -365,14 +367,43 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         return vNomVl2 * vNomVl2 / SB; // Fix me: What if vNomVl2 != vNomVl1?
     }
 
-    private static void checkShortCircuitParametersConsistency(ShortCircuitParameters parameters) {
+    private static void checkShortCircuitParametersConsistency(Network network, ShortCircuitParameters parameters) {
         getOrCreateOpenScParameters(parameters);
+        cleanInnerZone(network, parameters);
         List<String> inconsistentOptions = findInconsistentOptions(parameters);
         if (!inconsistentOptions.isEmpty()) {
             LOGGER.warn("Initial voltage profile mode is PREVIOUS_VALUE, but {} {}: the initial voltages come from a load flow "
                             + "computed with the complete network model, so they may not be consistent with the admittance matrix.",
                     inconsistentOptions, inconsistentOptions.size() > 1 ? "are set" : "is set");
         }
+    }
+
+    static void getOrCreateOpenScParameters(ShortCircuitParameters parameters) {
+        if (parameters.getExtension(OpenShortCircuitParameters.class) == null) {
+            parameters.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters());
+        }
+    }
+
+    private static void cleanInnerZone(Network network, ShortCircuitParameters parameters) {
+        OpenShortCircuitParameters openScParameters = parameters.getExtension(OpenShortCircuitParameters.class);
+        Set<String> innerZoneBusIds = openScParameters.getInnerZoneBusIds();
+        if (innerZoneBusIds.isEmpty()) {
+            return;
+        }
+
+        Map<Boolean, Set<String>> busIdsByValidity = innerZoneBusIds.stream()
+                .collect(Collectors.partitioningBy(busId -> network.getBusBreakerView().getBus(busId) != null, Collectors.toSet()));
+        Set<String> validBusIds = busIdsByValidity.get(true);
+        Set<String> invalidBusIds = busIdsByValidity.get(false);
+
+        if (invalidBusIds.isEmpty()) {
+            return;
+        }
+        if (validBusIds.isEmpty()) {
+            throw new PowsyblException("None of the inner zone buses exist in the network: " + invalidBusIds);
+        }
+        LOGGER.warn("Inner zone buses {} not found in the network, they are ignored", invalidBusIds);
+        openScParameters.setInnerZoneBusIds(validBusIds);
     }
 
     static List<String> findInconsistentOptions(ShortCircuitParameters parameters) {
@@ -397,11 +428,5 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             inconsistentOptions.add("withCapacities=false");
         }
         return inconsistentOptions;
-    }
-
-    static void getOrCreateOpenScParameters(ShortCircuitParameters parameters) {
-        if (parameters.getExtension(OpenShortCircuitParameters.class) == null) {
-            parameters.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters());
-        }
     }
 }

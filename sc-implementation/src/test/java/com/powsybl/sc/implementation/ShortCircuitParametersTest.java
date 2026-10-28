@@ -35,17 +35,20 @@ class ShortCircuitParametersTest {
 
     private LoadFlowParameters loadFlowParameters;
     private ShortCircuitAnalysisProvider provider;
+    private ShortCircuitParameters scp;
 
     @BeforeEach
     void setUp() {
         loadFlowParameters = LoadFlowParameters.load();
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
         provider = new OpenShortCircuitProvider();
+        scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
     }
 
     @Test
     void open4nWithLoadsFalse() {
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters().setWithLoads(false);
+        scp.setWithLoads(false);
         List<FaultResult> frs = run(create4nShunts(NetworkFactory.findDefault()), scp);
 
         assertMagnitudeCurrents(frs, 2949.84546, 3119.4812, 2954.60254, 2837.94067);
@@ -54,7 +57,6 @@ class ShortCircuitParametersTest {
 
     @Test
     void open4nWithCapacitiesTrue() {
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class).setWithCapacities(true);
         List<FaultResult> frs = run(create4nShuntsNetworkWithLossyLine(), scp);
 
@@ -64,7 +66,6 @@ class ShortCircuitParametersTest {
 
     @Test
     void open4nWithCapacitiesFalse() {
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class).setWithCapacities(false);
         List<FaultResult> frs = run(create4nShuntsNetworkWithLossyLine(), scp);
 
@@ -74,7 +75,6 @@ class ShortCircuitParametersTest {
 
     @Test
     void open4nWithResistancesTrue() {
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class).setWithResistances(true);
         List<FaultResult> frs = run(create4nShuntsNetworkWithLossyLine(), scp);
 
@@ -84,12 +84,27 @@ class ShortCircuitParametersTest {
 
     @Test
     void open4nWithResistancesFalse() {
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class).setWithResistances(false);
         List<FaultResult> frs = run(create4nShuntsNetworkWithLossyLine(), scp);
 
         assertMagnitudeCurrents(frs, 3619.93359, 3824.12598, 3665.83569, 3481.27563);
         assertBusVoltages(frs, 6.46059752, 0.0, 5.60450268, 10.4660444);
+    }
+
+    @Test
+    void open4nWithInconsistentShortCircuitParameters() {
+        Network n4nLossyLine = create4nShuntsNetworkWithLossyLine();
+        LoadFlow.run(n4nLossyLine, loadFlowParameters);
+        scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE)
+                .setWithLoads(false)
+                .setWithShuntCompensators(false)
+                .setWithNeutralPosition(true);
+        scp.getExtension(OpenShortCircuitParameters.class)
+                .setWithResistances(false)
+                .setWithCapacities(false);
+        List<FaultResult> frs = run(n4nLossyLine, scp);
+
+        assertMagnitudeCurrents(frs, 2684.06998, 2886.75134, 2690.00646, 2579.44128);
     }
 
     /**
@@ -221,6 +236,39 @@ class ShortCircuitParametersTest {
         assertEquals(2, frs.getFirst().getShortCircuitBusResults().size());
         assertMagnitudeCurrents(frs, 8737.08594, 8684.00879);
         assertBusVoltages(frs, 0.0, 8.68918419);
+    }
+
+    /**
+     * Bus "B5" is unknown so innerZOne: "B1" and "B3"
+     * */
+    @Test
+    void unknowBusInInnerZoneBusIdsIgnored() {
+        Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
+        LoadFlow.run(n4nWithGenerators, loadFlowParameters);
+        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
+        scp.getExtension(OpenShortCircuitParameters.class)
+                .setInnerZoneBusIds(List.of("B2", "B3", "B5"))
+                .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
+                .setInnerZoneGeneratorPowerThreshold(10.0);
+        List<FaultResult> frs = run(n4nWithGenerators, scp);
+
+        assertEquals(2, frs.size());
+        assertEquals(2, frs.getFirst().getShortCircuitBusResults().size());
+        assertMagnitudeCurrents(frs, 8737.08594, 8684.00879);
+        assertBusVoltages(frs, 0.0, 8.68918419);
+    }
+
+    @Test
+    void throwErrorForNoneValidInnerBusIds() {
+        Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
+        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
+        scp.getExtension(OpenShortCircuitParameters.class)
+                .setInnerZoneBusIds(List.of("B5", "B6"));
+
+        PowsyblException error = assertThrows(PowsyblException.class, () -> run(n4nWithGenerators, scp));
+
+        assertTrue(error.getMessage().contains("B5"));
+        assertTrue(error.getMessage().contains("B6"));
     }
 
     /**
