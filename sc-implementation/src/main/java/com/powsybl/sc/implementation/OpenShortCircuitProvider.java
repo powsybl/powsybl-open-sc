@@ -10,17 +10,17 @@ package com.powsybl.sc.implementation;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Stopwatch;
 import com.powsybl.computation.ComputationManager;
+import com.powsybl.contingency.violations.LimitViolation;
 import com.powsybl.iidm.network.*;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.openloadflow.network.LfBus;
-import com.powsybl.sc.util.CalculationLocation;
 import com.powsybl.openloadflow.network.LfNetwork;
-import com.powsybl.sc.util.Feeder;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
+import com.powsybl.sc.util.CalculationLocation;
+import com.powsybl.sc.util.Feeder;
 import com.powsybl.sc.util.FeedersAtBusResult;
-import com.powsybl.contingency.violations.LimitViolation;
 import com.powsybl.shortcircuit.*;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
@@ -64,7 +64,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     }
 
     @Override
-    public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters, ComputationManager computationManager, List<FaultParameters> faultParameters) {
+    public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters,
+                                                             ComputationManager computationManager, List<FaultParameters> faultParameters) {
 
         Objects.requireNonNull(network);
         Objects.requireNonNull(parameters);
@@ -122,7 +123,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             List<FeederResult> feederResults = new ArrayList<>();
             List<LimitViolation> limitViolations = new ArrayList<>();
             List<ShortCircuitBusResults> busResults = new ArrayList<>();
-            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
+            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults,
+                    limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }
@@ -148,9 +150,11 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
             List<ShortCircuitBusResults> busResults = new ArrayList<>();
             if (scbParameters.isVoltageUpdate()) {
-                fillBusResults(scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(), scbParameters.getMinVoltageDropProportional());
+                fillBusResults(scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(),
+                        scbParameters.getMinVoltageDropProportional());
             }
-            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
+            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider,
+                    limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }

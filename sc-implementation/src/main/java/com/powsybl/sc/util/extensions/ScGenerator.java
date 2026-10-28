@@ -18,7 +18,7 @@ public class ScGenerator {
         SYNCHRONOUS_GEN,
         ASYNCHRONOUS_GEN,
         SYNCHRONOUS_MOTOR,
-        ASYNCHRONOUS_MOTOR;
+        ASYNCHRONOUS_MOTOR
     }
 
     private final Complex transZd;

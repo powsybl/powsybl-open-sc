@@ -19,13 +19,13 @@ public class GeneratorShortCircuit2 extends AbstractExtension<Generator> {
 
     public enum RotorType {
         UNDEFINED,
-        TURBOSERIES_1;
+        TURBOSERIES_1
     }
 
     public enum GeneratorType {
         UNKNOWN,
         ROTATING_MACHINE,
-        FEEDER;
+        FEEDER
     }
 
     private double transRd; // transient resistance // TODO : will be final when kG of the norm will be handled

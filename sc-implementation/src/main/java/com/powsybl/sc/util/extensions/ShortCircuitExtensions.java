@@ -8,12 +8,12 @@
 package com.powsybl.sc.util.extensions;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.iidm.network.extensions.FortescueConstants;
 import com.powsybl.iidm.network.extensions.GeneratorFortescue;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuit;
 import com.powsybl.iidm.network.extensions.LineFortescue;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
-import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.extensions.*;
 import com.powsybl.sc.util.AdmittanceEquationSystem;
@@ -174,7 +174,8 @@ public final class ShortCircuitExtensions {
         ScTransfo3wKt.Leg leg3kT = new ScTransfo3wKt.Leg(kT3R, kT3X, kT3R0, kT3X0);
 
         lfBranch.setProperty(PROPERTY_SHORT_CIRCUIT, new ScTransfo3W(leg1, leg2, leg3));
-        lfBranch.setProperty(PROPERTY_SHORT_CIRCUIT_NORM, new ScTransfo3wKt(leg1kT, leg2kT, leg3kT)); // set in a separate extension because is does not depend only on iidm in input but also on the type of norm
+        // set in a separate extension because is does not depend only on iidm in input but also on the type of norm
+        lfBranch.setProperty(PROPERTY_SHORT_CIRCUIT_NORM, new ScTransfo3wKt(leg1kT, leg2kT, leg3kT));
     }
 
     private static void addLineExtension(Network network, LfBranch lfBranch) {
