@@ -147,20 +147,20 @@ public final class AdmittanceEquationSystem {
         return tmpY;
     }
 
-    private static Complex computeAdmForAdmShunt(boolean isWithShuntCompensators, LfBus bus) {
+    private static Complex computeAdmForAdmShunt(ImpedanceLinearResolutionParameters parameters, LfBus bus) {
         Complex y = new Complex(0.);
 
-        if (isWithShuntCompensators) {
+        if (parameters.isWithShuntCompensators()) {
             y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
         }
 
         return y;
     }
 
-    private static Complex computeAdmForAdmAdmit(Complex v, boolean isWithShuntCompensators, boolean isBusPv, LfBus bus) {
+    private static Complex computeAdmForAdmAdmit(Complex v, ImpedanceLinearResolutionParameters parameters, boolean isBusPv, LfBus bus) {
         Complex y = new Complex(0.);
 
-        if (isWithShuntCompensators) {
+        if (parameters.isWithShuntCompensators()) {
             y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
         }
 
@@ -182,22 +182,25 @@ public final class AdmittanceEquationSystem {
         return y.add(yLoadEq).add(yGenEq);
     }
 
-    private static Complex computeAdmForAdmThevenin(Complex v, boolean isWithShuntCompensators, LfBus bus, FeedersAtNetwork feeders, StudyType admittanceStudyType, AdmittanceType admittanceType) {
-        Complex y = new Complex(0.);
+    private static Complex computeAdmForAdmThevenin(Complex v, ImpedanceLinearResolutionParameters parameters, LfBus bus, FeedersAtNetwork feeders, StudyType admittanceStudyType, AdmittanceType admittanceType) {
+        Complex y = Complex.ZERO;
+        Complex yLoadEq = Complex.ZERO;
 
         List<Feeder> feederList = new ArrayList<>();
 
-        if (isWithShuntCompensators) {
+        if (parameters.isWithShuntCompensators()) {
             // Handling shunts that physically exist
             y = new Complex(0., getBfromShuntAndUpdateFeederList(bus, feederList)); // ! updates feederList
         }
 
-        ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-        Complex yLoadEq = scLoad.ydEquivalent().divide(v.abs() * v.abs());
+        if (parameters.isWithLoads()) {
+            ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
+            yLoadEq = scLoad.ydEquivalent().divide(v.abs() * v.abs());
 
-        if (yLoadEq.abs() > EPSILON) {
-            Feeder loadFeeder = new LoadFeeder(yLoadEq, bus); // Currently only one feeder aggregating all the loads of the bus!
-            feederList.add(loadFeeder);
+            if (yLoadEq.abs() > EPSILON) {
+                Feeder loadFeeder = new LoadFeeder(yLoadEq, bus); // Currently only one feeder aggregating all the loads of the bus!
+                feederList.add(loadFeeder);
+            }
         }
 
         Complex yGenEq = getYtransfromRdXdAndUpdateFeederList(bus, admittanceStudyType, feederList, admittanceType); // ! updates feederList
@@ -224,7 +227,6 @@ public final class AdmittanceEquationSystem {
     private static void createShunts(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
                                      ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, FrequencyType frequencyType) {
         AdmittanceType admittanceType = parameters.getAdmittanceType();
-        boolean isWithShuntCompensators = parameters.isWithShuntCompensators();
         StudyType admittanceStudyType = parameters.getStudyType();
 
         for (LfBus bus : network.getBuses()) {
@@ -237,9 +239,9 @@ public final class AdmittanceEquationSystem {
             // 3. shunts representing generating units
 
             Complex y = switch (admittanceType) {
-                case ADM_SHUNT -> computeAdmForAdmShunt(isWithShuntCompensators, bus);
-                case ADM_ADMIT -> computeAdmForAdmAdmit(v, isWithShuntCompensators, isBusPv, bus);
-                case ADM_THEVENIN -> computeAdmForAdmThevenin(v, isWithShuntCompensators, bus, feeders, admittanceStudyType, admittanceType);
+                case ADM_SHUNT -> computeAdmForAdmShunt(parameters, bus);
+                case ADM_ADMIT -> computeAdmForAdmAdmit(v, parameters, isBusPv, bus);
+                case ADM_THEVENIN -> computeAdmForAdmThevenin(v, parameters, bus, feeders, admittanceStudyType, admittanceType);
                 case ADM_THEVENIN_HOMOPOLAR -> computeAdmForAdmTheveninHomopolar(bus, feeders, admittanceStudyType, admittanceType);
                 default -> new Complex(0.);
             };
