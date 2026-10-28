@@ -51,6 +51,26 @@ public class ShortCircuitParametersTest {
         assertBusVoltages(frs, new double[]{5.87773705, 0.0, 5.55469227, 9.46258354}, 1);
     }
 
+    @Test
+    void openSc4nShuntWithCapacitiesFalse() {
+        Network nt4Shunts = create4nShunts(NetworkFactory.findDefault());
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
+        ComputationManager cm = LocalComputationManager.getDefault();
+        ShortCircuitParameters scp = new ShortCircuitParameters()
+                .setStudyType(StudyType.SUB_TRANSIENT);
+        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters)
+                .setWithCapacities(false));
+
+        ShortCircuitAnalysisResult scar = provider.run(nt4Shunts, createBusFaultsFor4n(), scp, cm, Collections.emptyList()).join();
+
+        List<FaultResult> frs = scar.getFaultResults();
+
+        assertMagnitudeCurrents(frs,
+                new double[]{3547.16528, 3747.61084, 3592.37964, 3411.64258}
+        );
+        assertBusVoltages(frs, new double[]{6.46059752, 0.0, 5.57590151, 10.4008541}, 1);
+    }
+
     private static List<Fault> createBusFaultsFor4n() {
         return List.of(
                 new BusFault("F1", "B1"),

@@ -95,7 +95,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         return new KTCoeff(kTr, kTx);
     }
 
-    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
+    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, ImpedanceLinearResolutionParameters parameters, AdmittanceEquationSystem.FrequencyType frequencyType) {
         super(branch);
         Objects.requireNonNull(bus1);
         Objects.requireNonNull(bus2);
@@ -124,7 +124,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         double kTx = ktCoeff.kTx();
 
         // Take the rho of the neutral position (model(0)) of tapChanger if isWithNeutralPosition set to True
-        if (isWithNeutralPosition
+        if (parameters.isWithNeutralPosition()
                 && piModel instanceof PiModelArray piModelArray) {
             rho = piModelArray.getModel(0).getR1();
             r = piModelArray.getModel(0).getR() * kTr;
@@ -147,10 +147,11 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         cos2A = Math.cos(2 * alpha);
         sin2A = Math.sin(2 * alpha);
 
-        gPi1 = piModel.getG1() / kTr;
-        bPi1 = piModel.getB1() / kTx;
-        gPi2 = piModel.getG2() / kTr;
-        bPi2 = piModel.getB2() / kTx;
+        boolean isWithCapacities = parameters.isWithCapacities();
+        gPi1 = isWithCapacities ? piModel.getG1() / kTr : 0.0;
+        bPi1 = isWithCapacities ? piModel.getB1() / kTx : 0.0;
+        gPi2 = isWithCapacities ? piModel.getG2() / kTr : 0.0;
+        bPi2 = isWithCapacities ? piModel.getB2() / kTx : 0.0;
     }
 
     @Override

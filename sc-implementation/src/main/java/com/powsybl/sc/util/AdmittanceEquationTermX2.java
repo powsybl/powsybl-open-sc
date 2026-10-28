@@ -30,11 +30,11 @@ public class AdmittanceEquationTermX2 extends AbstractAdmittanceEquationTerm {
     private final double b2b21sum;
 
     public AdmittanceEquationTermX2(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet,
-                                    AdmittanceEquationSystem.AdmittanceType admittanceType, boolean isWithNeutralPosition, AdmittanceEquationSystem.FrequencyType frequencyType) {
-        super(branch, bus1, bus2, variableSet, isWithNeutralPosition, frequencyType);
+                                    ImpedanceLinearResolutionParameters parameters, AdmittanceEquationSystem.FrequencyType frequencyType) {
+        super(branch, bus1, bus2, variableSet, parameters, frequencyType);
         // Direct component:
         // I2x = -g21 * V1x + b21 * V1y + (g2 + g21)V2x - (b2 + b21)V2y
-        if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
+        if (parameters.getAdmittanceType() == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
             HomopolarModel homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL);
             if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
                 homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL_20HZ);
