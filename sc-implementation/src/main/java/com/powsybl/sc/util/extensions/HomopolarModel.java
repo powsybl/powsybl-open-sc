@@ -16,6 +16,8 @@ import org.apache.commons.math3.complex.ComplexUtils;
 
 import java.util.Objects;
 
+import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+
 /**
  * zero sequence additional attributes
  *
@@ -34,8 +36,6 @@ import java.util.Objects;
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at gmail.com>
  */
 public class HomopolarModel {
-
-    private static final double EPSILON = 0.000001;
 
     private final LfBranch branch;
 

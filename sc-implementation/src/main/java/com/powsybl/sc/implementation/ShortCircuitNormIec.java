@@ -18,6 +18,8 @@ import com.powsybl.sc.util.extensions.TwoWindingsTransformerNorm;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -34,8 +36,6 @@ public class ShortCircuitNormIec extends ShortCircuitNormNone {
     public static final double LOW_VOLTAGE_CMIN = 0.95;
     public static final double MEDIUM_VOLTAGE_CMIN = 1.0;
     public static final double HIGH_VOLTAGE_MAX_CMIN = 1.0;
-
-    public static final double EPSILON = 0.000001;
 
     List<GeneratorWithTfo> generatorsWithTfo;
 
@@ -252,7 +252,7 @@ public class ShortCircuitNormIec extends ShortCircuitNormNone {
         double yBaseTfo = ratedSt2w / (ratedU2 * ratedU2);
         double xt2wpu = t2w.getX() * yBaseTfo;
 
-        double ks = 1.0;
+        double ks;
         RatioTapChanger ratioTapChanger = t2w.getRatioTapChanger();
 
         if (ratioTapChanger == null) {

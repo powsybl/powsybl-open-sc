@@ -76,7 +76,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         // building of fault lists
         List<ShortCircuitFault> faultsList = new ArrayList<>();
-        Map<ShortCircuitFault, Fault> scFaultToFault = new HashMap<>(); // for now we use this map to get the correspondence between short circuit provider and internal modelling of fault
+        Map<ShortCircuitFault, Fault> scFaultToFault = new HashMap<>(); // for now, we use this map to get the correspondence between short circuit provider and internal modelling of fault
 
         Pair<Boolean, Boolean> faultTypes = buildFaultLists(network, faults, faultsList, scFaultToFault);
         boolean existBalancedFaults = faultTypes.getKey();
@@ -87,7 +87,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(lfParameters, matrixFactory, at, faultsList, parameters, shortCircuitNorm);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory, at, faultsList, parameters, shortCircuitNorm);
 
         // lists to store the results
         List<FaultResult> faultResults = new ArrayList<>();

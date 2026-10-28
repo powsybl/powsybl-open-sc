@@ -932,14 +932,14 @@ public final class ReferenceNetwork {
                 .add();
 
         // This feeder is changed into a machine because it is not yet possible to model a grounded feeder with a load
-        /*vl5.newLoad()
+        /* vl5.newLoad()
                 .setId("LOAD_FEEDER2") // we try to model the feeder through a load that will be transformed into an impedance
                 .setBus(bus5.getId())
                 .setP0(pEquivalentFeeder2)
                 .setQ0(qEquivalentFeeder2)
                 .add();*/
 
-        Generator q2 = vl5.newGenerator() //alternative modelling
+        Generator q2 = vl5.newGenerator() //alternative modeling
                 .setId("Q2")
                 .setBus(bus5.getId())
                 .setMinP(0.0)

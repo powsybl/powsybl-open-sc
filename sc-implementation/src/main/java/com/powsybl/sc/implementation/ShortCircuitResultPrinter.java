@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
-import static com.powsybl.sc.extensions.LoadShortCircuit.EPSILON;
+import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -140,9 +140,8 @@ public class ShortCircuitResultPrinter {
     }
 
     public String getStringFortescueValue(FortescueValue fv) {
-        String s = "[ " + fv.getZeroMagnitude() + " < " + fv.getZeroAngle() + " ; "
+        return "[ " + fv.getZeroMagnitude() + " < " + fv.getZeroAngle() + " ; "
                         + fv.getPositiveMagnitude() + " < " + fv.getPositiveAngle() + " ; "
                         + fv.getNegativeMagnitude() + " < " + fv.getNegativeAngle() + " ] ";
-        return s;
     }
 }

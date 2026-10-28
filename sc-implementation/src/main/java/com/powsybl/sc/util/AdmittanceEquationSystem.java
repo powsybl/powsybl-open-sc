@@ -16,6 +16,7 @@ import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.util.extensions.ScGenerator;
 import com.powsybl.sc.util.extensions.ScLoad;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
+import com.powsybl.shortcircuit.StudyType;
 import net.jafama.FastMath;
 import org.apache.commons.math3.complex.Complex;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
+import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -32,8 +34,6 @@ import static com.powsybl.openloadflow.util.PerUnit.SB;
 public final class AdmittanceEquationSystem {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdmittanceEquationSystem.class);
-
-    private static final double EPSILON = 0.00000001;
 
     private AdmittanceEquationSystem() {
     }
@@ -66,12 +66,6 @@ public final class AdmittanceEquationSystem {
         ADM_ADMIT, // all external  nodal injections are transformed into passive shunt elements included in the Y matrix (then [Ie] should be [0])
         ADM_THEVENIN, // used to compute the Zth Thevenin Equivalent: shunts remain shunts, synchronous machines are transformed into X" equivalent shunts, remaining injections are transformed into passive shunt elements included in the Y matrix
         ADM_THEVENIN_HOMOPOLAR // used to compute the homopolar admittance matrix for unbalanced short circuits
-    }
-
-    public enum AdmittancePeriodType {
-        ADM_SUB_TRANSIENT,
-        ADM_TRANSIENT,
-        ADM_STEADY_STATE,
     }
 
     public enum FrequencyType {
@@ -120,7 +114,7 @@ public final class AdmittanceEquationSystem {
         return tmpB;
     }
 
-    private static Complex getYtransfromRdXdAndUpdateFeederList(LfBus bus, AdmittancePeriodType admittancePeriodType, List<Feeder> feederList, AdmittanceType admittanceType) {
+    private static Complex getYtransfromRdXdAndUpdateFeederList(LfBus bus, StudyType admittanceStudyType, List<Feeder> feederList, AdmittanceType admittanceType) {
         double vnomVl = bus.getNominalV();
 
         Complex tmpY = new Complex(0.);
@@ -128,7 +122,7 @@ public final class AdmittanceEquationSystem {
             ScGenerator scGen = (ScGenerator) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
             double kG = (Double) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
             Complex z = scGen.getTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
-            if (admittancePeriodType == AdmittancePeriodType.ADM_SUB_TRANSIENT) {
+            if (admittanceStudyType == StudyType.SUB_TRANSIENT) {
                 z = scGen.getSubTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
             }
 
@@ -153,20 +147,20 @@ public final class AdmittanceEquationSystem {
         return tmpY;
     }
 
-    private static Complex computeAdmForAdmShunt(boolean isShuntsIgnore, LfBus bus) {
+    private static Complex computeAdmForAdmShunt(boolean isWithShuntCompensators, LfBus bus) {
         Complex y = new Complex(0.);
 
-        if (!isShuntsIgnore) {
+        if (isWithShuntCompensators) {
             y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
         }
 
         return y;
     }
 
-    private static Complex computeAdmForAdmAdmit(Complex v, boolean isShuntsIgnore, boolean isBusPv, LfBus bus) {
+    private static Complex computeAdmForAdmAdmit(Complex v, boolean isWithShuntCompensators, boolean isBusPv, LfBus bus) {
         Complex y = new Complex(0.);
 
-        if (!isShuntsIgnore) {
+        if (isWithShuntCompensators) {
             y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
         }
 
@@ -188,12 +182,12 @@ public final class AdmittanceEquationSystem {
         return y.add(yLoadEq).add(yGenEq);
     }
 
-    private static Complex computeAdmForAdmThevenin(Complex v, boolean isShuntsIgnore, LfBus bus, FeedersAtNetwork feeders, AdmittancePeriodType admittancePeriodType, AdmittanceType admittanceType) {
+    private static Complex computeAdmForAdmThevenin(Complex v, boolean isWithShuntCompensators, LfBus bus, FeedersAtNetwork feeders, StudyType admittanceStudyType, AdmittanceType admittanceType) {
         Complex y = new Complex(0.);
 
         List<Feeder> feederList = new ArrayList<>();
 
-        if (!isShuntsIgnore) {
+        if (isWithShuntCompensators) {
             // Handling shunts that physically exist
             y = new Complex(0., getBfromShuntAndUpdateFeederList(bus, feederList)); // ! updates feederList
         }
@@ -206,7 +200,7 @@ public final class AdmittanceEquationSystem {
             feederList.add(loadFeeder);
         }
 
-        Complex yGenEq = getYtransfromRdXdAndUpdateFeederList(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList
+        Complex yGenEq = getYtransfromRdXdAndUpdateFeederList(bus, admittanceStudyType, feederList, admittanceType); // ! updates feederList
         // TODO : check how to verify that the generators are operating
 
         FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
@@ -215,10 +209,10 @@ public final class AdmittanceEquationSystem {
         return y.add(yLoadEq).add(yGenEq);
     }
 
-    private static Complex computeAdmForAdmTheveninHomopolar(LfBus bus, FeedersAtNetwork feeders, AdmittancePeriodType admittancePeriodType, AdmittanceType admittanceType) {
+    private static Complex computeAdmForAdmTheveninHomopolar(LfBus bus, FeedersAtNetwork feeders, StudyType admittanceStudyType, AdmittanceType admittanceType) {
         List<Feeder> feederList = new ArrayList<>(); // not used yet in homopolar
 
-        Complex y = getYtransfromRdXdAndUpdateFeederList(bus, admittancePeriodType, feederList, admittanceType); // ! updates feederList
+        Complex y = getYtransfromRdXdAndUpdateFeederList(bus, admittanceStudyType, feederList, admittanceType); // ! updates feederList
         //TODO : check how to verify that the generators are operating
 
         FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
@@ -230,8 +224,8 @@ public final class AdmittanceEquationSystem {
     private static void createShunts(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
                                      ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, FrequencyType frequencyType) {
         AdmittanceType admittanceType = parameters.getAdmittanceType();
-        boolean isShuntsIgnore = parameters.isTheveninIgnoreShunts();
-        AdmittancePeriodType admittancePeriodType = parameters.getTheveninPeriodType();
+        boolean isWithShuntCompensators = parameters.isWithShuntCompensators();
+        StudyType admittanceStudyType = parameters.getStudyType();
 
         for (LfBus bus : network.getBuses()) {
             Complex v = parameters.getInitialVoltage(bus.getNum());
@@ -243,10 +237,10 @@ public final class AdmittanceEquationSystem {
             // 3. shunts representing generating units
 
             Complex y = switch (admittanceType) {
-                case ADM_SHUNT -> computeAdmForAdmShunt(isShuntsIgnore, bus);
-                case ADM_ADMIT -> computeAdmForAdmAdmit(v, isShuntsIgnore, isBusPv, bus);
-                case ADM_THEVENIN -> computeAdmForAdmThevenin(v, isShuntsIgnore, bus, feeders, admittancePeriodType, admittanceType);
-                case ADM_THEVENIN_HOMOPOLAR -> computeAdmForAdmTheveninHomopolar(bus, feeders, admittancePeriodType, admittanceType);
+                case ADM_SHUNT -> computeAdmForAdmShunt(isWithShuntCompensators, bus);
+                case ADM_ADMIT -> computeAdmForAdmAdmit(v, isWithShuntCompensators, isBusPv, bus);
+                case ADM_THEVENIN -> computeAdmForAdmThevenin(v, isWithShuntCompensators, bus, feeders, admittanceStudyType, admittanceType);
+                case ADM_THEVENIN_HOMOPOLAR -> computeAdmForAdmTheveninHomopolar(bus, feeders, admittanceStudyType, admittanceType);
                 default -> new Complex(0.);
             };
 

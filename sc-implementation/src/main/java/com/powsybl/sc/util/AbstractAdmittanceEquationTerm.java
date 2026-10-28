@@ -178,13 +178,4 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
         throw new UnsupportedOperationException("Not needed");
     }
 
-    @Override
-    public boolean hasRhs() {
-        return false;
-    }
-
-    @Override
-    public double rhs() {
-        return 0;
-    }
 }

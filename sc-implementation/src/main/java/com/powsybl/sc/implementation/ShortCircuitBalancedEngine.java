@@ -107,7 +107,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         Complex vInit = linearResolutionResult.getEth();
         Complex zth = linearResolutionResult.getZthEq();
 
-        Complex zfToGround = shortCircuitFault.getZf().getZg();
+        Complex zfToGround = shortCircuitFault.getZf().zg();
         Complex id = computeFaultCurrent(vInit, zth, zfToGround);
 
         // The post-fault voltage values at faulted bus are computed as follow :
@@ -173,7 +173,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                 .add(zthBus2Bus1.multiply(r * s))
                 .add(zLine.multiply(r * s));
 
-        Complex zfToGround = shortCircuitFault.getZf().getZg();
+        Complex zfToGround = shortCircuitFault.getZf().zg();
         Complex id = computeFaultCurrent(vInit, zth, zfToGround);
 
         // dv = -(s*Zq1 + r*Zq2)*Id
