@@ -7,6 +7,7 @@
  */
 package com.powsybl.sc.util;
 
+import com.powsybl.iidm.network.Network;
 import com.powsybl.openloadflow.ac.AcLoadFlowContext;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
 import com.powsybl.openloadflow.ac.AcloadFlowEngine;
@@ -27,6 +28,7 @@ import java.util.List;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
 import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+import static com.powsybl.sc.util.ShortCircuitHelper.isGeneratorSelected;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -111,11 +113,13 @@ public final class AdmittanceEquationSystem {
         return tmpB;
     }
 
-    private static Complex getYtransfromRdXdAndUpdateFeederList(LfBus bus, StudyType admittanceStudyType, List<Feeder> feederList, AdmittanceType admittanceType) {
+    private static Complex getYtransfromRdXdAndUpdateFeederList(Network network, LfBus bus, ImpedanceLinearResolutionParameters parameters, StudyType admittanceStudyType, List<Feeder> feederList, AdmittanceType admittanceType) {
         double vnomVl = bus.getNominalV();
-
         Complex tmpY = new Complex(0.);
         for (LfGenerator lfgen : bus.getGenerators()) { //compute R'd or R"d from generators at bus
+            if (!isGeneratorSelected(lfgen, parameters, network)) {
+                continue;
+            }
             ScGenerator scGen = (ScGenerator) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
             double kG = (Double) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
             Complex z = scGen.getTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
@@ -179,7 +183,7 @@ public final class AdmittanceEquationSystem {
         return y.add(yLoadEq).add(yGenEq);
     }
 
-    private static Complex computeAdmForAdmThevenin(Complex v, ImpedanceLinearResolutionParameters parameters, LfBus bus, FeedersAtNetwork feeders, StudyType admittanceStudyType, AdmittanceType admittanceType) {
+    private static Complex computeAdmForAdmThevenin(Network network, Complex v, ImpedanceLinearResolutionParameters parameters, LfBus bus, FeedersAtNetwork feeders, StudyType admittanceStudyType, AdmittanceType admittanceType) {
         Complex y = Complex.ZERO;
         Complex yLoadEq = Complex.ZERO;
 
@@ -200,7 +204,7 @@ public final class AdmittanceEquationSystem {
             }
         }
 
-        Complex yGenEq = getYtransfromRdXdAndUpdateFeederList(bus, admittanceStudyType, feederList, admittanceType); // ! updates feederList
+        Complex yGenEq = getYtransfromRdXdAndUpdateFeederList(network, bus, parameters, admittanceStudyType, feederList, admittanceType); // ! updates feederList
         // TODO : check how to verify that the generators are operating
 
         FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
@@ -209,10 +213,11 @@ public final class AdmittanceEquationSystem {
         return y.add(yLoadEq).add(yGenEq);
     }
 
-    private static Complex computeAdmForAdmTheveninHomopolar(LfBus bus, FeedersAtNetwork feeders, StudyType admittanceStudyType, AdmittanceType admittanceType) {
+    private static Complex computeAdmForAdmTheveninHomopolar(Network network, LfBus bus, ImpedanceLinearResolutionParameters parameters,
+                                                             FeedersAtNetwork feeders, StudyType admittanceStudyType, AdmittanceType admittanceType) {
         List<Feeder> feederList = new ArrayList<>(); // not used yet in homopolar
 
-        Complex y = getYtransfromRdXdAndUpdateFeederList(bus, admittanceStudyType, feederList, admittanceType); // ! updates feederList
+        Complex y = getYtransfromRdXdAndUpdateFeederList(network, bus, parameters, admittanceStudyType, feederList, admittanceType); // ! updates feederList
         //TODO : check how to verify that the generators are operating
 
         FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
@@ -221,12 +226,12 @@ public final class AdmittanceEquationSystem {
         return y;
     }
 
-    private static void createShunts(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
+    private static void createShunts(Network network, LfNetwork lfNetwork, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
                                      ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, FrequencyType frequencyType) {
         AdmittanceType admittanceType = parameters.getAdmittanceType();
         StudyType admittanceStudyType = parameters.getStudyType();
 
-        for (LfBus bus : network.getBuses()) {
+        for (LfBus bus : lfNetwork.getBuses()) {
             Complex v = parameters.getInitialVoltage(bus.getNum());
             boolean isBusPv = bus.isVoltageControlled();
 
@@ -238,8 +243,8 @@ public final class AdmittanceEquationSystem {
             Complex y = switch (admittanceType) {
                 case ADM_SHUNT -> computeAdmForAdmShunt(parameters, bus);
                 case ADM_ADMIT -> computeAdmForAdmAdmit(v, parameters, isBusPv, bus);
-                case ADM_THEVENIN -> computeAdmForAdmThevenin(v, parameters, bus, feeders, admittanceStudyType, admittanceType);
-                case ADM_THEVENIN_HOMOPOLAR -> computeAdmForAdmTheveninHomopolar(bus, feeders, admittanceStudyType, admittanceType);
+                case ADM_THEVENIN -> computeAdmForAdmThevenin(network, v, parameters, bus, feeders, admittanceStudyType, admittanceType);
+                case ADM_THEVENIN_HOMOPOLAR -> computeAdmForAdmTheveninHomopolar(network, bus, parameters, feeders, admittanceStudyType, admittanceType);
                 default -> new Complex(0.);
             };
 
@@ -262,22 +267,22 @@ public final class AdmittanceEquationSystem {
         }
     }
 
-    public static EquationSystem<VariableType, EquationType> create(LfNetwork network, VariableSet<VariableType> variableSet,
+    public static EquationSystem<VariableType, EquationType> create(Network network, LfNetwork lfNetwork, VariableSet<VariableType> variableSet,
                                                                     ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, FrequencyType frequencyType) {
         AdmittanceType admittanceType = parameters.getAdmittanceType();
         AcLoadFlowParameters acLoadFlowParameters = parameters.getAcLoadFlowParameters();
-        EquationSystem<VariableType, EquationType> equationSystem = new EquationSystem<>(EquationType.class, network, variableSet);
+        EquationSystem<VariableType, EquationType> equationSystem = new EquationSystem<>(EquationType.class, lfNetwork, variableSet);
 
         if (admittanceType == AdmittanceType.ADM_ADMIT) {
-            try (AcLoadFlowContext context = new AcLoadFlowContext(network, acLoadFlowParameters)) {
+            try (AcLoadFlowContext context = new AcLoadFlowContext(lfNetwork, acLoadFlowParameters)) {
                 new AcloadFlowEngine(context)
                         .run();
             }
         }
 
-        createBranches(network, variableSet, equationSystem, parameters, frequencyType);
+        createBranches(lfNetwork, variableSet, equationSystem, parameters, frequencyType);
         if (admittanceType != AdmittanceType.ADM_INJ) { //shunts created in the admittance matrix are only those that really exist in the network
-            createShunts(network, variableSet, equationSystem, parameters, feeders, frequencyType);
+            createShunts(network, lfNetwork, variableSet, equationSystem, parameters, feeders, frequencyType);
         }
 
         return equationSystem;

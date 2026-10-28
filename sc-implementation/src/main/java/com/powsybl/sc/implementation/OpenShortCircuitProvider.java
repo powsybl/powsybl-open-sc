@@ -11,7 +11,6 @@ import com.google.auto.service.AutoService;
 import com.google.common.base.Stopwatch;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.*;
-import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.openloadflow.network.LfBus;
@@ -33,6 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
+import static com.powsybl.sc.util.ShortCircuitHelper.isLfBusInInnerZone;
 import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
 
 /**
@@ -68,17 +68,14 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
         Objects.requireNonNull(network);
         Objects.requireNonNull(parameters);
+        checkShortCircuitParametersConsistency(parameters);
         Stopwatch stopwatch = Stopwatch.createStarted();
-        OpenShortCircuitParameters extension = parameters.getExtension(OpenShortCircuitParameters.class);
-        LoadFlowParameters lfParameters = extension != null
-                ? extension.getLoadFlowParameters()
-                : new LoadFlowParameters();
 
         // building of fault lists
         List<ShortCircuitFault> faultsList = new ArrayList<>();
-        Map<ShortCircuitFault, Fault> scFaultToFault = new HashMap<>(); // for now, we use this map to get the correspondence between short circuit provider and internal modelling of fault
+        Map<ShortCircuitFault, Fault> scFaultToFault = new HashMap<>(); // for now, we use this map to get the correspondence between short circuit provider and internal modeling of fault
 
-        Pair<Boolean, Boolean> faultTypes = buildFaultLists(network, faults, faultsList, scFaultToFault);
+        Pair<Boolean, Boolean> faultTypes = buildFaultLists(network, faults, faultsList, scFaultToFault, parameters);
         boolean existBalancedFaults = faultTypes.getKey();
         boolean existUnbalancedFaults = faultTypes.getValue();
 
@@ -148,7 +145,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
             List<ShortCircuitBusResults> busResults = new ArrayList<>();
             if (scbParameters.isVoltageUpdate()) {
-                fillBusResults(scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(), scbParameters.getMinVoltageDropProportional());
+                fillBusResults(network, scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(),
+                        scbParameters.getMinVoltageDropProportional(), scbParameters.getInnerZoneBusIds());
             }
             MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
@@ -189,32 +187,43 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         }
     }
 
-    private void fillBusResults(LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult, List<Complex> initialVoltages, double minVoltDropProportional) {
+    private void fillBusResults(Network network, LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult, List<Complex> initialVoltages, double minVoltDropProportional, Set<String> innerZonBusIds) {
         List<FortescueValue> dVoltages = scResult.getBusNum2Dv();
         for (LfBus lfBus : lfNetwork.getBuses()) {
-            int num = lfBus.getNum();
-            Complex initialVpu = initialVoltages.get(num);
-            Complex dVpu = polar2Complex(dVoltages.get(num).getPositiveMagnitude(), dVoltages.get(num).getPositiveAngle());
-            double voltageDropProportional = dVpu.abs() / initialVpu.abs();
-            Complex finalVpu = initialVpu.add(dVpu);
+            if (isLfBusInInnerZone(lfBus, network, innerZonBusIds)) {
+                int num = lfBus.getNum();
+                Complex initialVpu = initialVoltages.get(num);
+                Complex dVpu = polar2Complex(dVoltages.get(num).getPositiveMagnitude(), dVoltages.get(num).getPositiveAngle());
+                double voltageDropProportional = dVpu.abs() / initialVpu.abs();
+                Complex finalVpu = initialVpu.add(dVpu);
 
-            if (voltageDropProportional >= minVoltDropProportional) {
-                String voltLevelId = lfBus.getVoltageLevelId();
-                String busId = lfBus.getId();
-                double nominalV = lfBus.getNominalV();
-                double initialV = nominalV * initialVpu.abs();
-                double finalV = nominalV * finalVpu.abs();
-                MagnitudeShortCircuitBusResults result = new MagnitudeShortCircuitBusResults(voltLevelId, busId, initialV, finalV, voltageDropProportional);
-                busResults.add(result);
+                if (voltageDropProportional >= minVoltDropProportional) {
+                    String voltLevelId = lfBus.getVoltageLevelId();
+                    String busId = lfBus.getId();
+                    double nominalV = lfBus.getNominalV();
+                    double initialV = nominalV * initialVpu.abs();
+                    double finalV = nominalV * finalVpu.abs();
+                    MagnitudeShortCircuitBusResults result = new MagnitudeShortCircuitBusResults(voltLevelId, busId, initialV, finalV, voltageDropProportional);
+                    busResults.add(result);
+                }
             }
         }
     }
 
-    public Pair<Boolean, Boolean> buildFaultLists(Network network, List<Fault> faults, List<ShortCircuitFault> balancedFaultsList, Map<ShortCircuitFault, Fault> scFaultToFault) {
+    public Pair<Boolean, Boolean> buildFaultLists(Network network, List<Fault> faults, List<ShortCircuitFault> balancedFaultsList,
+                                                  Map<ShortCircuitFault, Fault> scFaultToFault, ShortCircuitParameters parameters) {
         boolean existBalancedFaults = false;
         boolean existUnbalancedFaults = false;
 
         for (Fault fault : faults) {
+            String elementId = fault.getElementId();
+            Bus bus = network.getBusBreakerView().getBus(elementId);
+
+            Set<String> innerZoneBusIds = parameters.getExtension(OpenShortCircuitParameters.class).getInnerZoneBusIds();
+
+            if (!innerZoneBusIds.isEmpty() && !innerZoneBusIds.contains(bus.getId())) {
+                continue;
+            }
             ShortCircuitFault.ShortCircuitType scType = ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND; // Default type
 
             if (fault.getFaultType() == Fault.FaultType.SINGLE_PHASE) {
@@ -354,5 +363,45 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         Branch<?> branch = network.getBranch(elementId);
         double vNomVl2 = branch.getTerminal2().getVoltageLevel().getNominalV();
         return vNomVl2 * vNomVl2 / SB; // Fix me: What if vNomVl2 != vNomVl1?
+    }
+
+    private static void checkShortCircuitParametersConsistency(ShortCircuitParameters parameters) {
+        getOrCreateOpenScParameters(parameters);
+        List<String> inconsistentOptions = findInconsistentOptions(parameters);
+        if (!inconsistentOptions.isEmpty()) {
+            LOGGER.warn("Initial voltage profile mode is PREVIOUS_VALUE, but {} {}: the initial voltages come from a load flow "
+                            + "computed with the complete network model, so they may not be consistent with the admittance matrix.",
+                    inconsistentOptions, inconsistentOptions.size() > 1 ? "are set" : "is set");
+        }
+    }
+
+    static List<String> findInconsistentOptions(ShortCircuitParameters parameters) {
+        if (parameters.getInitialVoltageProfileMode() != InitialVoltageProfileMode.PREVIOUS_VALUE) {
+            return List.of();
+        }
+        OpenShortCircuitParameters openScParameters = parameters.getExtension(OpenShortCircuitParameters.class);
+        List<String> inconsistentOptions = new ArrayList<>();
+        if (!parameters.isWithLoads()) {
+            inconsistentOptions.add("withLoads=false");
+        }
+        if (!parameters.isWithShuntCompensators()) {
+            inconsistentOptions.add("withShuntCompensators=false");
+        }
+        if (parameters.isWithNeutralPosition()) {
+            inconsistentOptions.add("withNeutralPosition=true");
+        }
+        if (!openScParameters.isWithResistances()) {
+            inconsistentOptions.add("withResistances=false");
+        }
+        if (!openScParameters.isWithCapacities()) {
+            inconsistentOptions.add("withCapacities=false");
+        }
+        return inconsistentOptions;
+    }
+
+    static void getOrCreateOpenScParameters(ShortCircuitParameters parameters) {
+        if (parameters.getExtension(OpenShortCircuitParameters.class) == null) {
+            parameters.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters());
+        }
     }
 }

@@ -490,9 +490,8 @@ public class ShortCircuitBalancedTest {
         ShortCircuitFault sc3 = createZeroImpedanceTriphasedGroundFault("F3", "B6");
         List<ShortCircuitFault> faultList = List.of(sc1, sc2, sc3);
 
-        ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, shortCircuitNormIec);
+                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -551,22 +550,11 @@ public class ShortCircuitBalancedTest {
     @Test
     void openShortCircuitProvider2nWithFaultImpedance() {
 
-        //set up LF info
-        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
-        loadFlowParameters.setTwtSplitShuntAdmittance(true);
         Network nt2 = create2n(NetworkFactory.findDefault());
-        LoadFlow.run(nt2, loadFlowParameters);
 
-        //set up ShortCircuitProvider info
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new DenseMatrixFactory());
-        ComputationManager cm = LocalComputationManager.getDefault();
-        ShortCircuitParameters scp = new ShortCircuitParameters();
-
-        List<Fault> faults = new ArrayList<>();
         BusFault bf1 = new BusFault("F1", "B1", 0.5, 1, Fault.ConnectionType.SERIES, Fault.FaultType.THREE_PHASE);
         BusFault bf2 = new BusFault("F2", "B2", 5, 10, Fault.ConnectionType.PARALLEL, Fault.FaultType.THREE_PHASE);
-        faults.add(bf1);
-        faults.add(bf2);
+        List<Fault> faults = List.of(bf1, bf2);
 
         ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
 

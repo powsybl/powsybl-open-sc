@@ -40,7 +40,7 @@ public class TheveninEquivalent {
         List<LfNetwork> lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), theveninParameters.getAcLoadFlowParameters().getNetworkParameters());
         ShortCircuitExtensions.add(network, lfNetworks);
         LfNetwork lfNetwork = lfNetworks.getFirst();
-        impedanceLinearResolution = new ImpedanceLinearResolution(lfNetwork, generateAdmittanceLinearResolutionParam(network, lfNetwork, theveninParameters));
+        impedanceLinearResolution = new ImpedanceLinearResolution(network, lfNetwork, generateAdmittanceLinearResolutionParam(network, lfNetwork, theveninParameters));
     }
 
     public ImpedanceLinearResolution getImpedanceLinearResolution() {
