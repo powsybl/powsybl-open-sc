@@ -134,6 +134,9 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
             r = piModel.getR() * kTr;
             x = piModel.getX() * kTx * freqCoef;
         }
+        if (!parameters.isWithResistances()) {
+            r = 0.0;
+        }
         double zk2 = r * r + x * x;
         if (zk2 == 0) {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
