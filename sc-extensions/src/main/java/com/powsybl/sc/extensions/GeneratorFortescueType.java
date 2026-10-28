@@ -19,7 +19,7 @@ public class GeneratorFortescueType extends AbstractExtension<Generator> {
     public enum GeneratorType {
         UNKNOWN,
         ROTATING_MACHINE,
-        FEEDER;
+        FEEDER
     }
 
     private final GeneratorType generatorType;

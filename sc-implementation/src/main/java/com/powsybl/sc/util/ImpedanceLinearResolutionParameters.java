@@ -9,8 +9,8 @@ package com.powsybl.sc.util;
 
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
-import org.apache.commons.math3.complex.Complex;
 import com.powsybl.sc.implementation.ShortCircuitEngineParameters;
+import org.apache.commons.math3.complex.Complex;
 
 import java.util.List;
 import java.util.Objects;
@@ -38,7 +38,8 @@ public class ImpedanceLinearResolutionParameters {
 
     private final boolean isWithNeutralPosition;
 
-    public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> calculationLocations, ShortCircuitEngineParameters scParameters,
+    public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory,
+                                               List<CalculationLocation> calculationLocations, ShortCircuitEngineParameters scParameters,
                                                AdmittanceEquationSystem.AdmittanceType admittanceType, List<Complex> initialVoltages) {
         this.acLoadFlowParameters = Objects.requireNonNull(acLoadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
@@ -51,7 +52,8 @@ public class ImpedanceLinearResolutionParameters {
         this.isWithNeutralPosition = scParameters.isWithNeutralPosition();
     }
 
-    public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> calculationLocations, TheveninEquivalentParameters thParameters,
+    public ImpedanceLinearResolutionParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory,
+                                               List<CalculationLocation> calculationLocations, TheveninEquivalentParameters thParameters,
                                                AdmittanceEquationSystem.AdmittanceType admittanceType, List<Complex> initialVoltages) {
         this.acLoadFlowParameters = Objects.requireNonNull(acLoadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);

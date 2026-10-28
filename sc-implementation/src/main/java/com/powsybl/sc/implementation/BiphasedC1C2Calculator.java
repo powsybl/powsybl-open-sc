@@ -21,7 +21,7 @@ public class BiphasedC1C2Calculator extends BiphasedCommonSupportShortCircuitCal
                                   Complex zd12, Complex zd22, Complex zd21) {
         super(zdf, zof, zFault, initV, v2dInit, zo12, zo22, zo21, zd12, zd22, zd21);
 
-//Description of the fault (short circuit between c1 and a2) :
+        //Description of the fault (short circuit between c1 and a2) :
         // a1 ---------------x------------------  by definition : Ia1 = Ib1 = Ia2 = Ib2 = 0
         // b1 ---------------x------------------                  Ic1 = -Ic2
         // c1 ---------------+------------------                  Vc1 = Zf * Ic1 + Vc2

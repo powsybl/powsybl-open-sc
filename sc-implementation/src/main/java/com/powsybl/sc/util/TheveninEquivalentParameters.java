@@ -22,7 +22,7 @@ public class TheveninEquivalentParameters {
     public enum TheveninPeriodType {
         THEVENIN_SUB_TRANSIENT, //uses subTransient parameters x"d
         THEVENIN_TRANSIENT,     //uses transient parameters x'd
-        THEVENIN_STEADY_STATE;
+        THEVENIN_STEADY_STATE
     }
 
     public static final double XSUBTRANSIENT = 0.2; //default value if data not available
@@ -43,7 +43,8 @@ public class TheveninEquivalentParameters {
 
     private final boolean isWithNeutralPosition;
 
-    public TheveninEquivalentParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory, List<CalculationLocation> voltageLevels, InitialVoltageProfileMode theveninVoltageProfileType, TheveninPeriodType theveninPeriodType) {
+    public TheveninEquivalentParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory,
+                                        List<CalculationLocation> voltageLevels, InitialVoltageProfileMode theveninVoltageProfileType, TheveninPeriodType theveninPeriodType) {
         this.acLoadFlowParameters = Objects.requireNonNull(acLoadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.theveninCalculationLocation = Objects.requireNonNull(voltageLevels);

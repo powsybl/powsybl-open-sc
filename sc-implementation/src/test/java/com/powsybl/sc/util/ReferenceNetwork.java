@@ -8,11 +8,11 @@
 package com.powsybl.sc.util;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.LineFortescueAdder;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
-import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.sc.extensions.*;
 
 /**
