@@ -25,9 +25,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
 import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+import static com.powsybl.sc.util.ShortCircuitHelper.createInnerZonePredicate;
 import static com.powsybl.sc.util.ShortCircuitHelper.isGeneratorSelected;
 
 /**
@@ -113,11 +115,12 @@ public final class AdmittanceEquationSystem {
         return tmpB;
     }
 
-    private static Complex getYtransfromRdXdAndUpdateFeederList(Network network, LfBus bus, ImpedanceLinearResolutionParameters parameters, StudyType admittanceStudyType, List<Feeder> feederList, AdmittanceType admittanceType) {
+    private static Complex getYtransfromRdXdAndUpdateFeederList(Network network, LfBus bus, ImpedanceLinearResolutionParameters parameters, Predicate<LfBus> innerZone,
+                                                                StudyType admittanceStudyType, List<Feeder> feederList, AdmittanceType admittanceType) {
         double vnomVl = bus.getNominalV();
         Complex tmpY = new Complex(0.);
         for (LfGenerator lfgen : bus.getGenerators()) { //compute R'd or R"d from generators at bus
-            if (!isGeneratorSelected(lfgen, parameters, network)) {
+            if (!isGeneratorSelected(lfgen, parameters, network, innerZone)) {
                 continue;
             }
             ScGenerator scGen = (ScGenerator) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
@@ -183,7 +186,8 @@ public final class AdmittanceEquationSystem {
         return y.add(yLoadEq).add(yGenEq);
     }
 
-    private static Complex computeAdmForAdmThevenin(Network network, Complex v, ImpedanceLinearResolutionParameters parameters, LfBus bus, FeedersAtNetwork feeders, StudyType admittanceStudyType, AdmittanceType admittanceType) {
+    private static Complex computeAdmForAdmThevenin(Network network, Complex v, ImpedanceLinearResolutionParameters parameters, Predicate<LfBus> innerZone,
+                                                    LfBus bus, FeedersAtNetwork feeders, StudyType admittanceStudyType, AdmittanceType admittanceType) {
         Complex y = Complex.ZERO;
         Complex yLoadEq = Complex.ZERO;
 
@@ -204,7 +208,7 @@ public final class AdmittanceEquationSystem {
             }
         }
 
-        Complex yGenEq = getYtransfromRdXdAndUpdateFeederList(network, bus, parameters, admittanceStudyType, feederList, admittanceType); // ! updates feederList
+        Complex yGenEq = getYtransfromRdXdAndUpdateFeederList(network, bus, parameters, innerZone, admittanceStudyType, feederList, admittanceType); // ! updates feederList
         // TODO : check how to verify that the generators are operating
 
         FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
@@ -213,11 +217,11 @@ public final class AdmittanceEquationSystem {
         return y.add(yLoadEq).add(yGenEq);
     }
 
-    private static Complex computeAdmForAdmTheveninHomopolar(Network network, LfBus bus, ImpedanceLinearResolutionParameters parameters,
+    private static Complex computeAdmForAdmTheveninHomopolar(Network network, LfBus bus, ImpedanceLinearResolutionParameters parameters, Predicate<LfBus> innerZone,
                                                              FeedersAtNetwork feeders, StudyType admittanceStudyType, AdmittanceType admittanceType) {
         List<Feeder> feederList = new ArrayList<>(); // not used yet in homopolar
 
-        Complex y = getYtransfromRdXdAndUpdateFeederList(network, bus, parameters, admittanceStudyType, feederList, admittanceType); // ! updates feederList
+        Complex y = getYtransfromRdXdAndUpdateFeederList(network, bus, parameters, innerZone, admittanceStudyType, feederList, admittanceType); // ! updates feederList
         //TODO : check how to verify that the generators are operating
 
         FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
@@ -230,6 +234,7 @@ public final class AdmittanceEquationSystem {
                                      ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, FrequencyType frequencyType) {
         AdmittanceType admittanceType = parameters.getAdmittanceType();
         StudyType admittanceStudyType = parameters.getStudyType();
+        Predicate<LfBus> innerZone = createInnerZonePredicate(network, parameters.getInnerZoneBusIds());
 
         for (LfBus bus : lfNetwork.getBuses()) {
             Complex v = parameters.getInitialVoltage(bus.getNum());
@@ -243,8 +248,8 @@ public final class AdmittanceEquationSystem {
             Complex y = switch (admittanceType) {
                 case ADM_SHUNT -> computeAdmForAdmShunt(parameters, bus);
                 case ADM_ADMIT -> computeAdmForAdmAdmit(v, parameters, isBusPv, bus);
-                case ADM_THEVENIN -> computeAdmForAdmThevenin(network, v, parameters, bus, feeders, admittanceStudyType, admittanceType);
-                case ADM_THEVENIN_HOMOPOLAR -> computeAdmForAdmTheveninHomopolar(network, bus, parameters, feeders, admittanceStudyType, admittanceType);
+                case ADM_THEVENIN -> computeAdmForAdmThevenin(network, v, parameters, innerZone, bus, feeders, admittanceStudyType, admittanceType);
+                case ADM_THEVENIN_HOMOPOLAR -> computeAdmForAdmTheveninHomopolar(network, bus, parameters, innerZone, feeders, admittanceStudyType, admittanceType);
                 default -> new Complex(0.);
             };
 

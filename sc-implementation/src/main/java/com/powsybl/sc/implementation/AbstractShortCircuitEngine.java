@@ -28,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Predicate;
 
+import static com.powsybl.sc.util.ShortCircuitHelper.createInnerZonePredicate;
 import static com.powsybl.sc.util.ShortCircuitHelper.isGeneratorSelected;
 
 /**
@@ -72,13 +74,11 @@ public abstract class AbstractShortCircuitEngine {
      * (generators whose |P| is not above the zone power threshold are ignored in ABOVE_POWER_THRESHOLD mode).
      */
     private void checkAtLeastOneContributingGenerator(LfNetwork lfNetwork) {
+        Predicate<LfBus> innerZone = createInnerZonePredicate(network, parameters.getInnerZoneBusIds());
         boolean found = lfNetwork.getBuses().stream()
                 .flatMap(bus -> bus.getGenerators().stream())
                 .filter(lfGenerator -> network.getGenerator(lfGenerator.getOriginalId()) != null)
-                .anyMatch(lfGenerator -> isGeneratorSelected(lfGenerator, network,
-                        parameters.getInnerZoneBusIds(),
-                        parameters.getInnerZoneGeneratorSelectionMode(), parameters.getOuterZoneGeneratorSelectionMode(),
-                        parameters.getInnerZoneGeneratorPowerThreshold(), parameters.getOuterZoneGeneratorPowerThreshold()));
+                .anyMatch(lfGenerator -> isGeneratorSelected(lfGenerator, parameters, network, innerZone));
         if (!found) {
             throw new PowsyblException("No generator contributes to the short-circuit current in network '" + network.getId()
                     + "': check the network connectivity and the inner/outer zone generator selection parameters");

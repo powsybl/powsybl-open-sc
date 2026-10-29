@@ -7,6 +7,7 @@ import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfGenerator;
 import com.powsybl.sc.extensions.GeneratorSelectionMode;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
+import com.powsybl.sc.implementation.ShortCircuitEngineParameters;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,26 +15,32 @@ import org.slf4j.LoggerFactory;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
-public class ShortCircuitHelper {
+public final class ShortCircuitHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitHelper.class);
 
-    public void shortCircuitHelper() { }
+    private ShortCircuitHelper() {
+    }
 
-    public static boolean isLfBusInInnerZone(LfBus lfBus, Network network, Set<String> innerZoneBusIds) {
+    public static Predicate<LfBus> createInnerZonePredicate(Network network, Set<String> innerZoneBusIds) {
         if (innerZoneBusIds.isEmpty()) {
-            return true;
-        } else {
-            Set<String> innerZoneLfBusIds = getLfBusIdsFromIidmBusId(network, innerZoneBusIds);
-            return innerZoneLfBusIds.contains(lfBus.getId());
+            return lfBus -> true;
         }
+        Set<String> innerZoneLfBusIds = getLfBusIdsFromIidmBusId(network, innerZoneBusIds);
+        return lfBus -> innerZoneLfBusIds.contains(lfBus.getId());
     }
 
     public static Set<String> getLfBusIdsFromIidmBusId(Network network, Set<String> innerZoneBusIds) {
         Set<String> lfBusIds = new HashSet<>();
         for (String busId : innerZoneBusIds) {
-            Bus mergedBus = network.getBusBreakerView().getBus(busId)
-                    .getVoltageLevel().getBusView().getMergedBus(busId);
+            Bus busBreakerBus = network.getBusBreakerView().getBus(busId);
+            if (busBreakerBus == null) {
+                // the provider removes unknown buses beforehand, but the engines can be used directly
+                LOGGER.warn("Inner zone bus {} not found in the network, it is ignored", busId);
+                continue;
+            }
+            Bus mergedBus = busBreakerBus.getVoltageLevel().getBusView().getMergedBus(busId);
             if (mergedBus != null) {
                 lfBusIds.add(mergedBus.getId());
             }
@@ -47,18 +54,24 @@ public class ShortCircuitHelper {
         return openScParameters != null ? openScParameters : new OpenShortCircuitParameters();
     }
 
-    static boolean isGeneratorSelected(LfGenerator generator, ImpedanceLinearResolutionParameters parameters, Network network) {
-        return isGeneratorSelected(generator, network, parameters.getInnerZoneBusIds(),
+    public static boolean isGeneratorSelected(LfGenerator generator, ImpedanceLinearResolutionParameters parameters, Network network,
+                                       Predicate<LfBus> innerZone) {
+        return isGeneratorSelected(generator, network, innerZone,
                 parameters.getInnerZoneGeneratorSelectionMode(), parameters.getOuterZoneGeneratorSelectionMode(),
                 parameters.getInnerZoneGeneratorPowerThreshold(), parameters.getOuterZoneGeneratorPowerThreshold());
     }
 
-    public static boolean isGeneratorSelected(LfGenerator generator, Network network, Set<String> innerZoneBusIds,
+    public static boolean isGeneratorSelected(LfGenerator generator, ShortCircuitEngineParameters parameters, Network network,
+                                       Predicate<LfBus> innerZone) {
+        return isGeneratorSelected(generator, network, innerZone,
+                parameters.getInnerZoneGeneratorSelectionMode(), parameters.getOuterZoneGeneratorSelectionMode(),
+                parameters.getInnerZoneGeneratorPowerThreshold(), parameters.getOuterZoneGeneratorPowerThreshold());
+    }
+
+    public static boolean isGeneratorSelected(LfGenerator generator, Network network, Predicate<LfBus> innerZone,
                                               GeneratorSelectionMode innerZoneMode, GeneratorSelectionMode outerZoneMode,
                                               double innerZoneThreshold, double outerZoneThreshold) {
-        LfBus bus = generator.getBus();
-        // Note: if the set innerZoneBusIds is empty (by default), it is interpreted as the whole network
-        boolean inInnerZone = isLfBusInInnerZone(bus, network, innerZoneBusIds);
+        boolean inInnerZone = innerZone.test(generator.getBus());
 
         GeneratorSelectionMode mode = inInnerZone ? innerZoneMode : outerZoneMode;
         if (mode == GeneratorSelectionMode.ALL) {

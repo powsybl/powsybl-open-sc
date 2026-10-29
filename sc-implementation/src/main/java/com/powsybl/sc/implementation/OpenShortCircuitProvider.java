@@ -31,10 +31,11 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
-import static com.powsybl.sc.util.ShortCircuitHelper.isLfBusInInnerZone;
+import static com.powsybl.sc.util.ShortCircuitHelper.createInnerZonePredicate;
 import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
 
 /**
@@ -129,6 +130,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     public void runBalancedAnalysis(Network network, ShortCircuitEngineParameters scbParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<FaultResult> faultResults) {
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
         scbEngine.run();
+        Predicate<LfBus> innerZone = createInnerZonePredicate(network, scbParameters.getInnerZoneBusIds());
 
         // the results per faults might be inconsistent if many buses per voltage level
         // TODO : see how this could be improved by allowing results per electrical bus on the short circuit provider
@@ -147,8 +149,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
             List<ShortCircuitBusResults> busResults = new ArrayList<>();
             if (scbParameters.isVoltageUpdate()) {
-                fillBusResults(network, scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(),
-                        scbParameters.getMinVoltageDropProportional(), scbParameters.getInnerZoneBusIds());
+                fillBusResults(scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(),
+                        scbParameters.getMinVoltageDropProportional(), innerZone);
             }
             MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
@@ -189,10 +191,10 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         }
     }
 
-    private void fillBusResults(Network network, LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult, List<Complex> initialVoltages, double minVoltDropProportional, Set<String> innerZonBusIds) {
+    private void fillBusResults(LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult, List<Complex> initialVoltages, double minVoltDropProportional, Predicate<LfBus> innerZone) {
         List<FortescueValue> dVoltages = scResult.getBusNum2Dv();
         for (LfBus lfBus : lfNetwork.getBuses()) {
-            if (isLfBusInInnerZone(lfBus, network, innerZonBusIds)) {
+            if (innerZone.test(lfBus)) {
                 int num = lfBus.getNum();
                 Complex initialVpu = initialVoltages.get(num);
                 Complex dVpu = polar2Complex(dVoltages.get(num).getPositiveMagnitude(), dVoltages.get(num).getPositiveAngle());
