@@ -121,7 +121,7 @@ public abstract class AbstractShortCircuitEngine {
         String bus1Name = location.getBusLocation();
         String bus2Name = location.getBus2Location();
 
-        // creates additional info for fault, identifying location through iidm branches instead of iidm busses to easily get lf buses
+        // creates additional info for fault, identifying location through iidm branches instead of iidm buses to easily get lf buses
         location.setIidmBusInfo(branchInfoByBusName.computeIfAbsent(bus1Name, k -> buildFaultBranchFromBusId(k, network)));
         if (bus2Name != null) {
             location.setIidmBus2Info(branchInfoByBusName.computeIfAbsent(bus2Name, k -> buildFaultBranchFromBusId(k, network)));

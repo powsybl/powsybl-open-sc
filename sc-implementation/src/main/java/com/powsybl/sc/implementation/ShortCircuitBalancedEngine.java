@@ -78,8 +78,8 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         res.setLfNetwork(lfNetwork);
         res.setTrueVoltageProfileUpdate();
 
-        int nbBusses = lfNetwork.getBuses().size();
-        res.createEmptyFortescueVoltageVector(nbBusses);
+        int nbBuses = lfNetwork.getBuses().size();
+        res.createEmptyFortescueVoltageVector(nbBuses);
 
         for (Map.Entry<Integer, Complex> zd : busToZknf.entrySet()) {
             Complex deltaV = zd.getValue().multiply(id).multiply(-1.);
@@ -197,9 +197,9 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
         Map<Integer, Complex> combinedBusToZknf = null;
         if (parameters.isVoltageUpdate()) {
-            int nbBusses = lfNetwork.getBuses().size();
+            int nbBuses = lfNetwork.getBuses().size();
             combinedBusToZknf = new HashMap<>();
-            for (int busNum = 0; busNum < nbBusses; busNum++) {
+            for (int busNum = 0; busNum < nbBuses; busNum++) {
                 Complex zdBus1 = linearResolutionResult1.getBusToZknf().get(busNum);
                 Complex zdBus2 = twoBusResult.getBus2ToZknf().get(busNum);
                 combinedBusToZknf.put(busNum, zdBus1.multiply(s).add(zdBus2.multiply(r)));

@@ -33,7 +33,7 @@ public final class ShortCircuitEngineParameters {
 
     public enum AnalysisType {
         SELECTIVE, // short circuit analysis for List<ShortCircuitFault> faults in input
-        SYSTEMATIC // short circuit analysis for all busses of input grid
+        SYSTEMATIC // short circuit analysis for all buses of input grid
     }
 
     private final LoadFlowParameters loadFlowParameters;
