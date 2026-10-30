@@ -7,6 +7,7 @@
  */
 package com.powsybl.sc.util;
 
+import com.powsybl.iidm.network.Network;
 import com.powsybl.math.matrix.DenseMatrix;
 import com.powsybl.openloadflow.equations.EquationSystem;
 import com.powsybl.openloadflow.equations.VariableSet;
@@ -17,6 +18,8 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
+
+import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_CONSISTENCY_TOLERANCE_PU;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -32,15 +35,17 @@ public class ImpedanceLinearResolution {
     // [ Vx ]                        [ Ix ]           [ Vx_init ]
     // [ Vy ] = -t[En]*inv(Y)*[En] * [ Iy ] + t[En] * [ Vy_init ]
     //
+    private final Network network;
 
-    private final LfNetwork network;
+    private final LfNetwork lfNetwork;
 
     private final ImpedanceLinearResolutionParameters parameters;
 
     public final Map<LfBus, ImpedanceLinearResolutionResult> results = new HashMap<>();
 
-    public ImpedanceLinearResolution(LfNetwork network, ImpedanceLinearResolutionParameters parameters) {
+    public ImpedanceLinearResolution(Network network, LfNetwork lfNetwork, ImpedanceLinearResolutionParameters parameters) {
         this.network = Objects.requireNonNull(network);
+        this.lfNetwork = Objects.requireNonNull(lfNetwork);
         this.parameters = Objects.requireNonNull(parameters);
     }
 
@@ -141,16 +146,15 @@ public class ImpedanceLinearResolution {
     }
 
     public static void checkMatrixExtractionConsistency(Complex z1, Complex z2, LfBus lfBus1, LfBus lfBus2) {
-        double epsilon = 0.00001;
 
         String bus1Id = lfBus1.getId();
         String bus2Id = lfBus2.getId();
 
-        if (Math.abs(z1.getReal() - z2.getReal()) > epsilon) {
+        if (Math.abs(z1.getReal() - z2.getReal()) > IMPEDANCE_CONSISTENCY_TOLERANCE_PU) {
             throw new IllegalArgumentException("Impedance block values rth : z11 and Z22 of nodes Bus1 = {" + bus1Id + "} and Bus2 = {" + bus2Id + "} have inconsitant values z11= " + z1.getReal() + " y1i2i=" + z2.getReal());
         }
 
-        if (Math.abs(z2.getImaginary() - z1.getImaginary()) > epsilon) {
+        if (Math.abs(z2.getImaginary() - z1.getImaginary()) > IMPEDANCE_CONSISTENCY_TOLERANCE_PU) {
             throw new IllegalArgumentException("Impedance block values xth : z12 and Z21 of nodes Bus1 = {" + bus1Id + "} and Bus2 = {" + bus2Id + "} have inconsitant values z12= " + z1.getImaginary() + " z21=" + z2.getImaginary());
         }
     }
@@ -208,11 +212,11 @@ public class ImpedanceLinearResolution {
     public void run() {
         FeedersAtNetwork equationsSystemFeeders = new FeedersAtNetwork();
         EquationSystem<VariableType, EquationType> equationSystem
-                = AdmittanceEquationSystem.create(network, new VariableSet<>(), parameters, equationsSystemFeeders, AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ);
+                = AdmittanceEquationSystem.create(network, lfNetwork, new VariableSet<>(), parameters, equationsSystemFeeders, AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ);
 
         FeedersAtNetwork equationsSystemFeeders20hz = new FeedersAtNetwork();
         EquationSystem<VariableType, EquationType> equationSystem20hz
-                = AdmittanceEquationSystem.create(network, new VariableSet<>(), parameters, equationsSystemFeeders20hz, AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ);
+                = AdmittanceEquationSystem.create(network, lfNetwork, new VariableSet<>(), parameters, equationsSystemFeeders20hz, AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ);
 
         List<LfBus> inputBuses = new ArrayList<>();
         List<Pair<LfBus, LfBus>> busPairList = new ArrayList<>();
@@ -221,7 +225,7 @@ public class ImpedanceLinearResolution {
             String iidmBranchId = locationInfo.getIidmBusInfo().getKey();
             int branchSide = locationInfo.getIidmBusInfo().getValue();
 
-            LfBus bus1 = getLfBusFromIidmBranch(iidmBranchId, branchSide, network);
+            LfBus bus1 = getLfBusFromIidmBranch(iidmBranchId, branchSide, lfNetwork);
             if (bus1 != null) {
                 if (!inputBuses.contains(bus1)) {
                     inputBuses.add(bus1);
@@ -233,7 +237,7 @@ public class ImpedanceLinearResolution {
             if (needsSecondBus) {
                 String iidmBranchId2 = locationInfo.getIidmBus2Info().getKey();
                 int branchSide2 = locationInfo.getIidmBus2Info().getValue();
-                LfBus bus2 = getLfBusFromIidmBranch(iidmBranchId2, branchSide2, network);
+                LfBus bus2 = getLfBusFromIidmBranch(iidmBranchId2, branchSide2, lfNetwork);
                 if (bus2 != null) {
                     if (!inputBuses.contains(bus2)) {
                         inputBuses.add(bus2);
@@ -264,8 +268,8 @@ public class ImpedanceLinearResolution {
         //  - En_y_k is the vector t[ 0 0 ... 0 0 0 1 0 0 ... 0 0 ] where 1 corresponds to the line/column of the bus k where the imaginary part of Z matrix is modelled
 
         // Step 1 : build the extraction vectors
-        try (AdmittanceMatrix yd = new AdmittanceMatrix(equationSystem, parameters.getMatrixFactory(), network);
-             AdmittanceMatrix yd20hz = new AdmittanceMatrix(equationSystem20hz, parameters.getMatrixFactory(), network)) {
+        try (AdmittanceMatrix yd = new AdmittanceMatrix(equationSystem, parameters.getMatrixFactory(), lfNetwork);
+             AdmittanceMatrix yd20hz = new AdmittanceMatrix(equationSystem20hz, parameters.getMatrixFactory(), lfNetwork)) {
 
             DenseMatrix en = new DenseMatrix(yd.getRowCount(), 2 * inputBuses.size());
             DenseMatrix en20hz = new DenseMatrix(yd.getRowCount(), 2 * inputBuses.size());

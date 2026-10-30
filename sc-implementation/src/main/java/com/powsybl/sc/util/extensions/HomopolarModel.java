@@ -16,6 +16,8 @@ import org.apache.commons.math3.complex.ComplexUtils;
 
 import java.util.Objects;
 
+import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_EPSILON_PU;
+
 /**
  * zero sequence additional attributes
  *
@@ -34,8 +36,6 @@ import java.util.Objects;
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at gmail.com>
  */
 public class HomopolarModel {
-
-    private static final double EPSILON = 0.000001;
 
     private final LfBranch branch;
 
@@ -101,10 +101,10 @@ public class HomopolarModel {
                 // this assumption could be changed if not relevant
                 double gCoeff = 1.;
                 double bCoeff = 1.;
-                if (Math.abs(zo.getImaginary()) > EPSILON) {
+                if (Math.abs(zo.getImaginary()) > IMPEDANCE_EPSILON_PU) {
                     bCoeff = z.getImaginary() / zo.getImaginary();
                 }
-                if (Math.abs(zo.getReal()) > EPSILON) {
+                if (Math.abs(zo.getReal()) > IMPEDANCE_EPSILON_PU) {
                     gCoeff = z.getReal() / zo.getReal();
                 }
 
@@ -128,10 +128,10 @@ public class HomopolarModel {
                 // this assumption could be changed if not relevant
                 double gCoeff = 1.;
                 double bCoeff = 1.;
-                if (Math.abs(zo.getImaginary()) > EPSILON) {
+                if (Math.abs(zo.getImaginary()) > IMPEDANCE_EPSILON_PU) {
                     bCoeff = z.getImaginary() / zo.getImaginary();
                 }
-                if (Math.abs(zo.getReal()) > EPSILON) {
+                if (Math.abs(zo.getReal()) > IMPEDANCE_EPSILON_PU) {
                     gCoeff = z.getReal() / zo.getReal();
                 }
 
@@ -177,10 +177,10 @@ public class HomopolarModel {
                 // this assumption could be changed if not relevant
                 double gCoeff = 1.;
                 double bCoeff = 1.;
-                if (Math.abs(zo.getImaginary()) > EPSILON) {
+                if (Math.abs(zo.getImaginary()) > IMPEDANCE_EPSILON_PU) {
                     bCoeff = z.getImaginary() / zo.getImaginary();
                 }
-                if (Math.abs(zo.getReal()) > EPSILON) {
+                if (Math.abs(zo.getReal()) > IMPEDANCE_EPSILON_PU) {
                     gCoeff = z.getReal() / zo.getReal();
                 }
 

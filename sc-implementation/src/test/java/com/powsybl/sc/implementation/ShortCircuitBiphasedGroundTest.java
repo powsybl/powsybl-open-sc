@@ -11,6 +11,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
@@ -33,34 +34,33 @@ class ShortCircuitBiphasedGroundTest {
 
     @BeforeEach
     void setUp() {
-        loadFlowParameters = LoadFlowParameters.load().setTwtSplitShuntAdmittance(true);
+        loadFlowParameters = new LoadFlowParameters()
+                .setTwtSplitShuntAdmittance(true);
         matrixFactory = new DenseMatrixFactory();
     }
 
     @Test
     void shortCircuit6NodesIec9094() {
-
         Network network = ReferenceNetwork.create6NodesIec9094();
 
         ShortCircuitFaultImpedance scZ1 = new ShortCircuitFaultImpedance(new Complex(0.));
-        ShortCircuitFault sc1 = new ShortCircuitFault("B3", "sc1", "B3", scZ1, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
+        ShortCircuitFault sc1 = createBiphasedGroundFault("sc1", "B3", scZ1);
 
         ShortCircuitFaultImpedance scZ2 = new ShortCircuitFaultImpedance(new Complex(0.), new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
-        ShortCircuitFault sc2 = new ShortCircuitFault("B3", "sc2", "B3", scZ2, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
+        ShortCircuitFault sc2 = createBiphasedGroundFault("sc2", "B3", scZ2);
 
         ShortCircuitFaultImpedance scZ3 = new ShortCircuitFaultImpedance(new Complex(0.000007, 0.00005), new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
-        ShortCircuitFault sc3 = new ShortCircuitFault("B3", "sc3", "B3", scZ3, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
+        ShortCircuitFault sc3 = createBiphasedGroundFault("sc3", "B3", scZ3);
 
         List<ShortCircuitFault> faultList = List.of(sc1, sc2, sc3);
 
-        ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitParameters scParameters = new ShortCircuitParameters()
-                .setWithVoltageResult(false)
+        ShortCircuitParameters scp = new ShortCircuitParameters()
                 .setStudyType(StudyType.SUB_TRANSIENT)
                 .setWithNeutralPosition(true);
+        OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(loadFlowParameters);
+        scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
-        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scp, faultList, new ShortCircuitNormIec());
 
         scbEngine.run();
 
@@ -68,6 +68,10 @@ class ShortCircuitBiphasedGroundTest {
         assertEquals(36.83269305365278, getIk(scbEngine, sc2), 1e-5);
         assertEquals(36.831803523930354, getIk(scbEngine, sc3), 1e-5);
 
+    }
+
+    private static ShortCircuitFault createBiphasedGroundFault(String id, String busId, ShortCircuitFaultImpedance impedance) {
+        return new ShortCircuitFault(busId, id, busId, impedance, ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND);
     }
 
     private static double getIk(ShortCircuitUnbalancedEngine scbEngine, ShortCircuitFault fault) {

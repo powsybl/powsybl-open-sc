@@ -10,20 +10,16 @@ package com.powsybl.sc.util;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.loadflow.LoadFlowResult;
 import com.powsybl.math.matrix.DenseMatrixFactory;
 import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
-import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
 import com.powsybl.openloadflow.graph.EvenShiloachGraphDecrementalConnectivityFactory;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
+import com.powsybl.shortcircuit.StudyType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.usefultoys.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,40 +31,31 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class TheveninTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TheveninTest.class);
-
-    private LoadFlowParameters parameters;
+    private LoadFlowParameters loadFlowParameters;
 
     private MatrixFactory matrixFactory;
 
-    private LoadFlow.Runner loadFlowRunner;
-
     @BeforeEach
     void setUp() {
-        parameters = new LoadFlowParameters()
-                .setTwtSplitShuntAdmittance(true)
-                .setVoltageInitMode(LoadFlowParameters.VoltageInitMode.PREVIOUS_VALUES);
+        loadFlowParameters = new LoadFlowParameters()
+                .setTwtSplitShuntAdmittance(true);
         matrixFactory = new DenseMatrixFactory();
-        loadFlowRunner = new LoadFlow.Runner(new OpenLoadFlowProvider(matrixFactory));
     }
 
     @Test
     void computeZthTest() {
         Network network = Networks.create4n();
-        LoadFlowResult resultnt4 = loadFlowRunner.run(network, parameters);
+        LoadFlow.run(network, loadFlowParameters);
 
-        List<CalculationLocation> faultsList = new ArrayList<>();
-        CalculationLocation f1 = new CalculationLocation("B4");
-        CalculationLocation f2 = new CalculationLocation("B2");
-        faultsList.add(f1);
-        faultsList.add(f2);
+        List<CalculationLocation> locationList = List.of(
+                new CalculationLocation("B4"),
+                new CalculationLocation("B2"));
 
         AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
-                parameters, OpenLoadFlowParameters.get(parameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
+                loadFlowParameters, OpenLoadFlowParameters.get(loadFlowParameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
 
-        InitialVoltageProfileMode avp = InitialVoltageProfileMode.PREVIOUS_VALUE;
-        TheveninEquivalentParameters.TheveninPeriodType periodType = TheveninEquivalentParameters.TheveninPeriodType.THEVENIN_TRANSIENT;
-        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(acLoadFlowParameters, matrixFactory, faultsList, avp, periodType); // check how to give a Network bus in input
+        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(loadFlowParameters, matrixFactory, locationList)
+                .setTheveninVoltageProfileType(InitialVoltageProfileMode.PREVIOUS_VALUE);
         TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
 
         thEq.run();
@@ -90,22 +77,16 @@ public class TheveninTest {
     void referenceTransientTest() {
         Network network = ReferenceNetwork.createShortCircuitReference();
 
-        List<CalculationLocation> faultsList = new ArrayList<>();
-        CalculationLocation f1 = new CalculationLocation("B2");
-        CalculationLocation f2 = new CalculationLocation("B5");
-        CalculationLocation f3 = new CalculationLocation("B7");
-        CalculationLocation f4 = new CalculationLocation("B8");
-        faultsList.add(f1);
-        faultsList.add(f2);
-        faultsList.add(f3);
-        faultsList.add(f4);
+        List<CalculationLocation> locationList = List.of(
+                new CalculationLocation("B2"),
+                new CalculationLocation("B5"),
+                new CalculationLocation("B7"),
+                new CalculationLocation("B8"));
 
         AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
-                parameters, OpenLoadFlowParameters.get(parameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
+                loadFlowParameters, OpenLoadFlowParameters.get(loadFlowParameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
 
-        InitialVoltageProfileMode avp = InitialVoltageProfileMode.NOMINAL;
-        TheveninEquivalentParameters.TheveninPeriodType periodType = TheveninEquivalentParameters.TheveninPeriodType.THEVENIN_TRANSIENT;
-        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(acLoadFlowParameters, matrixFactory, faultsList, avp, periodType); // check how to give a Network bus in input
+        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(loadFlowParameters, matrixFactory, locationList);
         TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
 
         thEq.run();
@@ -127,22 +108,18 @@ public class TheveninTest {
     @Test
     void referenceSubTransientTest() {
         Network network = ReferenceNetwork.createShortCircuitReference();
-        List<CalculationLocation> faultsList = new ArrayList<>();
-        CalculationLocation f1 = new CalculationLocation("B2");
-        CalculationLocation f2 = new CalculationLocation("B5");
-        CalculationLocation f3 = new CalculationLocation("B7");
-        CalculationLocation f4 = new CalculationLocation("B8");
-        faultsList.add(f1);
-        faultsList.add(f2);
-        faultsList.add(f3);
-        faultsList.add(f4);
+
+        List<CalculationLocation> locationList = List.of(
+                new CalculationLocation("B2"),
+                new CalculationLocation("B5"),
+                new CalculationLocation("B7"),
+                new CalculationLocation("B8"));
 
         AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
-                parameters, OpenLoadFlowParameters.get(parameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
+                loadFlowParameters, OpenLoadFlowParameters.get(loadFlowParameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
 
-        InitialVoltageProfileMode avp = InitialVoltageProfileMode.NOMINAL;
-        TheveninEquivalentParameters.TheveninPeriodType periodType = TheveninEquivalentParameters.TheveninPeriodType.THEVENIN_SUB_TRANSIENT;
-        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(acLoadFlowParameters, matrixFactory, faultsList, avp, periodType); // check how to give a Network bus in input
+        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(loadFlowParameters, matrixFactory, locationList)
+                .setTheveninStudyType(StudyType.SUB_TRANSIENT);
         TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
 
         thEq.run();

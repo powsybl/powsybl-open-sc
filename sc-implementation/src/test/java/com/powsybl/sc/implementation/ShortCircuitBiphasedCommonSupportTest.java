@@ -9,11 +9,9 @@ package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.math.matrix.DenseMatrixFactory;
-import com.powsybl.math.matrix.MatrixFactory;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
-import com.powsybl.shortcircuit.StudyType;
 import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,14 +25,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class ShortCircuitBiphasedCommonSupportTest {
 
-    private LoadFlowParameters loadFlowParameters;
-
-    private MatrixFactory matrixFactory;
+    private ShortCircuitParameters scp;
 
     @BeforeEach
     void setUp() {
-        loadFlowParameters = LoadFlowParameters.load().setTwtSplitShuntAdmittance(true);
-        matrixFactory = new DenseMatrixFactory();
+        scp = new ShortCircuitParameters();
+        OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(new LoadFlowParameters().setTwtSplitShuntAdmittance(true));
+        scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
     }
 
     @Test
@@ -42,16 +39,10 @@ class ShortCircuitBiphasedCommonSupportTest {
 
         Network network = ReferenceNetwork.create6NodesIec9094();
 
-        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", "B2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_A2);
+        ShortCircuitFault sc1 = createZeroImpedanceBiphasedCommonSupportFault("B2", "B3", "sc1", "B2", ShortCircuitFault.ShortCircuitBiphasedType.C1_A2);
         List<ShortCircuitFault> faultList = List.of(sc1);
 
-        ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitParameters scParameters = new ShortCircuitParameters()
-                .setStudyType(StudyType.SUB_TRANSIENT)
-                .setWithNeutralPosition(true);
-
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
-        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scp, faultList, new ShortCircuitNormIec());
 
         scbEngine.run();
 
@@ -65,18 +56,12 @@ class ShortCircuitBiphasedCommonSupportTest {
         Network network = ReferenceNetwork.create6NodesIec9094();
         Complex zFaultToGround = new Complex(0.);
         ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
-        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", "B2", scz, ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_B2);
-        ShortCircuitFault sc2 = new ShortCircuitFault("B4", "B5", "sc2", "B4", scz, ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_C2);
+        ShortCircuitFault sc1 = createZeroImpedanceBiphasedCommonSupportFault("B2", "B3", "sc1", "B2", ShortCircuitFault.ShortCircuitBiphasedType.C1_B2);
+        ShortCircuitFault sc2 = createZeroImpedanceBiphasedCommonSupportFault("B4", "B5", "sc2", "B4", ShortCircuitFault.ShortCircuitBiphasedType.C1_C2);
         // TODO : a list that contains BIPHASED_COMMON_SUPPORT with the same nodes is not supported yet : FIX_ME
         List<ShortCircuitFault> faultList = List.of(sc1, sc2);
 
-        ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitParameters scParameters = new ShortCircuitParameters()
-                .setStudyType(StudyType.SUB_TRANSIENT)
-                .setWithNeutralPosition(true);
-
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
-        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scp, faultList, new ShortCircuitNormIec());
 
         scbEngine.run();
 
@@ -88,6 +73,12 @@ class ShortCircuitBiphasedCommonSupportTest {
     private static double getDefaultIk(ShortCircuitUnbalancedEngine scbEngine,
                                  ShortCircuitFault fault) {
         return scbEngine.resultsPerFault.get(fault).getDefaultIk().abs();
+    }
+
+    private static ShortCircuitFault createZeroImpedanceBiphasedCommonSupportFault(String busId1, String busId2, String id, String elementId,
+                                                                                   ShortCircuitFault.ShortCircuitBiphasedType biphasedType) {
+        return new ShortCircuitFault(busId1, busId2, id, elementId, new ShortCircuitFaultImpedance(Complex.ZERO),
+                ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, biphasedType);
     }
 
 }
