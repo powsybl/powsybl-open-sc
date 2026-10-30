@@ -18,7 +18,8 @@ import org.apache.commons.math3.util.FastMath;
 
 import java.util.*;
 
-import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+import static com.powsybl.sc.extensions.ShortCircuitConstants.CURRENT_EPSILON_PU;
+import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_EPSILON_PU;
 import static com.powsybl.sc.implementation.ShortCircuitFault.ShortCircuitType.*;
 
 /**
@@ -567,9 +568,9 @@ public class ShortCircuitResult {
         for (LfBranch branch : getLfNetwork().getBranches()) {
             PiModel piModel = branch.getPiModel();
             // we only look at ratio for branches with significant short circuit currents
-            if (piModel.getX() >= EPSILON
-                    && (branchDi1.get(branch).getPositiveMagnitude() > EPSILON
-                    || branchDi2.get(branch).getPositiveMagnitude() > EPSILON)) {
+            if (piModel.getX() >= IMPEDANCE_EPSILON_PU
+                    && (branchDi1.get(branch).getPositiveMagnitude() > CURRENT_EPSILON_PU
+                    || branchDi2.get(branch).getPositiveMagnitude() > CURRENT_EPSILON_PU)) {
                 maxRatio = Math.max(maxRatio, piModel.getR() / piModel.getX());
             }
         }

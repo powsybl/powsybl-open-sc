@@ -12,7 +12,7 @@ import com.powsybl.commons.extensions.AbstractExtension;
 import com.powsybl.iidm.network.Load;
 import org.apache.commons.math3.complex.Complex;
 
-import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+import static com.powsybl.sc.extensions.ShortCircuitConstants.POWER_EPSILON_MVA;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -112,7 +112,7 @@ public class LoadShortCircuit extends AbstractExtension<Load> {
         // using formula P(MW) = Re(Z) * |V|² / |Z|² and Q(MVAR) = Im(Z) * |V|² / |Z|²  or  Z = |V|² / (P-jQ)
         // We compute the equivalent impedance at Unom
 
-        if (s2 > EPSILON) {
+        if (Math.sqrt(s2) > POWER_EPSILON_MVA) {
             xn = qLoad * uNom * uNom / s2;
             rn = pLoad * uNom * uNom / s2;
         }

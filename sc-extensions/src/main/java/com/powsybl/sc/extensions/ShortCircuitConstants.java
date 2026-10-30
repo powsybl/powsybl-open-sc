@@ -16,7 +16,12 @@ public final class ShortCircuitConstants {
     private ShortCircuitConstants() {
     }
 
-    public static final double EPSILON = 1e-6;
+    public static final double POWER_EPSILON_MVA = 1e-6;
+    public static final double CURRENT_EPSILON_PU = 1e-6;
+    public static final double IMPEDANCE_EPSILON_PU = 1e-6;
+    public static final double ADMITTANCE_EPSILON_PU = 1e-8;
+
+    public static final double IMPEDANCE_CONSISTENCY_TOLERANCE_PU = 1e-5;
 
     public static final double DEFAULT_TRANS_RD = 0;
     public static final double DEFAULT_SUB_TRANS_RD = 0;

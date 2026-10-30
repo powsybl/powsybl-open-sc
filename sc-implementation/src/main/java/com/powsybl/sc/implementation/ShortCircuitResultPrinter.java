@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
-import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+import static com.powsybl.sc.extensions.ShortCircuitConstants.CURRENT_EPSILON_PU;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -93,7 +93,7 @@ public class ShortCircuitResultPrinter {
         for (LfBus bus : shortCircuitResult.getLfNetwork().getBuses()) {
             FeedersAtBusResult feedBus = shortCircuitResult.getFeedersResultDirect().get(bus);
             for (FeederResult fr : feedBus.getBusFeedersResult()) {
-                if (fr.getIContribution().abs() > EPSILON) {
+                if (fr.getIContribution().abs() > CURRENT_EPSILON_PU) {
                     LOGGER.info("  -> Direct Feeder {} : {} has I (Pu) contribution  =  {}", fr.getFeeder().getFeederType(), fr.getFeeder().getId(), fr.getIContribution());
                 }
             }
@@ -104,14 +104,14 @@ public class ShortCircuitResultPrinter {
 
             feedBus = shortCircuitResult.getFeedersResultsHomopolar().get(bus);
             for (FeederResult fr : feedBus.getBusFeedersResult()) {
-                if (fr.getIContribution().abs() > EPSILON) {
+                if (fr.getIContribution().abs() > CURRENT_EPSILON_PU) {
                     LOGGER.info("  -> Homopolar Feeder {} : {} has I (Pu) contribution  =  {}", fr.getFeeder().getFeederType(), fr.getFeeder().getId(), fr.getIContribution());
                 }
             }
 
             feedBus = shortCircuitResult.getFeedersResultsInverse().get(bus);
             for (FeederResult fr : feedBus.getBusFeedersResult()) {
-                if (fr.getIContribution().abs() > EPSILON) {
+                if (fr.getIContribution().abs() > CURRENT_EPSILON_PU) {
                     LOGGER.info("  -> Inverse Feeder {} : {} has I (Pu) contribution  =  {}", fr.getFeeder().getFeederType(), fr.getFeeder().getId(), fr.getIContribution());
                 }
             }

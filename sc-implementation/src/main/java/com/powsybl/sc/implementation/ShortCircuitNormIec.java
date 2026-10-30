@@ -18,7 +18,7 @@ import com.powsybl.sc.util.extensions.TwoWindingsTransformerNorm;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+import static com.powsybl.sc.extensions.ShortCircuitConstants.POWER_EPSILON_MVA;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -309,7 +309,7 @@ public class ShortCircuitNormIec extends ShortCircuitNormNone {
     public double getKgNoTfo(Generator gen) {
         double nominalU = gen.getTerminal().getVoltageLevel().getNominalV();
         double ratedS = gen.getRatedS();
-        if (Math.abs(ratedS) < EPSILON) {
+        if (Math.abs(ratedS) < POWER_EPSILON_MVA) {
             ratedS = 100.;
         }
         double cmax = getCmaxVoltageFactor(nominalU);

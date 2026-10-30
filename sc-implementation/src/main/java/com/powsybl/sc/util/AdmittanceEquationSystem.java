@@ -28,7 +28,8 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
-import static com.powsybl.sc.extensions.ShortCircuitConstants.EPSILON;
+import static com.powsybl.sc.extensions.ShortCircuitConstants.ADMITTANCE_EPSILON_PU;
+import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_EPSILON_PU;
 import static com.powsybl.sc.util.ShortCircuitHelper.createInnerZonePredicate;
 import static com.powsybl.sc.util.ShortCircuitHelper.isGeneratorSelected;
 
@@ -139,8 +140,7 @@ public final class AdmittanceEquationSystem {
                 }
             }
 
-            double epsilon = 0.0000001;
-            if (z.abs() > epsilon) {
+            if (z.abs() > IMPEDANCE_EPSILON_PU) {
                 Complex yGen = z.reciprocal().multiply(vnomVl * vnomVl / SB);
                 tmpY = tmpY.add(yGen);
                 Feeder genFeeder = new GeneratorFeeder(yGen, lfgen);
@@ -202,7 +202,7 @@ public final class AdmittanceEquationSystem {
             ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
             yLoadEq = scLoad.ydEquivalent().divide(v.abs() * v.abs());
 
-            if (yLoadEq.abs() > EPSILON) {
+            if (yLoadEq.abs() > ADMITTANCE_EPSILON_PU) {
                 Feeder loadFeeder = new LoadFeeder(yLoadEq, bus); // Currently only one feeder aggregating all the loads of the bus!
                 feederList.add(loadFeeder);
             }
@@ -263,7 +263,7 @@ public final class AdmittanceEquationSystem {
             z = new Complex(z.getReal(), z.getImaginary() * freqCoef);
             y = z.reciprocal();
 
-            if (y.abs() > EPSILON) {
+            if (y.abs() > ADMITTANCE_EPSILON_PU) {
                 equationSystem.createEquation(bus.getNum(), EquationType.BUS_YR)
                         .addTerm(new AdmittanceEquationTermShunt(y.getReal(), y.getImaginary(), bus, variableSet, true));
                 equationSystem.createEquation(bus.getNum(), EquationType.BUS_YI)

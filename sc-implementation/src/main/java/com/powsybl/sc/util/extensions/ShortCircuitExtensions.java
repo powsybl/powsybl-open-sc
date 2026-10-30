@@ -283,13 +283,13 @@ public final class ShortCircuitExtensions {
                     Complex s = new Complex(load.getP0(), load.getQ0());
                     double s2 = s.abs() * s.abs();
 
-                    if (s2 > EPSILON) {
+                    if (s.abs() > POWER_EPSILON_MVA) {
                         zd = s.multiply(uNom * uNom / s2);
                     }
                 }
-                if (zd.abs() > EPSILON) {
-                    Complex tmpY = zd.reciprocal().multiply(uNom * uNom / SB);
-                    yLoads = yLoads.add(tmpY);
+                Complex zdPu = zd.multiply(SB / (uNom * uNom));
+                if (zdPu.abs() > IMPEDANCE_EPSILON_PU) {
+                    yLoads = yLoads.add(zdPu.reciprocal());
                 }
             }
         }
