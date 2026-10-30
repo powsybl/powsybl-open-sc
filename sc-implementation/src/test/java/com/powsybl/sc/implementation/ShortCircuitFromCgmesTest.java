@@ -47,7 +47,8 @@ class ShortCircuitFromCgmesTest {
         parametersLf = new LoadFlowParameters().setTwtSplitShuntAdmittance(true);
         matrixFactory = new DenseMatrixFactory();
         scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(parametersLf));
+        OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(parametersLf);
+        scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
         busNameToId = new HashMap<>();
         busNameToId.put("Bus1", "adee76cd-b2b9-48ac-8fd4-0d205a435f59");
         busNameToId.put("Bus9", "87c0d153-e308-4b2b-92a4-4fad53ab1ff9");

@@ -42,7 +42,8 @@ public class ShortCircuitOnaLineTest {
         matrixFactory = new DenseMatrixFactory();
         LoadFlowParameters loadFlowParameters = new LoadFlowParameters().setTwtSplitShuntAdmittance(true);
         scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+        OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(loadFlowParameters);
+        scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
     }
 
     @Test

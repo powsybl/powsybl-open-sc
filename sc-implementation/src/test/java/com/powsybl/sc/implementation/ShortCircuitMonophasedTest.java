@@ -46,7 +46,8 @@ public class ShortCircuitMonophasedTest {
         loadFlowParameters = new LoadFlowParameters().setTwtSplitShuntAdmittance(true);
         matrixFactory = new DenseMatrixFactory();
         scp = new ShortCircuitParameters();
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+        OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(loadFlowParameters);
+        scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
     }
 
     @Test

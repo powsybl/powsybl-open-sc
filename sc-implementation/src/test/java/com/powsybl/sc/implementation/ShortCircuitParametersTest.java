@@ -43,7 +43,8 @@ class ShortCircuitParametersTest {
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
         provider = new OpenShortCircuitProvider();
         scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+        OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(loadFlowParameters);
+        scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
     }
 
     @Test
@@ -440,7 +441,7 @@ class ShortCircuitParametersTest {
     }
 
     private ShortCircuitParameters createDefaultShortCircuitParameters() {
-        OpenShortCircuitParameters openScParametersScParameters = new OpenShortCircuitParameters(loadFlowParameters);
+        OpenShortCircuitParameters openScParametersScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(loadFlowParameters);
         ShortCircuitParameters scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
         scp.addExtension(OpenShortCircuitParameters.class, openScParametersScParameters);
         return scp;

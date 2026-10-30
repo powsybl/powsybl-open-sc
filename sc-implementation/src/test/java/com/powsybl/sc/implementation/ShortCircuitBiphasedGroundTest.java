@@ -57,7 +57,8 @@ class ShortCircuitBiphasedGroundTest {
         ShortCircuitParameters scp = new ShortCircuitParameters()
                 .setStudyType(StudyType.SUB_TRANSIENT)
                 .setWithNeutralPosition(true);
-        scp.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters(loadFlowParameters));
+        OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(loadFlowParameters);
+        scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
 
         ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
                 ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());

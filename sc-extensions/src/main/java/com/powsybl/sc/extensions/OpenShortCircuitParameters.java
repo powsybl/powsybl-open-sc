@@ -23,44 +23,24 @@ public class OpenShortCircuitParameters extends AbstractExtension<ShortCircuitPa
     private double innerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
     private double outerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
 
-    public OpenShortCircuitParameters() {
-        this(new LoadFlowParameters());
-    }
-
-    public OpenShortCircuitParameters(LoadFlowParameters loadFlowParameters) {
-        this.loadFlowParameters = Objects.requireNonNull(loadFlowParameters);
-    }
-
-    public OpenShortCircuitParameters(LoadFlowParameters loadFlowParameters, boolean withCapacities, boolean withResistances) {
-        this.loadFlowParameters = Objects.requireNonNull(loadFlowParameters);
-        this.withCapacities = withCapacities;
-        this.withResistances = withResistances;
-    }
-
     @Override
     public String getName() {
         return NAME;
     }
 
     public LoadFlowParameters getLoadFlowParameters() {
+        if (loadFlowParameters == null) {
+            loadFlowParameters = new LoadFlowParameters();
+        }
         return loadFlowParameters;
     }
 
-    /**
-     * Whether the shunt admittances at both ends of each branch should be taken into account
-     * when building the admittance matrix.
-     * If false, the shunt conductance and susceptances at both ends of each branch
-     * (G1, B1, G2, B2) are considered to be set to 0.
-     */
+    // Whether the shunt admittances at both ends of each branch should be taken into account
     public boolean isWithCapacities() {
         return withCapacities;
     }
 
-    /**
-     * Whether the series resistance of each branch should be taken into account
-     * when building the admittance matrix.
-     * If false, the series resistance R of each branch is considered to be set to 0.
-     */
+     // Whether the series resistance of each branch should be taken into account
     public boolean isWithResistances() {
         return withResistances;
     }

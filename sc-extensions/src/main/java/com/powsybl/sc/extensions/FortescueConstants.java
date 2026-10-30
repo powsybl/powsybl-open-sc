@@ -18,8 +18,8 @@ public final class FortescueConstants {
     private FortescueConstants() {
     }
 
-    public static final Complex FORTESCUE_A = new Complex(-0.5, FastMath.sqrt(3.) / 2); // Fortescue operator a = e^(j·2π/3)
-    public static final Complex FORTESCUE_A2 = FORTESCUE_A.conjugate(); // a² = e^(j·4π/3) = conjugate of a
+    public static final Complex FORTESCUE_A = new Complex(-0.5, FastMath.sqrt(3.) / 2); // e^(j·2π/3)
+    public static final Complex FORTESCUE_A2 = FORTESCUE_A.conjugate(); // a² = e^(j·4π/3) = conj(a)
 
     public static final double DEFAULT_COEFF_RO = 1;
     public static final double DEFAULT_COEFF_XO = 1;

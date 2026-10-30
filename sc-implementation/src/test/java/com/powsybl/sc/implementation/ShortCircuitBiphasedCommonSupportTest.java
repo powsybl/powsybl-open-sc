@@ -35,8 +35,8 @@ class ShortCircuitBiphasedCommonSupportTest {
     void setUp() {
         matrixFactory = new DenseMatrixFactory();
         scp = new ShortCircuitParameters();
-        scp.addExtension(OpenShortCircuitParameters.class,
-                new OpenShortCircuitParameters(new LoadFlowParameters().setTwtSplitShuntAdmittance(true)));
+        OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(new LoadFlowParameters().setTwtSplitShuntAdmittance(true));
+        scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
     }
 
     @Test
