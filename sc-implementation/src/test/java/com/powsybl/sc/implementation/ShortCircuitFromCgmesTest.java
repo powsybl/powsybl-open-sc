@@ -11,8 +11,6 @@ import com.powsybl.cgmes.conformity.CgmesConformity1Catalog;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.math.matrix.DenseMatrixFactory;
-import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.sc.cgmes.CgmesShortCircuitImportPostProcessor;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
@@ -38,14 +36,11 @@ class ShortCircuitFromCgmesTest {
 
     private LoadFlowParameters parametersLf;
 
-    private MatrixFactory matrixFactory;
-
     private ShortCircuitParameters scp;
 
     @BeforeEach
     void setUp() {
         parametersLf = new LoadFlowParameters().setTwtSplitShuntAdmittance(true);
-        matrixFactory = new DenseMatrixFactory();
         scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
         OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(parametersLf);
         scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
@@ -94,9 +89,7 @@ class ShortCircuitFromCgmesTest {
         //double kG1 = 0.99597;
         //double kG2 = 0.876832;
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, buildTriphasedFaultList(), scp, shortCircuitNormIec);
-        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scp, buildTriphasedFaultList(), shortCircuitNormIec);
 
         Map<String, Double> values = getrunResultBalanced(scbEngine);
 
@@ -132,9 +125,7 @@ class ShortCircuitFromCgmesTest {
         //  keeping the values provided in input, short circuit at bus2 varies from 15.9722 kA ( = the reference) to 15.981 kA
         //  if we want to keep the reference result, we need to modify the ratio of ro_b/r_b and ro_c/r_c equal to : double coeffRoT4 = 0.107281 / (rT4b + rT4c) 120. /120. ;
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, buildMonophasedFaultList(), scp, shortCircuitNormIec);
-        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scp, buildMonophasedFaultList(), shortCircuitNormIec);
 
         Map<String, Double> values = getRunResultUnbalanced(scbEngine);
 
@@ -163,9 +154,7 @@ class ShortCircuitFromCgmesTest {
 
         scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, buildTriphasedFaultList(), scp, shortCircuitNormIec);
-        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scp, buildTriphasedFaultList(), shortCircuitNormIec);
 
         Map<String, Double> values = getrunResultBalanced(scbEngine);
 

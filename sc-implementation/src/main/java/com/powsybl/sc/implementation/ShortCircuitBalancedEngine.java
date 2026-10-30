@@ -11,7 +11,9 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
+import com.powsybl.sc.extensions.ShortCircuitAnalysisType;
 import com.powsybl.sc.util.*;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.apache.commons.math3.complex.Complex;
 
 import java.util.HashMap;
@@ -23,8 +25,8 @@ import java.util.Map;
  */
 public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
-    public ShortCircuitBalancedEngine(Network network, ShortCircuitEngineParameters parameters) {
-        super(network, parameters);
+    public ShortCircuitBalancedEngine(Network network, ShortCircuitParameters parameters, List<ShortCircuitFault> shortCircuitFaults, ShortCircuitNorm shortCircuitNorm) {
+        super(network, parameters, shortCircuitFaults, shortCircuitNorm);
     }
 
     @Override
@@ -33,15 +35,20 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         fillInitialVoltages();
 
         // building a contingency list with all voltage levels
-        if (parameters.getAnalysisType() == ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC) {
+        if (openShortCircuitParameters.getShortCircuitAnalysisType() == ShortCircuitAnalysisType.SYSTEMATIC) {
             buildSystematicList(ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND);
         }
 
-        solverFaultList = buildFaultListsFromInputs();
-        List<CalculationLocation> solverLocationList = solverFaultList.stream().map(ShortCircuitFault::getCalculationLocation).toList();
+        buildFaultListsFromInputs();
+        List<CalculationLocation> solverLocationList = shortCircuitFaults.stream().map(ShortCircuitFault::getCalculationLocation).toList();
 
-        ImpedanceLinearResolutionParameters linearResolutionParameters = new ImpedanceLinearResolutionParameters(acLoadFlowParameters,
-                parameters.getMatrixFactory(), solverLocationList, parameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN, initialVoltages);
+        ImpedanceLinearResolutionParameters linearResolutionParameters = new ImpedanceLinearResolutionParameters(
+                openShortCircuitParameters.getLoadFlowParameters(),
+                openShortCircuitParameters.getMatrixFactory(),
+                solverLocationList,
+                shortCircuitParameters,
+                AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN,
+                initialVoltages);
 
         ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(network, lfNetwork, linearResolutionParameters);
 
@@ -49,7 +56,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
         //Build the ShortCircuit results using the Thevenin computation results
         resultsPerFault.clear();
-        solverFaultList.forEach(fault -> {
+        shortCircuitFaults.forEach(fault -> {
             switch (fault.getShortCircuitFaultType()) {
                 case BUS -> processBusShortCircuitFaults(fault, lfNetwork, directResolution);
                 case BRANCH -> processBranchShortCircuitFaults(fault, lfNetwork, directResolution);
@@ -72,7 +79,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
      * deltaV(bus) = -Id * zknf(bus).
      */
     private void updateVoltageProfileIfNeeded(ShortCircuitResult res, LfNetwork lfNetwork, Complex id, Map<Integer, Complex> busToZknf) {
-        if (!parameters.isVoltageUpdate()) {
+        if (!shortCircuitParameters.isWithVoltageResult()) {
             return;
         }
         res.setLfNetwork(lfNetwork);
@@ -118,11 +125,11 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         Complex zth20hz = linearResolutionResult.getZthEq20Hz();
 
         ShortCircuitResult res = new ShortCircuitResult(shortCircuitFault, lfBus, id, zth, vInit, dv,
-                linearResolutionResult.getEqSysFeeders(), parameters.getNorm(), zth20hz);
+                linearResolutionResult.getEqSysFeeders(), shortCircuitNorm, zth20hz);
 
         updateVoltageProfileIfNeeded(res, lfNetwork, id, linearResolutionResult.getBusToZknf());
 
-        res.updateFeedersResult(parameters); // feeders are updated only if voltageUpdate is made
+        res.updateFeedersResult(shortCircuitParameters); // feeders are updated only if voltageUpdate is made
         resultsPerFault.put(shortCircuitFault, res);
     }
 
@@ -193,10 +200,10 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                 .add(zLine20hz.multiply(r * s));
 
         ShortCircuitResult res = new ShortCircuitResult(shortCircuitFault, lfBus1, id, zth, vInit, dv,
-                linearResolutionResult1.getEqSysFeeders(), parameters.getNorm(), zth20hz);
+                linearResolutionResult1.getEqSysFeeders(), shortCircuitNorm, zth20hz);
 
         Map<Integer, Complex> combinedBusToZknf = null;
-        if (parameters.isVoltageUpdate()) {
+        if (shortCircuitParameters.isWithVoltageResult()) {
             int nbBuses = lfNetwork.getBuses().size();
             combinedBusToZknf = new HashMap<>();
             for (int busNum = 0; busNum < nbBuses; busNum++) {
@@ -207,7 +214,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         }
         updateVoltageProfileIfNeeded(res, lfNetwork, id, combinedBusToZknf);
 
-        res.updateFeedersResult(parameters); // feeders are updated only if voltageUpdate is made
+        res.updateFeedersResult(shortCircuitParameters); // feeders are updated only if voltageUpdate is made
         resultsPerFault.put(shortCircuitFault, res);
     }
 

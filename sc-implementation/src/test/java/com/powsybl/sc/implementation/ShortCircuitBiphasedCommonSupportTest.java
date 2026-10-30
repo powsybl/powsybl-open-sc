@@ -9,8 +9,6 @@ package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.math.matrix.DenseMatrixFactory;
-import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
@@ -27,13 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class ShortCircuitBiphasedCommonSupportTest {
 
-    private MatrixFactory matrixFactory;
-
     private ShortCircuitParameters scp;
 
     @BeforeEach
     void setUp() {
-        matrixFactory = new DenseMatrixFactory();
         scp = new ShortCircuitParameters();
         OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(new LoadFlowParameters().setTwtSplitShuntAdmittance(true));
         scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
@@ -47,9 +42,7 @@ class ShortCircuitBiphasedCommonSupportTest {
         ShortCircuitFault sc1 = createZeroImpedanceBiphasedCommonSupportFault("B2", "B3", "sc1", "B2", ShortCircuitFault.ShortCircuitBiphasedType.C1_A2);
         List<ShortCircuitFault> faultList = List.of(sc1);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());
-        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scp, faultList, new ShortCircuitNormIec());
 
         scbEngine.run();
 
@@ -68,9 +61,7 @@ class ShortCircuitBiphasedCommonSupportTest {
         // TODO : a list that contains BIPHASED_COMMON_SUPPORT with the same nodes is not supported yet : FIX_ME
         List<ShortCircuitFault> faultList = List.of(sc1, sc2);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());
-        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scp, faultList, new ShortCircuitNormIec());
 
         scbEngine.run();
 

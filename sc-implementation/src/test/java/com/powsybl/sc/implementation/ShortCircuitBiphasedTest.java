@@ -9,8 +9,6 @@ package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.math.matrix.DenseMatrixFactory;
-import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
@@ -30,12 +28,9 @@ class ShortCircuitBiphasedTest {
 
     private LoadFlowParameters loadFlowParameters;
 
-    private MatrixFactory matrixFactory;
-
     @BeforeEach
     void setUp() {
         loadFlowParameters = LoadFlowParameters.load().setTwtSplitShuntAdmittance(true);
-        matrixFactory = new DenseMatrixFactory();
     }
 
     @Test
@@ -62,9 +57,7 @@ class ShortCircuitBiphasedTest {
         OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(loadFlowParameters);
         scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());
-        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scp, faultList, new ShortCircuitNormIec());
 
         scbEngine.run();
 

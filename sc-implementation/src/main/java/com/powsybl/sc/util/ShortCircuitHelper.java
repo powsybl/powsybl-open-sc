@@ -7,7 +7,6 @@ import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfGenerator;
 import com.powsybl.sc.extensions.GeneratorSelectionMode;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
-import com.powsybl.sc.implementation.ShortCircuitEngineParameters;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +60,7 @@ public final class ShortCircuitHelper {
                 parameters.getInnerZoneGeneratorPowerThreshold(), parameters.getOuterZoneGeneratorPowerThreshold());
     }
 
-    public static boolean isGeneratorSelected(LfGenerator generator, ShortCircuitEngineParameters parameters, Network network,
+    public static boolean isGeneratorSelected(LfGenerator generator, OpenShortCircuitParameters parameters, Network network,
                                        Predicate<LfBus> innerZone) {
         return isGeneratorSelected(generator, network, innerZone,
                 parameters.getInnerZoneGeneratorSelectionMode(), parameters.getOuterZoneGeneratorSelectionMode(),

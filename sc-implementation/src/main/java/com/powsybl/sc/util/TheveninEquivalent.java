@@ -143,7 +143,7 @@ public class TheveninEquivalent {
             }
         }
 
-        return new ImpedanceLinearResolutionParameters(acLoadFlowParameters, theveninParameters.getMatrixFactory(),
+        return new ImpedanceLinearResolutionParameters(theveninParameters.getLoadFlowParameters(), theveninParameters.getMatrixFactory(),
                 locations, theveninParameters, AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN, initialVoltages);
     }
 }

@@ -12,8 +12,6 @@ import com.google.common.base.Stopwatch;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.ComputationManager;
 import com.powsybl.iidm.network.*;
-import com.powsybl.math.matrix.MatrixFactory;
-import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.sc.util.CalculationLocation;
 import com.powsybl.openloadflow.network.LfNetwork;
@@ -45,15 +43,14 @@ import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
 public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenShortCircuitProvider.class);
-
-    private final MatrixFactory matrixFactory;
+    private final ShortCircuitNorm shortCircuitNorm;
 
     public OpenShortCircuitProvider() {
-        this(new SparseMatrixFactory());
+        this.shortCircuitNorm = new ShortCircuitNormNone();
     }
 
-    public OpenShortCircuitProvider(MatrixFactory matrixFactory) {
-        this.matrixFactory = Objects.requireNonNull(matrixFactory);
+    public OpenShortCircuitProvider(ShortCircuitNorm shortCircuitNorm) {
+        this.shortCircuitNorm = shortCircuitNorm;
     }
 
     @Override
@@ -82,22 +79,15 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         boolean existBalancedFaults = faultTypes.getKey();
         boolean existUnbalancedFaults = faultTypes.getValue();
 
-        // Selective or Systematic short circuit analysis
-        ShortCircuitEngineParameters.AnalysisType at = ShortCircuitEngineParameters.AnalysisType.SELECTIVE;
-
-        ShortCircuitNorm shortCircuitNorm = new ShortCircuitNormNone();
-
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory, at, faultsList, parameters, shortCircuitNorm);
-
         // lists to store the results
         List<FaultResult> faultResults = new ArrayList<>();
 
         if (existBalancedFaults) {
-            runBalancedAnalysis(network, scbParameters, scFaultToFault, faultResults);
+            runBalancedAnalysis(network, parameters, scFaultToFault, faultsList, faultResults);
         }
 
         if (existUnbalancedFaults) {
-            runUnbalancedAnalysis(network, scbParameters, scFaultToFault, faultResults);
+            runUnbalancedAnalysis(network, parameters, scFaultToFault, faultsList, faultResults);
         }
 
         LOGGER.info("Short circuit calculation done in {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
@@ -105,8 +95,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         return CompletableFuture.completedFuture(new ShortCircuitAnalysisResult(faultResults));
     }
 
-    public void runUnbalancedAnalysis(Network network, ShortCircuitEngineParameters scbParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<FaultResult> faultResults) {
-        ShortCircuitUnbalancedEngine scuEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+    public void runUnbalancedAnalysis(Network network, ShortCircuitParameters shortCircuitParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<ShortCircuitFault> shortCircuitFaults, List<FaultResult> faultResults) {
+        ShortCircuitUnbalancedEngine scuEngine = new ShortCircuitUnbalancedEngine(network, shortCircuitParameters, shortCircuitFaults, shortCircuitNorm);
         scuEngine.run();
 
         // the results per faults might be inconsistent if many buses per voltage level
@@ -127,10 +117,11 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         }
     }
 
-    public void runBalancedAnalysis(Network network, ShortCircuitEngineParameters scbParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<FaultResult> faultResults) {
-        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
+    public void runBalancedAnalysis(Network network, ShortCircuitParameters shortCircuitParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<ShortCircuitFault> shortCircuitFaults, List<FaultResult> faultResults) {
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, shortCircuitParameters, shortCircuitFaults, shortCircuitNorm);
         scbEngine.run();
-        Predicate<LfBus> innerZone = createInnerZonePredicate(network, scbParameters.getInnerZoneBusIds());
+        OpenShortCircuitParameters openScParameters = shortCircuitParameters.getExtension(OpenShortCircuitParameters.class);
+        Predicate<LfBus> innerZone = createInnerZonePredicate(network, openScParameters.getInnerZoneBusIds());
 
         // the results per faults might be inconsistent if many buses per voltage level
         // TODO : see how this could be improved by allowing results per electrical bus on the short circuit provider
@@ -143,21 +134,21 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             double voltage = scResult.getVd().abs() * scResult.getLfBus().getNominalV();
 
             List<FeederResult> feederResultsProvider = new ArrayList<>();
-            fillFeederResults(network, scbParameters, feederResultsProvider, scResult);
+            fillFeederResults(network, shortCircuitParameters, feederResultsProvider, scResult);
 
             List<LimitViolation> limitViolations = new ArrayList<>();
 
             List<ShortCircuitBusResults> busResults = new ArrayList<>();
-            if (scbParameters.isVoltageUpdate()) {
+            if (shortCircuitParameters.isWithVoltageResult()) {
                 fillBusResults(scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(),
-                        scbParameters.getMinVoltageDropProportional(), innerZone);
+                        shortCircuitParameters.getMinVoltageDropProportionalThreshold(), innerZone);
             }
             MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }
 
-    private void fillFeederResults(Network network, ShortCircuitEngineParameters scbParameters, List<FeederResult> feederResultsProvider, ShortCircuitResult scResult) {
+    private void fillFeederResults(Network network, ShortCircuitParameters shortCircuitParameters, List<FeederResult> feederResultsProvider, ShortCircuitResult scResult) {
         for (Map.Entry<LfBus, FeedersAtBusResult> busAndFeedersAtBusResult : scResult.getFeedersResultDirect().entrySet()) {
             LfBus lfBus = busAndFeedersAtBusResult.getKey();
             FeedersAtBusResult feedersAtBusResult = busAndFeedersAtBusResult.getValue();
@@ -166,7 +157,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 // 1000: kA to A
                 double unitToAmpere = SB * 1000 / Math.sqrt(3) / lfBus.getNominalV();
                 Complex iInitial = Complex.ZERO;
-                if (scbParameters.getVoltageProfileType() == InitialVoltageProfileMode.PREVIOUS_VALUE) {
+                if (shortCircuitParameters.getInitialVoltageProfileMode() == InitialVoltageProfileMode.PREVIOUS_VALUE) {
                     iInitial = feederResult.getFeeder().getInitialCurrentContribution(network).multiply(unitToAmpere);
                     if (iInitial.isNaN() || iInitial.isInfinite()) {
                         LOGGER.warn("Initial current for feeder '{}' on bus '{}' is NaN/Infinite, defaulting to 0.",

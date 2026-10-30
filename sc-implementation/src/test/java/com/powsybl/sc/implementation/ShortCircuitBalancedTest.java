@@ -13,9 +13,8 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.ThreeWindingsTransformerFortescue;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.math.matrix.DenseMatrixFactory;
-import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
+import com.powsybl.sc.extensions.ShortCircuitAnalysisType;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.sc.util.extensions.ThreeWindingsTransformerNorm;
 import com.powsybl.shortcircuit.*;
@@ -35,8 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  */
 public class ShortCircuitBalancedTest {
 
-    private MatrixFactory matrixFactory;
-
     private static final double DELTA_I_A = 1e-2;
     private static final double DELTA_I_KA = DELTA_I_A / 1e3; // For tests not using Core API -> to be replaced
     private static final double DELTA_V = 1e-5;
@@ -53,11 +50,10 @@ public class ShortCircuitBalancedTest {
 
     @BeforeEach
     void setUp() {
-        matrixFactory = new DenseMatrixFactory();
         loadFlowParameters = LoadFlowParameters.load()
                 .setTwtSplitShuntAdmittance(true);
 
-        provider = new OpenShortCircuitProvider(matrixFactory);
+        provider = new OpenShortCircuitProvider();
 
         cm = LocalComputationManager.getDefault();
 
@@ -79,17 +75,11 @@ public class ShortCircuitBalancedTest {
 
         scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
 
-        ShortCircuitEngineParameters scbParameters =
-                new ShortCircuitEngineParameters(matrixFactory,
-                        ShortCircuitEngineParameters.AnalysisType.SELECTIVE,
-                        tmpV,
-                        scp,
-                        new ShortCircuitNormNone());
-        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(nt2, scbParameters);
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(nt2, scp, tmpV, new ShortCircuitNormNone());
 
         scbEngine.run();
 
-        scbEngine.resultsPerFault.get(sc2).updateFeedersResult(scbEngine.parameters);
+        scbEngine.resultsPerFault.get(sc2).updateFeedersResult(scp);
 
         assertEquals(-0.4316661015058293, scbEngine.resultsPerFault.get(sc2).getId().getReal(), DELTA_I_KA / 10); // kA and not A
         assertEquals(-4.617486568622836, scbEngine.resultsPerFault.get(sc2).getId().getImaginary(), DELTA_I_KA / 10);
@@ -363,9 +353,8 @@ public class ShortCircuitBalancedTest {
         Network network = create2n(NetworkFactory.findDefault());
         List<ShortCircuitFault> faults = new ArrayList<>();
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC, faults, scp, new ShortCircuitNormNone());
-        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
+        scp.getExtension(OpenShortCircuitParameters.class).setShortCircuitAnalysisType(ShortCircuitAnalysisType.SYSTEMATIC);
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scp, faults, new ShortCircuitNormNone());
         scbEngine.run();
 
         List<Double> val = new ArrayList<>();
@@ -395,9 +384,7 @@ public class ShortCircuitBalancedTest {
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
         scp.setStudyType(StudyType.TRANSIENT);
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, shortCircuitNormIec);
-        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scp, faultList, shortCircuitNormIec);
 
         scbEngine.run();
         Map<ShortCircuitFault, Double> valuesIk = new HashMap<>();
@@ -491,9 +478,7 @@ public class ShortCircuitBalancedTest {
         ShortCircuitFault sc3 = createZeroImpedanceTriphasedGroundFault("F3", "B6");
         List<ShortCircuitFault> faultList = List.of(sc1, sc2, sc3);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());
-        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scp, faultList, new ShortCircuitNormIec());
 
         scbEngine.run();
         Map<ShortCircuitFault, Double> val = new HashMap<>();
@@ -525,9 +510,7 @@ public class ShortCircuitBalancedTest {
         List<ShortCircuitFault> faultList = List.of(sc1, sc2);
 
         scp.setWithNeutralPosition(true);
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormNone());
-        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scp, faultList, new ShortCircuitNormNone());
 
         scbEngine.run();
         Map<ShortCircuitFault, Double> val = new HashMap<>();

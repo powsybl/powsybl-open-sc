@@ -9,8 +9,6 @@ package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.math.matrix.DenseMatrixFactory;
-import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
@@ -33,13 +31,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class ShortCircuitOnaLineTest {
 
-    private MatrixFactory matrixFactory;
-
     private ShortCircuitParameters scp;
 
     @BeforeEach
     void setUp() {
-        matrixFactory = new DenseMatrixFactory();
         LoadFlowParameters loadFlowParameters = new LoadFlowParameters().setTwtSplitShuntAdmittance(true);
         scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
         OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(loadFlowParameters);
@@ -62,9 +57,7 @@ public class ShortCircuitOnaLineTest {
                 createZeroImpedanceTriphasedGroundFault("F6", "B25"),
                 createZeroImpedanceTriphasedGroundFault("F7", "B2")));
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());
-        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scp, faultList, new ShortCircuitNormIec());
 
         scbEngine.run();
         List<Double> val = new ArrayList<>();
@@ -160,9 +153,7 @@ public class ShortCircuitOnaLineTest {
 
         List<ShortCircuitFault> faultList = List.of(sc1, sc2, sc3, sc4, sc5, sc6, sc7);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormIec());
-        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scp, faultList, new ShortCircuitNormIec());
 
         scbEngine.run();
         Map<ShortCircuitFault, Double> val = new HashMap<>();

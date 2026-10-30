@@ -10,8 +10,10 @@ package com.powsybl.sc.implementation;
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.network.*;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.*;
 import com.powsybl.shortcircuit.FortescueValue;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.FastMath;
@@ -187,14 +189,16 @@ public class ShortCircuitResult {
     }
 
     public ComplexMatrix getDiFromDv(LfBranch branch, FortescueValue dv1Fort, FortescueValue dv2Fort, FortescueType fType,
-                                     ShortCircuitEngineParameters parameters) {
+                                     ShortCircuitParameters parameters) {
         AdmittanceEquationSystem.AdmittanceType admType = AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN;
         if (fType == FortescueType.HOMOPOLAR) {
             admType = AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR;
         }
 
+        OpenShortCircuitParameters openShortCircuitParameters = parameters.getExtension(OpenShortCircuitParameters.class);
         ComplexMatrix yBranch = BranchAdmittance.create(branch, admType, parameters.isWithNeutralPosition(),
-                        parameters.isWithResistances(), parameters.isWithCapacities(), AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ)
+                        openShortCircuitParameters.isWithResistances(), openShortCircuitParameters.isWithCapacities(),
+                        AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ)
                 .toComplexMatrix();
         Complex y11 = yBranch.get(0, 0);
         Complex y12 = yBranch.get(0, 1);
@@ -220,7 +224,7 @@ public class ShortCircuitResult {
         return di;
     }
 
-    public void calculateCurrentPerBus(ShortCircuitEngineParameters parameters) {
+    public void calculateCurrentPerBus(ShortCircuitParameters parameters) {
 
         // For each branch, we build the sum of currents at buses from branches
         // 1- Input is the voltage delta at each end of the branch
@@ -307,7 +311,7 @@ public class ShortCircuitResult {
         }
     }
 
-    public void updateFeedersResult(ShortCircuitEngineParameters parameters) {
+    public void updateFeedersResult(ShortCircuitParameters parameters) {
         if (!isVoltageProfileUpdated) {
             return;
         }

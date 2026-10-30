@@ -54,7 +54,7 @@ public class TheveninTest {
         AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
                 loadFlowParameters, OpenLoadFlowParameters.get(loadFlowParameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
 
-        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(acLoadFlowParameters, matrixFactory, locationList)
+        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(loadFlowParameters, matrixFactory, locationList)
                 .setTheveninVoltageProfileType(InitialVoltageProfileMode.PREVIOUS_VALUE);
         TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
 
@@ -86,7 +86,7 @@ public class TheveninTest {
         AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
                 loadFlowParameters, OpenLoadFlowParameters.get(loadFlowParameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
 
-        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(acLoadFlowParameters, matrixFactory, locationList);
+        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(loadFlowParameters, matrixFactory, locationList);
         TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
 
         thEq.run();
@@ -118,7 +118,7 @@ public class TheveninTest {
         AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
                 loadFlowParameters, OpenLoadFlowParameters.get(loadFlowParameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
 
-        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(acLoadFlowParameters, matrixFactory, locationList)
+        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(loadFlowParameters, matrixFactory, locationList)
                 .setTheveninStudyType(StudyType.SUB_TRANSIENT);
         TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
 

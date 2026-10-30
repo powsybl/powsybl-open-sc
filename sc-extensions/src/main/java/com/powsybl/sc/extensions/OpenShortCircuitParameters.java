@@ -2,6 +2,7 @@ package com.powsybl.sc.extensions;
 
 import com.powsybl.commons.extensions.AbstractExtension;
 import com.powsybl.loadflow.LoadFlowParameters;
+import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 
 import java.util.Collection;
@@ -14,6 +15,8 @@ import static com.powsybl.sc.extensions.ShortCircuitConstants.*;
 public class OpenShortCircuitParameters extends AbstractExtension<ShortCircuitParameters> {
     public static final String NAME = "open-short-circuit-parameters";
     private LoadFlowParameters loadFlowParameters;
+    private MatrixFactory matrixFactory = DEFAULT_MATRIX_FACTORY;
+    private ShortCircuitAnalysisType shortCircuitAnalysisType = DEFAULT_ANALYSIS_TYPE;
     private boolean withCapacities = DEFAULT_WITH_CAPACITIES;
     private boolean withResistances = DEFAULT_WITH_RESISTANCES;
 
@@ -58,6 +61,24 @@ public class OpenShortCircuitParameters extends AbstractExtension<ShortCircuitPa
     public OpenShortCircuitParameters setLoadFlowParameters(LoadFlowParameters loadFlowParameters) {
         this.loadFlowParameters = Objects.requireNonNull(loadFlowParameters);
         return this;
+    }
+
+    public OpenShortCircuitParameters setMatrixFactory(MatrixFactory matrixFactory) {
+        this.matrixFactory = matrixFactory;
+        return this;
+    }
+
+    public MatrixFactory getMatrixFactory() {
+        return matrixFactory;
+    }
+
+    public OpenShortCircuitParameters setShortCircuitAnalysisType(ShortCircuitAnalysisType analysisType) {
+        this.shortCircuitAnalysisType = analysisType;
+        return this;
+    }
+
+    public ShortCircuitAnalysisType getShortCircuitAnalysisType() {
+        return shortCircuitAnalysisType;
     }
 
     public Set<String> getInnerZoneBusIds() {

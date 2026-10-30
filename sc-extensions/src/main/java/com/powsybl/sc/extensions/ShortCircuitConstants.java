@@ -7,6 +7,9 @@
  */
 package com.powsybl.sc.extensions;
 
+import com.powsybl.math.matrix.DenseMatrixFactory;
+import com.powsybl.math.matrix.MatrixFactory;
+
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at gmail.com>
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -37,6 +40,8 @@ public final class ShortCircuitConstants {
     public static final double DEFAULT_R1_X1_RATIO = 1.;
     public static final double DEFAULT_IKQ = 10;
 
+    public static final MatrixFactory DEFAULT_MATRIX_FACTORY = new DenseMatrixFactory();
+    public static final ShortCircuitAnalysisType DEFAULT_ANALYSIS_TYPE = ShortCircuitAnalysisType.SELECTIVE;
     public static final boolean DEFAULT_WITH_CAPACITIES = true;
     public static final boolean DEFAULT_WITH_RESISTANCES = true;
 

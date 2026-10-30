@@ -18,8 +18,10 @@ import com.powsybl.openloadflow.graph.EvenShiloachGraphDecrementalConnectivityFa
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.CalculationLocation;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.VoltageRange;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
@@ -42,24 +44,31 @@ public abstract class AbstractShortCircuitEngine {
 
     protected final Network network;
 
-    protected final ShortCircuitEngineParameters parameters;
+    protected final ShortCircuitParameters shortCircuitParameters;
+
+    protected final OpenShortCircuitParameters openShortCircuitParameters;
+
+    protected final ShortCircuitNorm shortCircuitNorm;
 
     protected final List<LfNetwork> lfNetworks;
 
     protected final Map<ShortCircuitFault, ShortCircuitResult> resultsPerFault = new LinkedHashMap<>();
 
-    protected List<ShortCircuitFault> solverFaultList; // list of faults provided to the solver (not including biphased common support faults)
+    protected List<ShortCircuitFault> shortCircuitFaults; // list of faults provided to the solver (not including biphased common support faults)
 
     protected final AcLoadFlowParameters acLoadFlowParameters;
 
     protected List<Complex> initialVoltages; // list of initial voltages indexed by bus num
 
-    protected AbstractShortCircuitEngine(Network network, ShortCircuitEngineParameters parameters) {
+    protected AbstractShortCircuitEngine(Network network, ShortCircuitParameters shortCircuitParameters,
+                                         List<ShortCircuitFault> shortCircuitFaults, ShortCircuitNorm shortCircuitNorm) {
         this.network = Objects.requireNonNull(network);
-        this.parameters = Objects.requireNonNull(parameters);
+        this.shortCircuitParameters = Objects.requireNonNull(shortCircuitParameters);
+        this.openShortCircuitParameters = shortCircuitParameters.getExtension(OpenShortCircuitParameters.class);
         this.acLoadFlowParameters = getAcLoadFlowParametersFromParam();
         this.lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), acLoadFlowParameters.getNetworkParameters());
-        ShortCircuitNorm shortCircuitNorm = parameters.getNorm();
+        this.shortCircuitFaults = shortCircuitFaults;
+        this.shortCircuitNorm = shortCircuitNorm;
         ShortCircuitExtensions.add(network, lfNetworks, shortCircuitNorm.getNormExtensions());
         processNetwork();
     }
@@ -74,11 +83,11 @@ public abstract class AbstractShortCircuitEngine {
      * (generators whose |P| is not above the zone power threshold are ignored in ABOVE_POWER_THRESHOLD mode).
      */
     private void checkAtLeastOneContributingGenerator(LfNetwork lfNetwork) {
-        Predicate<LfBus> innerZone = createInnerZonePredicate(network, parameters.getInnerZoneBusIds());
+        Predicate<LfBus> innerZone = createInnerZonePredicate(network, openShortCircuitParameters.getInnerZoneBusIds());
         boolean found = lfNetwork.getBuses().stream()
                 .flatMap(bus -> bus.getGenerators().stream())
                 .filter(lfGenerator -> network.getGenerator(lfGenerator.getOriginalId()) != null)
-                .anyMatch(lfGenerator -> isGeneratorSelected(lfGenerator, parameters, network, innerZone));
+                .anyMatch(lfGenerator -> isGeneratorSelected(lfGenerator, openShortCircuitParameters, network, innerZone));
         if (!found) {
             throw new PowsyblException("No generator contributes to the short-circuit current in network '" + network.getId()
                     + "': check the network connectivity and the inner/outer zone generator selection parameters");
@@ -86,34 +95,34 @@ public abstract class AbstractShortCircuitEngine {
     }
 
     protected AcLoadFlowParameters getAcLoadFlowParametersFromParam() {
-        OpenLoadFlowParameters loadflowParametersExt = OpenLoadFlowParameters.get(parameters.getLoadFlowParameters());
-        return OpenLoadFlowParameters.createAcParameters(parameters.getLoadFlowParameters(), loadflowParametersExt, parameters.getMatrixFactory(), new EvenShiloachGraphDecrementalConnectivityFactory<>(), false, false);
+        OpenLoadFlowParameters loadflowParametersExt = OpenLoadFlowParameters.get(openShortCircuitParameters.getLoadFlowParameters());
+        return OpenLoadFlowParameters.createAcParameters(
+                openShortCircuitParameters.getLoadFlowParameters(),
+                loadflowParametersExt,
+                openShortCircuitParameters.getMatrixFactory(),
+                new EvenShiloachGraphDecrementalConnectivityFactory<>(),
+                false,
+                false);
     }
 
     protected void buildSystematicList(ShortCircuitFault.ShortCircuitType type) {
         List<ShortCircuitFault> scfSystematic = new ArrayList<>();
-        parameters.setVoltageUpdate(false);
+        shortCircuitParameters.setWithVoltageResult(false);
         for (Bus bus : network.getBusBreakerView().getBuses()) {
             ShortCircuitFault sc = new ShortCircuitFault(bus.getId(), bus.getId(), bus.getId(), new ShortCircuitFaultImpedance(new Complex(0.)), type); //TODO : check validity of voltage levels if no connexity
             scfSystematic.add(sc);
         }
-        parameters.setShortCircuitFaults(scfSystematic);
+        shortCircuitFaults = scfSystematic;
     }
 
-    protected List<ShortCircuitFault> buildFaultListsFromInputs() {
+    protected void buildFaultListsFromInputs() {
         // We handle a pre-treatment of faults given in input:
         // - filtering faults because of some inconsistencies on the bus identification
         // - addition of info in each fault to ease the identification in LfNetwork of iidm info
-
-        List<ShortCircuitFault> faultList = new ArrayList<>();
         Map<String, Pair<String, Integer>> branchInfoByBusName = new HashMap<>();
-
-        for (ShortCircuitFault scfe : parameters.getShortCircuitFaults()) {
-            enrichFaultWithIidmBusInfo(scfe, branchInfoByBusName);
-            faultList.add(scfe);
+        for (ShortCircuitFault fault : shortCircuitFaults) {
+            enrichFaultWithIidmBusInfo(fault, branchInfoByBusName);
         }
-
-        return faultList;
     }
 
     private void enrichFaultWithIidmBusInfo(ShortCircuitFault scfe, Map<String, Pair<String, Integer>> branchInfoByBusName) {
@@ -211,7 +220,7 @@ public abstract class AbstractShortCircuitEngine {
     }
 
     private Complex computeBusInitialVoltage(LfBus bus) {
-        return switch (parameters.getVoltageProfileType()) {
+        return switch (shortCircuitParameters.getInitialVoltageProfileMode()) {
             case PREVIOUS_VALUE -> ComplexUtils.polar2Complex(bus.getV(), bus.getAngle());
             case CONFIGURED -> computeVoltageUsingRanges(bus);
             case NOMINAL -> new Complex(1.);
@@ -222,7 +231,7 @@ public abstract class AbstractShortCircuitEngine {
         Complex v = new Complex(1.); // If bus nominal voltage is outside every range, it takes default value 1 pu
 
         double nominalV = bus.getNominalV();
-        for (VoltageRange range : parameters.getConfiguredVoltageRanges()) {
+        for (VoltageRange range : shortCircuitParameters.getVoltageRanges()) {
             if (bus.getNominalV() >= range.getMinimumNominalVoltage() && bus.getNominalV() <= range.getMaximumNominalVoltage()) {
                 double voltage = Double.isNaN(range.getVoltage()) ? 1.0 : range.getVoltage() / nominalV;
                 voltage *= Double.isNaN(range.getRangeCoefficient()) ? 1.0 : range.getRangeCoefficient();

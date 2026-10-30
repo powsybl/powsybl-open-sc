@@ -15,8 +15,6 @@ import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.LineFortescueAdder;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.math.matrix.DenseMatrixFactory;
-import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.sc.extensions.GeneratorFortescueTypeAdder;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.ReferenceNetwork;
@@ -36,15 +34,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ShortCircuitMonophasedTest {
 
     private LoadFlowParameters loadFlowParameters;
-
-    private MatrixFactory matrixFactory;
-
     private ShortCircuitParameters scp;
 
     @BeforeEach
     void setUp() {
         loadFlowParameters = new LoadFlowParameters().setTwtSplitShuntAdmittance(true);
-        matrixFactory = new DenseMatrixFactory();
         scp = new ShortCircuitParameters();
         OpenShortCircuitParameters openScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(loadFlowParameters);
         scp.addExtension(OpenShortCircuitParameters.class, openScParameters);
@@ -60,9 +54,7 @@ public class ShortCircuitMonophasedTest {
 
         List<ShortCircuitFault> faultList = List.of(createZeroImpedanceMonophasedFault("sc1", "B3"));
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, shortCircuitNormIec);
-        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scp, faultList, shortCircuitNormIec);
 
         scbEngine.run();
         List<Double> val = new ArrayList<>();
@@ -100,9 +92,7 @@ public class ShortCircuitMonophasedTest {
         List<ShortCircuitFault> faultList = List.of(sc1, sc2, sc3, sc4, sc5, sc6, sc7, sc8);
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, shortCircuitNormIec);
-        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
+        ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scp, faultList, shortCircuitNormIec);
 
         scbEngine.run();
         Map<String, Double> values = new HashMap<>();
@@ -130,7 +120,7 @@ public class ShortCircuitMonophasedTest {
 
         Network network = ReferenceNetwork.create8NodesIEC9094();
 
-        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(matrixFactory);
+        ShortCircuitAnalysisProvider provider = new OpenShortCircuitProvider(new ShortCircuitNormNone());
         ComputationManager cm = LocalComputationManager.getDefault();
         scp.setStudyType(StudyType.SUB_TRANSIENT);
 
@@ -173,9 +163,7 @@ public class ShortCircuitMonophasedTest {
         List<ShortCircuitFault> faultList = List.of(sc1);
 
         scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
-        ShortCircuitEngineParameters scunbParameters = new ShortCircuitEngineParameters(matrixFactory,
-                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scp, new ShortCircuitNormNone());
-        ShortCircuitUnbalancedEngine scunbEngine = new ShortCircuitUnbalancedEngine(network, scunbParameters);
+        ShortCircuitUnbalancedEngine scunbEngine = new ShortCircuitUnbalancedEngine(network, scp, faultList, new ShortCircuitNormNone());
 
         scunbEngine.run();
 

@@ -7,8 +7,11 @@
  */
 package com.powsybl.sc.util;
 
+import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.MatrixFactory;
+import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
+import com.powsybl.openloadflow.graph.EvenShiloachGraphDecrementalConnectivityFactory;
 import com.powsybl.sc.extensions.GeneratorSelectionMode;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.StudyType;
@@ -29,7 +32,7 @@ public class TheveninEquivalentParameters {
 
     public static final double XSUBTRANSIENT = 0.2; //default value if data not available
 
-    private final AcLoadFlowParameters acLoadFlowParameters;
+    private final LoadFlowParameters loadFlowParameters;
     private final MatrixFactory matrixFactory;
     private final List<CalculationLocation> theveninCalculationLocation;
 
@@ -47,15 +50,24 @@ public class TheveninEquivalentParameters {
     private double innerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
     private double outerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
 
-    public TheveninEquivalentParameters(AcLoadFlowParameters acLoadFlowParameters, MatrixFactory matrixFactory,
+    public TheveninEquivalentParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory,
                                         List<CalculationLocation> locations) {
-        this.acLoadFlowParameters = Objects.requireNonNull(acLoadFlowParameters);
+        this.loadFlowParameters = Objects.requireNonNull(loadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
         this.theveninCalculationLocation = Objects.requireNonNull(locations);
     }
 
+    public LoadFlowParameters getLoadFlowParameters() {
+        return loadFlowParameters;
+    }
+
     public AcLoadFlowParameters getAcLoadFlowParameters() {
-        return acLoadFlowParameters;
+        return getAcLoadFlowParametersFromParam(loadFlowParameters, matrixFactory);
+    }
+
+    private AcLoadFlowParameters getAcLoadFlowParametersFromParam(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory) {
+        OpenLoadFlowParameters loadflowParametersExt = OpenLoadFlowParameters.get(loadFlowParameters);
+        return OpenLoadFlowParameters.createAcParameters(loadFlowParameters, loadflowParametersExt, matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>(), false, false);
     }
 
     public MatrixFactory getMatrixFactory() {
