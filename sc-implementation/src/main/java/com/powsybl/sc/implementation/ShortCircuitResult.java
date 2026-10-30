@@ -11,7 +11,6 @@ import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.util.*;
-import com.powsybl.sc.util.extensions.AdmittanceConstants;
 import com.powsybl.shortcircuit.FortescueValue;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
@@ -186,13 +185,16 @@ public class ShortCircuitResult {
         return zh20hz;
     }
 
-    public ComplexMatrix getDiFromDv(LfBranch branch, FortescueValue dv1Fort, FortescueValue dv2Fort, FortescueType fType) {
+    public ComplexMatrix getDiFromDv(LfBranch branch, FortescueValue dv1Fort, FortescueValue dv2Fort, FortescueType fType,
+                                     ShortCircuitEngineParameters parameters) {
         AdmittanceEquationSystem.AdmittanceType admType = AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN;
         if (fType == FortescueType.HOMOPOLAR) {
             admType = AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR;
         }
 
-        ComplexMatrix yBranch = getAdmittanceMatrixBranch(branch, admType);
+        ComplexMatrix yBranch = BranchAdmittance.create(branch, admType, parameters.isWithNeutralPosition(),
+                        parameters.isWithResistances(), parameters.isWithCapacities(), AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ)
+                .toComplexMatrix();
         Complex y11 = yBranch.get(0, 0);
         Complex y12 = yBranch.get(0, 1);
         Complex y21 = yBranch.get(1, 0);
@@ -217,7 +219,7 @@ public class ShortCircuitResult {
         return di;
     }
 
-    public void calculateCurrentPerBus(boolean isWithNeutralPosition) {
+    public void calculateCurrentPerBus(ShortCircuitEngineParameters parameters) {
 
         // For each branch, we build the sum of currents at buses from branches
         // 1- Input is the voltage delta at each end of the branch
@@ -243,7 +245,7 @@ public class ShortCircuitResult {
                 FortescueValue dv2Fort = busNum2Dv.get(busNum2);
 
                 // Direct
-                ComplexMatrix di = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.DIRECT);
+                ComplexMatrix di = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.DIRECT, parameters);
                 Complex di1 = di.get(0, 0);
                 Complex di2 = di.get(1, 0);
 
@@ -260,7 +262,7 @@ public class ShortCircuitResult {
 
                     PiModel piModel = branch.getPiModel();
                     Complex zBranch;
-                    if (isWithNeutralPosition
+                    if (parameters.isWithNeutralPosition()
                             && piModel instanceof PiModelArray piModelArray) {
                         zBranch = new Complex(piModelArray.getModel(0).getR(), piModelArray.getModel(0).getX());
                     } else {
@@ -273,7 +275,7 @@ public class ShortCircuitResult {
                 }
 
                 // Homopolar
-                ComplexMatrix dio = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.HOMOPOLAR);
+                ComplexMatrix dio = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.HOMOPOLAR, parameters);
                 Complex dio1 = dio.get(0, 0);
                 Complex dio2 = dio.get(1, 0);
 
@@ -285,7 +287,7 @@ public class ShortCircuitResult {
                 resultHomopolarBus2Feeders.addItofeedersSum(dio2);
 
                 // Inverse
-                ComplexMatrix dii = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.INVERSE);
+                ComplexMatrix dii = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.INVERSE, parameters);
                 Complex dii1 = dii.get(0, 0);
                 Complex dii2 = dii.get(1, 0);
 
@@ -304,7 +306,7 @@ public class ShortCircuitResult {
         }
     }
 
-    public void updateFeedersResult(boolean isWithNeutralPosition) {
+    public void updateFeedersResult(ShortCircuitEngineParameters parameters) {
         if (!isVoltageProfileUpdated) {
             return;
         }
@@ -333,7 +335,7 @@ public class ShortCircuitResult {
             feedersResultsInverse.put(bus, feedersAtBusResultInverse);
         }
 
-        calculateCurrentPerBus(isWithNeutralPosition);
+        calculateCurrentPerBus(parameters);
 
         // Given the admittance of each feeder at bus, computed during building of AdmittanceEquationSystem,
         // we can then deduce the current contribution of each feeder, which is stored in feeder result
@@ -597,40 +599,5 @@ public class ShortCircuitResult {
 
     public void setLfNetwork(LfNetwork lfNetwork) {
         this.lfNetwork = lfNetwork;
-    }
-
-    static ComplexMatrix getAdmittanceMatrixBranch(LfBranch branch,
-                                                   AdmittanceEquationSystem.AdmittanceType admittanceType) {
-
-        // TODO : code duplicated with the admittance equation system, should be un-duplicated
-        PiModel piModel = branch.getPiModel();
-        if (piModel.getX() == 0) {
-            throw new IllegalArgumentException("Branch '" + branch.getId() + "' has reactance equal to zero");
-        }
-
-        if (piModel.getZ() == 0) {
-            throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
-        }
-        Complex z = new Complex(piModel.getR(), piModel.getX());
-        Complex y1 = new Complex(piModel.getG1(), piModel.getB1());
-        Complex y2 = new Complex(piModel.getG2(), piModel.getB2());
-        Complex rho = ComplexUtils.polar2Complex(piModel.getR1(), piModel.getA1());
-
-        double admCoef = 1.;
-        if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
-            admCoef = AdmittanceConstants.COEF_XO_XD; // Xo = 3 * Xd as a first approximation : TODO : improve when more data available
-            rho = new Complex(rho.getReal(), 0.); // In homopolar, the phase shift is canceled TODO : verify
-        }
-        Complex y11 = y1.add(z.reciprocal()).multiply(rho.abs() * rho.abs()).multiply(admCoef);
-        Complex y12 = rho.conjugate().multiply(z.reciprocal()).multiply(-1.).multiply(admCoef); // TODO : check if case of phase shift if it is the conjugate of direct y
-        Complex y21 = rho.multiply(z.reciprocal()).multiply(-1.).multiply(admCoef);
-        Complex y22 = y2.add(z.reciprocal()).multiply(admCoef);
-
-        ComplexMatrix admittance = new ComplexMatrix(2, 2);
-        admittance.set(0, 0, y11);
-        admittance.set(0, 1, y12);
-        admittance.set(1, 0, y21);
-        admittance.set(1, 1, y22);
-        return admittance;
     }
 }

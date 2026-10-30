@@ -122,7 +122,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
         updateVoltageProfileIfNeeded(res, lfNetwork, id, linearResolutionResult.getBusToZknf());
 
-        res.updateFeedersResult(parameters.isWithNeutralPosition()); // feeders are updated only if voltageUpdate is made
+        res.updateFeedersResult(parameters); // feeders are updated only if voltageUpdate is made
         resultsPerFault.put(shortCircuitFault, res);
     }
 
@@ -207,7 +207,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         }
         updateVoltageProfileIfNeeded(res, lfNetwork, id, combinedBusToZknf);
 
-        res.updateFeedersResult(parameters.isWithNeutralPosition()); // feeders are updated only if voltageUpdate is made
+        res.updateFeedersResult(parameters); // feeders are updated only if voltageUpdate is made
         resultsPerFault.put(shortCircuitFault, res);
     }
 

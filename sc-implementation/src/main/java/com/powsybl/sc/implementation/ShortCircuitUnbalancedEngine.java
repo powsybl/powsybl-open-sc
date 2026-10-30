@@ -125,7 +125,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                             directResult, homopolarResult,
                             scf, lfBus1, v1dInit, lfNetwork);
 
-                    res.updateFeedersResult(false); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
+                    res.updateFeedersResult(parameters); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
                     resultsPerFault.put(scf, res);
 
                 } else if (shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
@@ -175,7 +175,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                                     lfBus1, v1dInit, lfNetwork,
                                     lfBus2, v2dInit, biphasedDirectResult, biphasedHomopolarResult);
 
-                            res.updateFeedersResult(false); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
+                            res.updateFeedersResult(parameters); // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
                             resultsPerFault.put(scf, res);
 
                         } else {

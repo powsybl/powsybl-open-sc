@@ -89,7 +89,7 @@ public class ShortCircuitBalancedTest {
 
         scbEngine.run();
 
-        scbEngine.resultsPerFault.get(sc2).updateFeedersResult(false);
+        scbEngine.resultsPerFault.get(sc2).updateFeedersResult(scbEngine.parameters);
 
         assertEquals(-0.4316661015058293, scbEngine.resultsPerFault.get(sc2).getId().getReal(), DELTA_I_KA / 10); // kA and not A
         assertEquals(-4.617486568622836, scbEngine.resultsPerFault.get(sc2).getId().getImaginary(), DELTA_I_KA / 10);

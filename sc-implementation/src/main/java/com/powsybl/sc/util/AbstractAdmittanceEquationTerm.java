@@ -11,8 +11,6 @@ import com.powsybl.openloadflow.equations.AbstractElementEquationTerm;
 import com.powsybl.openloadflow.equations.Variable;
 import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.*;
-import com.powsybl.sc.util.extensions.ScTransfo3wKt;
-import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
 
 import java.util.List;
 import java.util.Objects;
@@ -32,68 +30,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
     protected final List<Variable<VariableType>> variables;
 
-    protected double rho;
-
-    protected double zInvSquare;
-
-    protected double r;
-
-    protected double x;
-
-    protected double cosA;
-
-    protected double sinA;
-
-    protected double cos2A;
-
-    protected double sin2A;
-
-    protected double gPi1;
-
-    protected double bPi1;
-
-    protected double gPi2;
-
-    protected double bPi2;
-
-    protected double freqCoef;
-
-    private record KTCoeff(double kTr, double kTx) {
-
-    }
-
-    private KTCoeff computeKTCoeff(LfBranch branch) {
-        double kTr = 1.;
-        double kTx = 1.;
-        if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_2) {
-            // branch is a 2 windings transformer
-            if (branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM) != null) {
-                kTx = (Double) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
-                kTr = kTx;
-            }
-        } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_1
-                || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_2
-                || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_3) {
-            // branch is leg1 of a 3 windings transformer and homopolar data available
-            ScTransfo3wKt scTransfoKt = (ScTransfo3wKt) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
-            if (scTransfoKt != null) {
-                if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_1) {
-                    kTr = scTransfoKt.getLeg1().getkTr();
-                    kTx = scTransfoKt.getLeg1().getkTx();
-                } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_2) {
-                    kTr = scTransfoKt.getLeg2().getkTr();
-                    kTx = scTransfoKt.getLeg2().getkTx();
-                } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_3) {
-                    kTr = scTransfoKt.getLeg3().getkTr();
-                    kTx = scTransfoKt.getLeg3().getkTx();
-                } else {
-                    throw new IllegalArgumentException("Branch " + branch.getId() + " has unknown 3-winding leg number");
-                }
-            }
-        }
-
-        return new KTCoeff(kTr, kTx);
-    }
+    protected final BranchAdmittance admittance;
 
     protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, ImpedanceLinearResolutionParameters parameters, AdmittanceEquationSystem.FrequencyType frequencyType) {
         super(branch);
@@ -108,53 +45,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
         variables = List.of(v1rVar, v2rVar, v1iVar, v2iVar);
 
-        freqCoef = 1.0;
-        if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
-            freqCoef = 20. / 50.;
-        }
-
-        PiModel piModel = branch.getPiModel();
-        if (piModel.getX() == 0) {
-            throw new IllegalArgumentException("Branch '" + branch.getId() + "' has reactance equal to zero");
-        }
-
-        KTCoeff ktCoeff = computeKTCoeff(branch);
-
-        double kTr = ktCoeff.kTr();
-        double kTx = ktCoeff.kTx();
-
-        // Take the rho of the neutral position (model(0)) of tapChanger if isWithNeutralPosition set to True
-        if (parameters.isWithNeutralPosition()
-                && piModel instanceof PiModelArray piModelArray) {
-            rho = piModelArray.getModel(0).getR1();
-            r = piModelArray.getModel(0).getR() * kTr;
-            x = piModelArray.getModel(0).getX() * kTx * freqCoef;
-        } else {
-            rho = piModel.getR1();
-            r = piModel.getR() * kTr;
-            x = piModel.getX() * kTx * freqCoef;
-        }
-        if (!parameters.isWithResistances()) {
-            r = 0.0;
-        }
-        double zk2 = r * r + x * x;
-        if (zk2 == 0) {
-            throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
-        }
-
-        zInvSquare = 1 / zk2;
-
-        double alpha = piModel.getA1();
-        cosA = Math.cos(alpha);
-        sinA = Math.sin(alpha);
-        cos2A = Math.cos(2 * alpha);
-        sin2A = Math.sin(2 * alpha);
-
-        boolean isWithCapacities = parameters.isWithCapacities();
-        gPi1 = isWithCapacities ? piModel.getG1() / kTr : 0.0;
-        bPi1 = isWithCapacities ? piModel.getB1() / kTx : 0.0;
-        gPi2 = isWithCapacities ? piModel.getG2() / kTr : 0.0;
-        bPi2 = isWithCapacities ? piModel.getB2() / kTx : 0.0;
+        admittance = BranchAdmittance.create(branch, parameters, frequencyType);
     }
 
     @Override
