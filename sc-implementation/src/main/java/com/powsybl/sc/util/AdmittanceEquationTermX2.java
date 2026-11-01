@@ -11,6 +11,7 @@ import com.powsybl.openloadflow.equations.Variable;
 import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
+import com.powsybl.sc.extensions.FrequencyType;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -18,8 +19,10 @@ import com.powsybl.openloadflow.network.LfBus;
 public class AdmittanceEquationTermX2 extends AbstractAdmittanceEquationTerm {
 
     public AdmittanceEquationTermX2(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet,
-                                    ImpedanceLinearResolutionParameters parameters, AdmittanceEquationSystem.FrequencyType frequencyType) {
-        super(branch, bus1, bus2, variableSet, parameters, frequencyType);
+                                    ImpedanceLinearResolutionParameters parameters,
+                                    AdmittanceType admittanceType,
+                                    FrequencyType frequencyType) {
+        super(branch, bus1, bus2, variableSet, parameters, admittanceType, frequencyType);
     }
 
     @Override

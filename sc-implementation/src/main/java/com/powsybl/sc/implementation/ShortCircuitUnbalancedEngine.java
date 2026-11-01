@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.powsybl.sc.util.ShortCircuitHelper.fillInitialVoltages;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -32,7 +34,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
     @Override
     public void run() {
         LfNetwork lfNetwork = lfNetworks.getFirst();
-        fillInitialVoltages();
+        initialVoltages = fillInitialVoltages(lfNetwork, shortCircuitParameters);
 
         if (openShortCircuitParameters.getShortCircuitAnalysisType() == ShortCircuitAnalysisType.SYSTEMATIC) {
             buildSystematicList(ShortCircuitFault.ShortCircuitType.MONOPHASED); // TODO : by default it is monophased, could be changed to choose type of systematic default
@@ -45,23 +47,24 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         buildFaultListsFromInputs();
         List<CalculationLocation> solverLocationList = shortCircuitFaults.stream().map(ShortCircuitFault::getCalculationLocation).toList();
 
-        ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersHomopolar = new ImpedanceLinearResolutionParameters(
-                openShortCircuitParameters.getLoadFlowParameters(),
-                openShortCircuitParameters.getMatrixFactory(),
-                solverLocationList,
-                shortCircuitParameters,
-                AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR,
-                initialVoltages);
+        ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersHomopolar = new ImpedanceLinearResolutionParameters(shortCircuitParameters);
 
-        ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersDirect = new ImpedanceLinearResolutionParameters(
-                openShortCircuitParameters.getLoadFlowParameters(),
-                openShortCircuitParameters.getMatrixFactory(),
-                solverLocationList,
-                shortCircuitParameters,
-                AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN, initialVoltages);
+        ImpedanceLinearResolutionParameters admittanceLinearResolutionParametersDirect = new ImpedanceLinearResolutionParameters(shortCircuitParameters);
 
-        ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(network, lfNetwork, admittanceLinearResolutionParametersDirect);
-        ImpedanceLinearResolution homopolarResolution = new ImpedanceLinearResolution(network, lfNetwork, admittanceLinearResolutionParametersHomopolar);
+        ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(
+                network,
+                lfNetwork,
+                solverLocationList,
+                initialVoltages,
+                AdmittanceType.ADM_THEVENIN,
+                admittanceLinearResolutionParametersDirect);
+        ImpedanceLinearResolution homopolarResolution = new ImpedanceLinearResolution(
+                network,
+                lfNetwork,
+                solverLocationList,
+                initialVoltages,
+                AdmittanceType.ADM_THEVENIN_HOMOPOLAR,
+                admittanceLinearResolutionParametersHomopolar);
 
         directResolution.run();
         homopolarResolution.run();

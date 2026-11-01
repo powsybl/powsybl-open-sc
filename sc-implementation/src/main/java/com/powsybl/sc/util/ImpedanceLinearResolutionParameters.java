@@ -16,15 +16,14 @@ import com.powsybl.sc.extensions.GeneratorSelectionMode;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
-import org.apache.commons.math3.complex.Complex;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 import static com.powsybl.sc.extensions.ShortCircuitConstants.*;
+import static com.powsybl.sc.util.ShortCircuitHelper.getOrDefaultOpenScParameters;
 import static com.powsybl.shortcircuit.ShortCircuitConstants.*;
 
 /**
@@ -34,13 +33,9 @@ public final class ImpedanceLinearResolutionParameters {
 
     public static final double XSUBTRANSIENT = 0.2; //default value if data not available
 
-    private final LoadFlowParameters loadFlowParameters;
-    private final MatrixFactory matrixFactory;
-    private final List<CalculationLocation> calculationLocations; // calculation locations where only one bus is required in input
-    private final AdmittanceEquationSystem.AdmittanceType admittanceType;
-    private final List<Complex> initialVoltages;
+    private LoadFlowParameters loadFlowParameters;
+    private MatrixFactory matrixFactory;
 
-    private List<CalculationLocation> biphasedCalculationLocations = Collections.emptyList(); // calculation locations where 2 buses are required in input
     private boolean voltageUpdate = DEFAULT_WITH_VOLTAGE_RESULT;
     private StudyType studyType = StudyType.SUB_TRANSIENT;
     private boolean withShuntCompensators = DEFAULT_WITH_SHUNT_COMPENSATORS;
@@ -54,52 +49,24 @@ public final class ImpedanceLinearResolutionParameters {
     private double innerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
     private double outerZoneGeneratorPowerThreshold = DEFAULT_RUNNING_GENERATOR_THRESHOLD;
 
-    public ImpedanceLinearResolutionParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory,
-                                               List<CalculationLocation> calculationLocations,
-                                               AdmittanceEquationSystem.AdmittanceType admittanceType,
-                                               List<Complex> initialVoltages) {
+    public ImpedanceLinearResolutionParameters() {
+    }
+
+    public ImpedanceLinearResolutionParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory) {
         this.loadFlowParameters = Objects.requireNonNull(loadFlowParameters);
         this.matrixFactory = Objects.requireNonNull(matrixFactory);
-        this.calculationLocations = Objects.requireNonNull(calculationLocations);
-        this.admittanceType = Objects.requireNonNull(admittanceType);
-        this.initialVoltages = initialVoltages;
     }
 
-    public ImpedanceLinearResolutionParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory,
-                                               List<CalculationLocation> calculationLocations,
-                                               List<CalculationLocation> biphasedCalculationLocations,
-                                               AdmittanceEquationSystem.AdmittanceType admittanceType,
-                                               List<Complex> initialVoltages) {
-        this(loadFlowParameters, matrixFactory, calculationLocations, admittanceType, initialVoltages);
-        setBiphasedCalculationLocations(biphasedCalculationLocations);
-    }
-
-    public ImpedanceLinearResolutionParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory,
-                                               List<CalculationLocation> calculationLocations, ShortCircuitParameters shortCircuitParameters,
-                                               AdmittanceEquationSystem.AdmittanceType admittanceType, List<Complex> initialVoltages) {
-        this(loadFlowParameters, matrixFactory, calculationLocations, admittanceType, initialVoltages);
+    public ImpedanceLinearResolutionParameters(ShortCircuitParameters shortCircuitParameters) {
         copyFrom(shortCircuitParameters);
-    }
-
-    public ImpedanceLinearResolutionParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory,
-                                               List<CalculationLocation> calculationLocations, ShortCircuitParameters shortCircuitParameters,
-                                               AdmittanceEquationSystem.AdmittanceType admittanceType,
-                                               List<CalculationLocation> biphasedCalculationLocations, List<Complex> initialVoltages) {
-        this(loadFlowParameters, matrixFactory, calculationLocations, shortCircuitParameters, admittanceType, initialVoltages);
-        setBiphasedCalculationLocations(biphasedCalculationLocations);
-    }
-
-    public ImpedanceLinearResolutionParameters(LoadFlowParameters loadFlowParameters, MatrixFactory matrixFactory,
-                                               List<CalculationLocation> calculationLocations, TheveninEquivalentParameters thParameters,
-                                               AdmittanceEquationSystem.AdmittanceType admittanceType, List<Complex> initialVoltages) {
-        this(loadFlowParameters, matrixFactory, calculationLocations, admittanceType, initialVoltages);
-        copyFrom(thParameters);
     }
 
     private void copyFrom(ShortCircuitParameters shortCircuitParameters) {
         Objects.requireNonNull(shortCircuitParameters);
-        OpenShortCircuitParameters openShortCircuitParameters = shortCircuitParameters.getExtension(OpenShortCircuitParameters.class);
-        setVoltageUpdate(shortCircuitParameters.isWithVoltageResult())
+        OpenShortCircuitParameters openShortCircuitParameters = getOrDefaultOpenScParameters(shortCircuitParameters);
+        setLoadFlowParameters(openShortCircuitParameters.getLoadFlowParameters())
+                .setMatrixFactory(openShortCircuitParameters.getMatrixFactory())
+                .setVoltageUpdate(shortCircuitParameters.isWithVoltageResult())
                 .setStudyType(shortCircuitParameters.getStudyType())
                 .setWithShuntCompensators(shortCircuitParameters.isWithShuntCompensators())
                 .setWithLoads(shortCircuitParameters.isWithLoads())
@@ -113,20 +80,9 @@ public final class ImpedanceLinearResolutionParameters {
                 .setOuterZoneGeneratorPowerThreshold(openShortCircuitParameters.getOuterZoneGeneratorPowerThreshold());
     }
 
-    private void copyFrom(TheveninEquivalentParameters thParameters) {
-        Objects.requireNonNull(thParameters);
-        setVoltageUpdate(thParameters.isVoltageUpdate())
-                .setStudyType(thParameters.getTheveninStudyType())
-                .setWithShuntCompensators(thParameters.isWithShuntCompensators())
-                .setWithLoads(thParameters.isWithLoads())
-                .setWithCapacities(thParameters.isWithCapacities())
-                .setWithResistances(thParameters.isWithResistances())
-                .setWithNeutralPosition(thParameters.isWithNeutralPosition())
-                .setInnerZoneBusIds(thParameters.getInnerZoneBusIds())
-                .setInnerZoneGeneratorSelectionMode(thParameters.getInnerZoneGeneratorSelectionMode())
-                .setOuterZoneGeneratorSelectionMode(thParameters.getOuterZoneGeneratorSelectionMode())
-                .setInnerZoneGeneratorPowerThreshold(thParameters.getInnerZoneGeneratorPowerThreshold())
-                .setOuterZoneGeneratorPowerThreshold(thParameters.getOuterZoneGeneratorPowerThreshold());
+    public ImpedanceLinearResolutionParameters setLoadFlowParameters(LoadFlowParameters loadFlowParameters) {
+        this.loadFlowParameters = loadFlowParameters;
+        return this;
     }
 
     public AcLoadFlowParameters getAcLoadFlowParameters() {
@@ -138,29 +94,13 @@ public final class ImpedanceLinearResolutionParameters {
         return OpenLoadFlowParameters.createAcParameters(loadFlowParameters, loadflowParametersExt, matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>(), false, false);
     }
 
+    public ImpedanceLinearResolutionParameters setMatrixFactory(MatrixFactory matrixFactory) {
+        this.matrixFactory = matrixFactory;
+        return this;
+    }
+
     public MatrixFactory getMatrixFactory() {
         return matrixFactory;
-    }
-
-    public List<CalculationLocation> getCalculationLocations() {
-        return calculationLocations;
-    }
-
-    public AdmittanceEquationSystem.AdmittanceType getAdmittanceType() {
-        return admittanceType;
-    }
-
-    public Complex getInitialVoltage(int num) {
-        return initialVoltages.get(num);
-    }
-
-    public List<CalculationLocation> getBiphasedCalculationLocations() {
-        return biphasedCalculationLocations;
-    }
-
-    public ImpedanceLinearResolutionParameters setBiphasedCalculationLocations(List<CalculationLocation> biphasedCalculationLocations) {
-        this.biphasedCalculationLocations = Objects.requireNonNull(biphasedCalculationLocations);
-        return this;
     }
 
     public boolean isVoltageUpdate() {

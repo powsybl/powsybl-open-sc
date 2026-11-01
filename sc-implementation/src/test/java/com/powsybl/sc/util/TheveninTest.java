@@ -11,11 +11,9 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.DenseMatrixFactory;
-import com.powsybl.math.matrix.MatrixFactory;
-import com.powsybl.openloadflow.OpenLoadFlowParameters;
-import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
-import com.powsybl.openloadflow.graph.EvenShiloachGraphDecrementalConnectivityFactory;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.StudyType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,13 +31,17 @@ public class TheveninTest {
 
     private LoadFlowParameters loadFlowParameters;
 
-    private MatrixFactory matrixFactory;
+    private final ShortCircuitParameters shortCircuitParameters = new ShortCircuitParameters();
 
     @BeforeEach
     void setUp() {
         loadFlowParameters = new LoadFlowParameters()
                 .setTwtSplitShuntAdmittance(true);
-        matrixFactory = new DenseMatrixFactory();
+
+        OpenShortCircuitParameters openShortCircuitParameters = new OpenShortCircuitParameters()
+                .setLoadFlowParameters(loadFlowParameters)
+                .setMatrixFactory(new DenseMatrixFactory());
+        shortCircuitParameters.addExtension(OpenShortCircuitParameters.class, openShortCircuitParameters);
     }
 
     @Test
@@ -51,12 +53,8 @@ public class TheveninTest {
                 new CalculationLocation("B4"),
                 new CalculationLocation("B2"));
 
-        AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
-                loadFlowParameters, OpenLoadFlowParameters.get(loadFlowParameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
-
-        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(loadFlowParameters, matrixFactory, locationList)
-                .setTheveninVoltageProfileType(InitialVoltageProfileMode.PREVIOUS_VALUE);
-        TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
+        shortCircuitParameters.setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);
+        TheveninEquivalent thEq = new TheveninEquivalent(network, locationList, shortCircuitParameters);
 
         thEq.run();
         Map<String, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> resultByBusId =
@@ -83,11 +81,7 @@ public class TheveninTest {
                 new CalculationLocation("B7"),
                 new CalculationLocation("B8"));
 
-        AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
-                loadFlowParameters, OpenLoadFlowParameters.get(loadFlowParameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
-
-        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(loadFlowParameters, matrixFactory, locationList);
-        TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
+        TheveninEquivalent thEq = new TheveninEquivalent(network, locationList, shortCircuitParameters);
 
         thEq.run();
         Map<String, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> resultByBusId =
@@ -115,12 +109,8 @@ public class TheveninTest {
                 new CalculationLocation("B7"),
                 new CalculationLocation("B8"));
 
-        AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
-                loadFlowParameters, OpenLoadFlowParameters.get(loadFlowParameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
-
-        TheveninEquivalentParameters thParameters = new TheveninEquivalentParameters(loadFlowParameters, matrixFactory, locationList)
-                .setTheveninStudyType(StudyType.SUB_TRANSIENT);
-        TheveninEquivalent thEq = new TheveninEquivalent(network, thParameters);
+        shortCircuitParameters.setStudyType(StudyType.SUB_TRANSIENT);
+        TheveninEquivalent thEq = new TheveninEquivalent(network, locationList, shortCircuitParameters);
 
         thEq.run();
         Map<String, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> resultByBusId =

@@ -11,6 +11,7 @@ import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.PiModel;
 import com.powsybl.openloadflow.network.PiModelArray;
+import com.powsybl.sc.extensions.FrequencyType;
 import com.powsybl.sc.util.extensions.AdmittanceConstants;
 import com.powsybl.sc.util.extensions.HomopolarModel;
 import com.powsybl.sc.util.extensions.ScTransfo3wKt;
@@ -52,16 +53,17 @@ public final class BranchAdmittance {
     }
 
     public static BranchAdmittance create(LfBranch branch, ImpedanceLinearResolutionParameters parameters,
-                                          AdmittanceEquationSystem.FrequencyType frequencyType) {
-        return create(branch, parameters.getAdmittanceType(), parameters.isWithNeutralPosition(),
+                                          AdmittanceType admittanceType,
+                                          FrequencyType frequencyType) {
+        return create(branch, admittanceType, parameters.isWithNeutralPosition(),
                 parameters.isWithResistances(), parameters.isWithCapacities(), frequencyType);
     }
 
-    public static BranchAdmittance create(LfBranch branch, AdmittanceEquationSystem.AdmittanceType admittanceType,
+    public static BranchAdmittance create(LfBranch branch, AdmittanceType admittanceType,
                                           boolean isWithNeutralPosition, boolean isWithResistances, boolean isWithCapacities,
-                                          AdmittanceEquationSystem.FrequencyType frequencyType) {
+                                          FrequencyType frequencyType) {
         double freqCoef = 1.0;
-        if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
+        if (frequencyType == FrequencyType.FREQ_20_HZ) {
             freqCoef = 20. / 50.;
         }
 
@@ -106,7 +108,7 @@ public final class BranchAdmittance {
         double gPi2 = isWithCapacities ? piModel.getG2() / kTr : 0.0;
         double bPi2 = isWithCapacities ? piModel.getB2() / kTx : 0.0;
 
-        if (admittanceType != AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
+        if (admittanceType != AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
             return new BranchAdmittance(
                     rho * zInvSquare * (r * cosA + x * sinA),
                     -rho * zInvSquare * (x * cosA + r * sinA),
@@ -119,7 +121,7 @@ public final class BranchAdmittance {
         }
 
         HomopolarModel homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL);
-        if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
+        if (frequencyType == FrequencyType.FREQ_20_HZ) {
             homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL_20HZ);
         }
         if (branch.getBranchType() == LfBranch.BranchType.LINE) {

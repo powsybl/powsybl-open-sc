@@ -16,7 +16,6 @@ import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.extensions.*;
-import com.powsybl.sc.util.AdmittanceEquationSystem;
 import org.apache.commons.math3.complex.Complex;
 
 import java.util.List;
@@ -79,8 +78,8 @@ public final class ShortCircuitExtensions {
                 }
 
                 // build homopolar model
-                HomopolarModel homopolarModel = HomopolarModel.build(lfBranch, AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ);
-                HomopolarModel homopolarModel20hz = HomopolarModel.build(lfBranch, AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ);
+                HomopolarModel homopolarModel = HomopolarModel.build(lfBranch, FrequencyType.FREQ_50_HZ);
+                HomopolarModel homopolarModel20hz = HomopolarModel.build(lfBranch, FrequencyType.FREQ_20_HZ);
                 lfBranch.setProperty(PROPERTY_HOMOPOLAR_MODEL, homopolarModel);
                 lfBranch.setProperty(PROPERTY_HOMOPOLAR_MODEL_20HZ, homopolarModel20hz);
             }

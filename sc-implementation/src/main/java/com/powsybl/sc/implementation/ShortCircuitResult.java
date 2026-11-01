@@ -10,6 +10,7 @@ package com.powsybl.sc.implementation;
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.network.*;
+import com.powsybl.sc.extensions.FrequencyType;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.*;
 import com.powsybl.shortcircuit.FortescueValue;
@@ -23,6 +24,7 @@ import java.util.*;
 import static com.powsybl.sc.extensions.ShortCircuitConstants.CURRENT_EPSILON_PU;
 import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_EPSILON_PU;
 import static com.powsybl.sc.implementation.ShortCircuitFault.ShortCircuitType.*;
+import static com.powsybl.sc.util.ShortCircuitHelper.getOrDefaultOpenScParameters;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -190,15 +192,15 @@ public class ShortCircuitResult {
 
     public ComplexMatrix getDiFromDv(LfBranch branch, FortescueValue dv1Fort, FortescueValue dv2Fort, FortescueType fType,
                                      ShortCircuitParameters parameters) {
-        AdmittanceEquationSystem.AdmittanceType admType = AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN;
+        AdmittanceType admType = AdmittanceType.ADM_THEVENIN;
         if (fType == FortescueType.HOMOPOLAR) {
-            admType = AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR;
+            admType = AdmittanceType.ADM_THEVENIN_HOMOPOLAR;
         }
 
-        OpenShortCircuitParameters openShortCircuitParameters = parameters.getExtension(OpenShortCircuitParameters.class);
+        OpenShortCircuitParameters openShortCircuitParameters = getOrDefaultOpenScParameters(parameters);
         ComplexMatrix yBranch = BranchAdmittance.create(branch, admType, parameters.isWithNeutralPosition(),
                         openShortCircuitParameters.isWithResistances(), openShortCircuitParameters.isWithCapacities(),
-                        AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ)
+                        FrequencyType.FREQ_50_HZ)
                 .toComplexMatrix();
         Complex y11 = yBranch.get(0, 0);
         Complex y12 = yBranch.get(0, 1);

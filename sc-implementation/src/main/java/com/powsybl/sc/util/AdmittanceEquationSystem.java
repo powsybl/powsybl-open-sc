@@ -14,6 +14,7 @@ import com.powsybl.openloadflow.ac.AcloadFlowEngine;
 import com.powsybl.openloadflow.equations.EquationSystem;
 import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.*;
+import com.powsybl.sc.extensions.FrequencyType;
 import com.powsybl.sc.util.extensions.ScGenerator;
 import com.powsybl.sc.util.extensions.ScLoad;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
@@ -45,37 +46,26 @@ public final class AdmittanceEquationSystem {
 
     //Equations are created based on the branches connections
     private static void createImpedantBranch(VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
-                                             LfBranch branch, LfBus bus1, LfBus bus2, ImpedanceLinearResolutionParameters parameters, FrequencyType frequencyType) {
+                                             LfBranch branch, LfBus bus1, LfBus bus2, ImpedanceLinearResolutionParameters parameters,
+                                             AdmittanceType admittanceType, FrequencyType frequencyType) {
         if (bus1 != null && bus2 != null) {
             // Equation system Y*V = I (expressed in cartesian coordinates x,y)
             equationSystem.createEquation(bus1.getNum(), EquationType.BUS_YR)
-                    .addTerm(new AdmittanceEquationTermX1(branch, bus1, bus2, variableSet, parameters, frequencyType));
+                    .addTerm(new AdmittanceEquationTermX1(branch, bus1, bus2, variableSet, parameters, admittanceType, frequencyType));
 
             equationSystem.createEquation(bus1.getNum(), EquationType.BUS_YI)
-                    .addTerm(new AdmittanceEquationTermY1(branch, bus1, bus2, variableSet, parameters, frequencyType));
+                    .addTerm(new AdmittanceEquationTermY1(branch, bus1, bus2, variableSet, parameters, admittanceType, frequencyType));
 
             equationSystem.createEquation(bus2.getNum(), EquationType.BUS_YR)
-                    .addTerm(new AdmittanceEquationTermX2(branch, bus1, bus2, variableSet, parameters, frequencyType));
+                    .addTerm(new AdmittanceEquationTermX2(branch, bus1, bus2, variableSet, parameters, admittanceType, frequencyType));
 
             equationSystem.createEquation(bus2.getNum(), EquationType.BUS_YI)
-                    .addTerm(new AdmittanceEquationTermY2(branch, bus1, bus2, variableSet, parameters, frequencyType));
+                    .addTerm(new AdmittanceEquationTermY2(branch, bus1, bus2, variableSet, parameters, admittanceType, frequencyType));
         }
     }
 
-    public enum AdmittanceType {
-        ADM_INJ, // all external nodal injections that does not come from branches are considered as current injectors (including shunts elements)
-        ADM_SHUNT, // all external  nodal injections that does not come from branches are considered as current injectors (but not shunt elements)
-        ADM_ADMIT, // all external  nodal injections are transformed into passive shunt elements included in the Y matrix (then [Ie] should be [0])
-        ADM_THEVENIN, // used to compute the Zth Thevenin Equivalent: shunts remain shunts, synchronous machines are transformed into X" equivalent shunts, remaining injections are transformed into passive shunt elements included in the Y matrix
-        ADM_THEVENIN_HOMOPOLAR // used to compute the homopolar admittance matrix for unbalanced short circuits
-    }
-
-    public enum FrequencyType {
-        FREQ_20_HZ,
-        FREQ_50_HZ
-    }
-
-    private static void createBranches(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem, ImpedanceLinearResolutionParameters parameters, FrequencyType frequencyType) {
+    private static void createBranches(LfNetwork network, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
+                                       ImpedanceLinearResolutionParameters parameters, AdmittanceType admittanceType, FrequencyType frequencyType) {
         for (LfBranch branch : network.getBranches()) {
             LfBus bus1 = branch.getBus1();
             LfBus bus2 = branch.getBus2();
@@ -86,7 +76,7 @@ public final class AdmittanceEquationSystem {
                             branch.getId());
                 }
             } else {
-                createImpedantBranch(variableSet, equationSystem, branch, bus1, bus2, parameters, frequencyType);
+                createImpedantBranch(variableSet, equationSystem, branch, bus1, bus2, parameters, admittanceType, frequencyType);
             }
         }
     }
@@ -230,14 +220,15 @@ public final class AdmittanceEquationSystem {
         return y;
     }
 
-    private static void createShunts(Network network, LfNetwork lfNetwork, VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
-                                     ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, FrequencyType frequencyType) {
-        AdmittanceType admittanceType = parameters.getAdmittanceType();
+    private static void createShunts(Network network, LfNetwork lfNetwork,
+                                     List<Complex> initialVoltages,
+                                     VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
+                                     ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, AdmittanceType admittanceType, FrequencyType frequencyType) {
         StudyType admittanceStudyType = parameters.getStudyType();
         Predicate<LfBus> innerZone = createInnerZonePredicate(network, parameters.getInnerZoneBusIds());
 
         for (LfBus bus : lfNetwork.getBuses()) {
-            Complex v = parameters.getInitialVoltage(bus.getNum());
+            Complex v = initialVoltages.get(bus.getNum());
             boolean isBusPv = bus.isVoltageControlled();
 
             // Total shunt at bus to be integrated in the admittance matrix is calculated summing:
@@ -272,9 +263,10 @@ public final class AdmittanceEquationSystem {
         }
     }
 
-    public static EquationSystem<VariableType, EquationType> create(Network network, LfNetwork lfNetwork, VariableSet<VariableType> variableSet,
-                                                                    ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, FrequencyType frequencyType) {
-        AdmittanceType admittanceType = parameters.getAdmittanceType();
+    public static EquationSystem<VariableType, EquationType> create(Network network, LfNetwork lfNetwork,
+                                                                    List<Complex> initialVoltages,
+                                                                    VariableSet<VariableType> variableSet,
+                                                                    ImpedanceLinearResolutionParameters parameters, FeedersAtNetwork feeders, AdmittanceType admittanceType, FrequencyType frequencyType) {
         AcLoadFlowParameters acLoadFlowParameters = parameters.getAcLoadFlowParameters();
         EquationSystem<VariableType, EquationType> equationSystem = new EquationSystem<>(EquationType.class, lfNetwork, variableSet);
 
@@ -285,9 +277,9 @@ public final class AdmittanceEquationSystem {
             }
         }
 
-        createBranches(lfNetwork, variableSet, equationSystem, parameters, frequencyType);
+        createBranches(lfNetwork, variableSet, equationSystem, parameters, admittanceType, frequencyType);
         if (admittanceType != AdmittanceType.ADM_INJ) { //shunts created in the admittance matrix are only those that really exist in the network
-            createShunts(network, lfNetwork, variableSet, equationSystem, parameters, feeders, frequencyType);
+            createShunts(network, lfNetwork, initialVoltages, variableSet, equationSystem, parameters, feeders, admittanceType, frequencyType);
         }
 
         return equationSystem;

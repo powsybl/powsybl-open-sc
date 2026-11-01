@@ -3,17 +3,22 @@ package com.powsybl.sc.util;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Generator;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.openloadflow.OpenLoadFlowParameters;
+import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
+import com.powsybl.openloadflow.graph.EvenShiloachGraphDecrementalConnectivityFactory;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfGenerator;
+import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.sc.extensions.GeneratorSelectionMode;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
+import com.powsybl.shortcircuit.VoltageRange;
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.complex.ComplexUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 public final class ShortCircuitHelper {
@@ -50,7 +55,11 @@ public final class ShortCircuitHelper {
     public static OpenShortCircuitParameters getOrDefaultOpenScParameters(ShortCircuitParameters scParameters) {
         OpenShortCircuitParameters openScParameters = Objects.requireNonNull(scParameters)
                 .getExtension(OpenShortCircuitParameters.class);
-        return openScParameters != null ? openScParameters : new OpenShortCircuitParameters();
+        if (openScParameters == null) {
+            openScParameters = new OpenShortCircuitParameters();
+            scParameters.addExtension(OpenShortCircuitParameters.class, openScParameters);
+        }
+        return openScParameters;
     }
 
     public static boolean isGeneratorSelected(LfGenerator generator, ImpedanceLinearResolutionParameters parameters, Network network,
@@ -94,5 +103,47 @@ public final class ShortCircuitHelper {
                     generator.getOriginalId(), absGeneratorPMw, threshold);
         }
         return running;
+    }
+
+    public static AcLoadFlowParameters getAcLfParametersFromOpenScParameters(OpenShortCircuitParameters openScParameters) {
+        OpenLoadFlowParameters loadflowParametersExt = OpenLoadFlowParameters.get(openScParameters.getLoadFlowParameters());
+        return OpenLoadFlowParameters.createAcParameters(
+                openScParameters.getLoadFlowParameters(),
+                loadflowParametersExt,
+                openScParameters.getMatrixFactory(),
+                new EvenShiloachGraphDecrementalConnectivityFactory<>(),
+                false,
+                false);
+    }
+
+    public static List<Complex> fillInitialVoltages(LfNetwork lfNetwork, ShortCircuitParameters shortCircuitParameters) {
+        List<Complex> initialVs = new ArrayList<>(lfNetwork.getBuses().size());
+        for (LfBus lfBus : lfNetwork.getBuses()) {
+            initialVs.add(lfBus.getNum(), computeBusInitialVoltage(lfBus, shortCircuitParameters));
+        }
+        return initialVs;
+    }
+
+    private static Complex computeBusInitialVoltage(LfBus bus, ShortCircuitParameters shortCircuitParameters) {
+        return switch (shortCircuitParameters.getInitialVoltageProfileMode()) {
+            case PREVIOUS_VALUE -> ComplexUtils.polar2Complex(bus.getV(), bus.getAngle());
+            case CONFIGURED -> computeVoltageUsingRanges(bus, shortCircuitParameters);
+            case NOMINAL -> Complex.ONE;
+        };
+    }
+
+    private static Complex computeVoltageUsingRanges(LfBus bus, ShortCircuitParameters shortCircuitParameters) {
+        Complex v = new Complex(1.); // If bus nominal voltage is outside every range, it takes default value 1 pu
+
+        double nominalV = bus.getNominalV();
+        for (VoltageRange range : shortCircuitParameters.getVoltageRanges()) {
+            if (bus.getNominalV() >= range.getMinimumNominalVoltage() && bus.getNominalV() <= range.getMaximumNominalVoltage()) {
+                double voltage = Double.isNaN(range.getVoltage()) ? 1.0 : range.getVoltage() / nominalV;
+                voltage *= Double.isNaN(range.getRangeCoefficient()) ? 1.0 : range.getRangeCoefficient();
+                return new Complex(voltage);
+            }
+        }
+
+        return v;
     }
 }

@@ -10,7 +10,7 @@ package com.powsybl.sc.util.extensions;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.network.LfBranch;
-import com.powsybl.sc.util.AdmittanceEquationSystem;
+import com.powsybl.sc.extensions.FrequencyType;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
 
@@ -20,7 +20,6 @@ import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_EPSILON_
 
 /**
  * zero sequence additional attributes
- *
  * Proposed Transformer model :
  *      Ia       Yg    A'  rho                 B'     Yg        Ib        Zga : grounding impedance on A side (in ohms expressed on A side)
  *   A-->--3*Zga--+    +--(())--+--Zoa--+--Zob--+     +--3*ZGb--<--B      Zoa : leakage impedance of A-winding (in ohms expressed on B side)
@@ -73,11 +72,11 @@ public class HomopolarModel {
         return zo.abs() != 0 ? 1 / (zo.abs() * zo.abs()) : 0;
     }
 
-    public static HomopolarModel build(LfBranch branch, AdmittanceEquationSystem.FrequencyType frequencyType) {
+    public static HomopolarModel build(LfBranch branch, FrequencyType frequencyType) {
         Objects.requireNonNull(branch);
 
         double freqCoef = 1.0;
-        if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
+        if (frequencyType == FrequencyType.FREQ_20_HZ) {
             freqCoef = 20. / 50.;
         }
 

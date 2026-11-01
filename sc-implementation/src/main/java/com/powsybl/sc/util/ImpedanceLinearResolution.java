@@ -14,6 +14,7 @@ import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
+import com.powsybl.sc.extensions.FrequencyType;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 
@@ -39,13 +40,25 @@ public class ImpedanceLinearResolution {
 
     private final LfNetwork lfNetwork;
 
+    private final List<CalculationLocation> calculationLocations; // calculation locations where only one bus is required in input
+
+    private final AdmittanceType admittanceType;
+
     private final ImpedanceLinearResolutionParameters parameters;
+
+    private final List<Complex> initialVoltages;
 
     public final Map<LfBus, ImpedanceLinearResolutionResult> results = new HashMap<>();
 
-    public ImpedanceLinearResolution(Network network, LfNetwork lfNetwork, ImpedanceLinearResolutionParameters parameters) {
+    public ImpedanceLinearResolution(Network network, LfNetwork lfNetwork, List<CalculationLocation> calculationLocations,
+                                     List<Complex> initialVoltages,
+                                     AdmittanceType admittanceType,
+                                     ImpedanceLinearResolutionParameters parameters) {
         this.network = Objects.requireNonNull(network);
         this.lfNetwork = Objects.requireNonNull(lfNetwork);
+        this.calculationLocations = calculationLocations;
+        this.initialVoltages = initialVoltages;
+        this.admittanceType = admittanceType;
         this.parameters = Objects.requireNonNull(parameters);
     }
 
@@ -212,16 +225,16 @@ public class ImpedanceLinearResolution {
     public void run() {
         FeedersAtNetwork equationsSystemFeeders = new FeedersAtNetwork();
         EquationSystem<VariableType, EquationType> equationSystem
-                = AdmittanceEquationSystem.create(network, lfNetwork, new VariableSet<>(), parameters, equationsSystemFeeders, AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ);
+                = AdmittanceEquationSystem.create(network, lfNetwork, initialVoltages, new VariableSet<>(), parameters, equationsSystemFeeders, admittanceType, FrequencyType.FREQ_50_HZ);
 
         FeedersAtNetwork equationsSystemFeeders20hz = new FeedersAtNetwork();
         EquationSystem<VariableType, EquationType> equationSystem20hz
-                = AdmittanceEquationSystem.create(network, lfNetwork, new VariableSet<>(), parameters, equationsSystemFeeders20hz, AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ);
+                = AdmittanceEquationSystem.create(network, lfNetwork, initialVoltages, new VariableSet<>(), parameters, equationsSystemFeeders20hz, admittanceType, FrequencyType.FREQ_20_HZ);
 
         List<LfBus> inputBuses = new ArrayList<>();
         List<Pair<LfBus, LfBus>> busPairList = new ArrayList<>();
 
-        for (CalculationLocation locationInfo : parameters.getCalculationLocations()) {
+        for (CalculationLocation locationInfo : calculationLocations) {
             String iidmBranchId = locationInfo.getIidmBusInfo().getKey();
             int branchSide = locationInfo.getIidmBusInfo().getValue();
 
@@ -322,7 +335,7 @@ public class ImpedanceLinearResolution {
                 int yRow1x = yd.getRowBus(lfBus.getNum(), EquationType.BUS_YR);
                 int yRow1y = yd.getRowBus(lfBus.getNum(), EquationType.BUS_YI);
 
-                Complex eth = parameters.getInitialVoltage(lfBus.getNum());
+                Complex eth = initialVoltages.get(lfBus.getNum());
 
                 // This is equivalent to get the diagonal blocks of tEn * inv(Y) * En but taking advantage of the sparsity of tEn
                 // The diagonal terms of the impedance matrix are the Thevenin impedance at each corresponding bus
@@ -409,7 +422,7 @@ public class ImpedanceLinearResolution {
                         checkMatrixExtractionConsistency(z21At20Hz, z21bis20Hz, lfBus, bus2);
                         checkMatrixExtractionConsistency(z12At20Hz, z12bis20Hz, lfBus, bus2);
 
-                        Complex eth2 = parameters.getInitialVoltage(bus2.getNum());
+                        Complex eth2 = initialVoltages.get(bus2.getNum());
 
                         res.addTwoBusResult(bus2, eth2, new ImpedanceUpperTriangle(z12, z21, z22), new ImpedanceUpperTriangle(z22At20Hz, z21At20Hz, z12At20Hz), numBus2Fault);
                     }

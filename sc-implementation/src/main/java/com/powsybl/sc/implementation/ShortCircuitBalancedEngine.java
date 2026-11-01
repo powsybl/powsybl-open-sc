@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.powsybl.sc.util.ShortCircuitHelper.fillInitialVoltages;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -32,7 +34,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
     @Override
     public void run() { //can handle both selective and systematic analysis with one single matrix inversion
         LfNetwork lfNetwork = lfNetworks.getFirst();
-        fillInitialVoltages();
+        initialVoltages = fillInitialVoltages(lfNetwork, shortCircuitParameters);
 
         // building a contingency list with all voltage levels
         if (openShortCircuitParameters.getShortCircuitAnalysisType() == ShortCircuitAnalysisType.SYSTEMATIC) {
@@ -42,15 +44,15 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         buildFaultListsFromInputs();
         List<CalculationLocation> solverLocationList = shortCircuitFaults.stream().map(ShortCircuitFault::getCalculationLocation).toList();
 
-        ImpedanceLinearResolutionParameters linearResolutionParameters = new ImpedanceLinearResolutionParameters(
-                openShortCircuitParameters.getLoadFlowParameters(),
-                openShortCircuitParameters.getMatrixFactory(),
-                solverLocationList,
-                shortCircuitParameters,
-                AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN,
-                initialVoltages);
+        ImpedanceLinearResolutionParameters linearResolutionParameters = new ImpedanceLinearResolutionParameters(shortCircuitParameters);
 
-        ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(network, lfNetwork, linearResolutionParameters);
+        ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(
+                network,
+                lfNetwork,
+                solverLocationList,
+                initialVoltages,
+                AdmittanceType.ADM_THEVENIN,
+                linearResolutionParameters);
 
         directResolution.run();
 

@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
 import static com.powsybl.sc.util.ShortCircuitHelper.createInnerZonePredicate;
+import static com.powsybl.sc.util.ShortCircuitHelper.getOrDefaultOpenScParameters;
 import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
 
 /**
@@ -120,7 +121,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     public void runBalancedAnalysis(Network network, ShortCircuitParameters shortCircuitParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<ShortCircuitFault> shortCircuitFaults, List<FaultResult> faultResults) {
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, shortCircuitParameters, shortCircuitFaults, shortCircuitNorm);
         scbEngine.run();
-        OpenShortCircuitParameters openScParameters = shortCircuitParameters.getExtension(OpenShortCircuitParameters.class);
+        OpenShortCircuitParameters openScParameters = getOrDefaultOpenScParameters(shortCircuitParameters);
         Predicate<LfBus> innerZone = createInnerZonePredicate(network, openScParameters.getInnerZoneBusIds());
 
         // the results per faults might be inconsistent if many buses per voltage level
@@ -361,9 +362,9 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     }
 
     private static void checkShortCircuitParametersConsistency(Network network, ShortCircuitParameters parameters) {
-        getOrCreateOpenScParameters(parameters);
-        cleanInnerZone(network, parameters);
-        List<String> inconsistentOptions = findInconsistentOptions(parameters);
+        OpenShortCircuitParameters openScParameters = getOrDefaultOpenScParameters(parameters);
+        cleanInnerZone(network, openScParameters);
+        List<String> inconsistentOptions = findInconsistentOptions(parameters, openScParameters);
         if (!inconsistentOptions.isEmpty()) {
             LOGGER.warn("Initial voltage profile mode is PREVIOUS_VALUE, but {} {}: the initial voltages come from a load flow "
                             + "computed with the complete network model, so they may not be consistent with the admittance matrix.",
@@ -371,14 +372,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         }
     }
 
-    static void getOrCreateOpenScParameters(ShortCircuitParameters parameters) {
-        if (parameters.getExtension(OpenShortCircuitParameters.class) == null) {
-            parameters.addExtension(OpenShortCircuitParameters.class, new OpenShortCircuitParameters());
-        }
-    }
-
-    private static void cleanInnerZone(Network network, ShortCircuitParameters parameters) {
-        OpenShortCircuitParameters openScParameters = parameters.getExtension(OpenShortCircuitParameters.class);
+    private static void cleanInnerZone(Network network,
+                                       OpenShortCircuitParameters openScParameters) {
         Set<String> innerZoneBusIds = openScParameters.getInnerZoneBusIds();
         if (innerZoneBusIds.isEmpty()) {
             return;
@@ -399,11 +394,10 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         openScParameters.setInnerZoneBusIds(validBusIds);
     }
 
-    static List<String> findInconsistentOptions(ShortCircuitParameters parameters) {
+    static List<String> findInconsistentOptions(ShortCircuitParameters parameters, OpenShortCircuitParameters openScParameters) {
         if (parameters.getInitialVoltageProfileMode() != InitialVoltageProfileMode.PREVIOUS_VALUE) {
             return List.of();
         }
-        OpenShortCircuitParameters openScParameters = parameters.getExtension(OpenShortCircuitParameters.class);
         List<String> inconsistentOptions = new ArrayList<>();
         if (!parameters.isWithLoads()) {
             inconsistentOptions.add("withLoads=false");
