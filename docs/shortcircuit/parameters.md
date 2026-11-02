@@ -8,17 +8,24 @@ If the extension is not set, it is created with its default values when the anal
 
 ## Generic parameters
 
-| Parameter | Used | Effect in OpenSC |
-|---|---|---|
-| `studyType` | yes | `SUB_TRANSIENT` uses the subtransient impedance of the generators, other values use the transient impedance. |
-| `withVoltageResult` | yes | Computes the post-fault voltage of every bus, and returns the bus results. |
-| `minVoltageDropProportionalThreshold` | yes | Bus results are only returned for buses whose voltage drop, relative to the initial voltage, is at least this value. |
-| `withLoads` | yes | If `false`, loads are not modelled in the admittance matrix. |
-| `withShuntCompensators` | yes | If `false`, shunt compensators are not modelled in the admittance matrix. |
-| `withNeutralPosition` | yes | If `true`, the ratio and impedance of transformers are taken at the neutral tap position. |
-| `initialVoltageProfileMode` | yes | `NOMINAL`: 1 pu on every bus. `CONFIGURED`: voltage given by `voltageRanges`. `PREVIOUS_VALUE`: voltage of the network state. |
-| `voltageRanges` | yes | Used with `initialVoltageProfileMode = CONFIGURED`. A bus outside every range is initialized at 1 pu. |
-| `withFeederResult`, `withLimitViolations`, `withFortescueResult` | no | Feeder results depend on `withVoltageResult`, limit violations are never computed, and results are always given as magnitudes. |
+| Parameter | Default | Used | Effect in OpenSC |
+|---|---|---|---|
+| `studyType` | `TRANSIENT` | yes | `SUB_TRANSIENT` uses the subtransient impedance of the generators, other values use the transient impedance. |
+| `withVoltageResult` | `true` | yes | Computes the post-fault voltage of every bus, and returns the bus results. |
+| `minVoltageDropProportionalThreshold` | `0` | yes | Bus results are only returned for buses whose voltage drop, relative to the initial voltage, is at least this value. |
+| `withLoads` | `true` | yes | If `false`, loads are not modelled in the admittance matrix. |
+| `withShuntCompensators` | `true` | yes | If `false`, shunt compensators are not modelled in the admittance matrix. |
+| `withNeutralPosition` | `false` | yes | If `true`, the ratio and impedance of transformers are taken at the neutral tap position. |
+| `initialVoltageProfileMode` | `NOMINAL` | yes | `NOMINAL`: 1 pu on every bus. `CONFIGURED`: voltage given by `voltageRanges`. `PREVIOUS_VALUE`: voltage of the network state. |
+| `voltageRanges` | none | yes | Used with `initialVoltageProfileMode = CONFIGURED`. A bus outside every range is initialized at 1 pu. |
+| `withFeederResult` | `true` | no | Feeder results depend on `withVoltageResult`. |
+| `withLimitViolations` | `true` | no | Limit violations are never computed. |
+| `withFortescueResult` | `true` | no | Results are always given as magnitudes. |
+| `withVSCConverterStations` | `true` | no | Ignored. |
+| `subTransientCoefficient` | `0.7` | no | Ignored: the subtransient reactance comes from the generator extensions, it is never derived from the transient one. |
+| `detailedReport` | `true` | no | Ignored. |
+
+The default values are those of PowSyBl Core.
 
 ## OpenShortCircuitParameters
 
