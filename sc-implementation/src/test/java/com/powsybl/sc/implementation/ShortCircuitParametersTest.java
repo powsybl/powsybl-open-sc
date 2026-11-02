@@ -102,7 +102,8 @@ class ShortCircuitParametersTest {
                 .setWithNeutralPosition(true);
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setWithResistances(false)
-                .setWithCapacities(false);
+                .setWithCapacities(false)
+                .setLoadFlowParameters(loadFlowParameters);
         List<FaultResult> frs = run(n4nLossyLine, scp);
 
         assertMagnitudeCurrents(frs, 2684.06998, 2886.75134, 2690.00646, 2579.44128);
@@ -152,8 +153,8 @@ class ShortCircuitParametersTest {
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ALL)
                 .setOuterZoneGeneratorSelectionMode(GeneratorSelectionMode.ALL)
-                .setInnerZoneGeneratorPowerThreshold(1000)
-                .setOuterZoneGeneratorPowerThreshold(1000);
+                .setOuterZoneGeneratorPowerThreshold(1000)
+                .setInnerZoneGeneratorPowerThreshold(1000);
         List<FaultResult> frs = run(n4nWithGenerators, scp);
 
         assertEquals(2, frs.size());

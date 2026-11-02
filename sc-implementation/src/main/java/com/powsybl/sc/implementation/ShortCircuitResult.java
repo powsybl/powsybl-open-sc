@@ -24,7 +24,6 @@ import java.util.*;
 import static com.powsybl.sc.extensions.ShortCircuitConstants.CURRENT_EPSILON_PU;
 import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_EPSILON_PU;
 import static com.powsybl.sc.implementation.ShortCircuitFault.ShortCircuitType.*;
-import static com.powsybl.sc.util.ShortCircuitHelper.getOrDefaultOpenScParameters;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -191,15 +190,15 @@ public class ShortCircuitResult {
     }
 
     public ComplexMatrix getDiFromDv(LfBranch branch, FortescueValue dv1Fort, FortescueValue dv2Fort, FortescueType fType,
-                                     ShortCircuitParameters parameters) {
+                                     ShortCircuitParameters parameters,
+                                     OpenShortCircuitParameters openScParameters) {
         AdmittanceType admType = AdmittanceType.ADM_THEVENIN;
         if (fType == FortescueType.HOMOPOLAR) {
             admType = AdmittanceType.ADM_THEVENIN_HOMOPOLAR;
         }
 
-        OpenShortCircuitParameters openShortCircuitParameters = getOrDefaultOpenScParameters(parameters);
         ComplexMatrix yBranch = BranchAdmittance.create(branch, admType, parameters.isWithNeutralPosition(),
-                        openShortCircuitParameters.isWithResistances(), openShortCircuitParameters.isWithCapacities(),
+                        openScParameters.isWithResistances(), openScParameters.isWithCapacities(),
                         FrequencyType.FREQ_50_HZ)
                 .toComplexMatrix();
         Complex y11 = yBranch.get(0, 0);
@@ -226,7 +225,7 @@ public class ShortCircuitResult {
         return di;
     }
 
-    public void calculateCurrentPerBus(ShortCircuitParameters parameters) {
+    public void calculateCurrentPerBus(ShortCircuitParameters parameters, OpenShortCircuitParameters openScParameters) {
 
         // For each branch, we build the sum of currents at buses from branches
         // 1- Input is the voltage delta at each end of the branch
@@ -252,7 +251,7 @@ public class ShortCircuitResult {
                 FortescueValue dv2Fort = busNum2Dv.get(busNum2);
 
                 // Direct
-                ComplexMatrix di = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.DIRECT, parameters);
+                ComplexMatrix di = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.DIRECT, parameters, openScParameters);
                 Complex di1 = di.get(0, 0);
                 Complex di2 = di.get(1, 0);
 
@@ -282,7 +281,7 @@ public class ShortCircuitResult {
                 }
 
                 // Homopolar
-                ComplexMatrix dio = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.HOMOPOLAR, parameters);
+                ComplexMatrix dio = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.HOMOPOLAR, parameters, openScParameters);
                 Complex dio1 = dio.get(0, 0);
                 Complex dio2 = dio.get(1, 0);
 
@@ -294,7 +293,7 @@ public class ShortCircuitResult {
                 resultHomopolarBus2Feeders.addItofeedersSum(dio2);
 
                 // Inverse
-                ComplexMatrix dii = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.INVERSE, parameters);
+                ComplexMatrix dii = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.INVERSE, parameters, openScParameters);
                 Complex dii1 = dii.get(0, 0);
                 Complex dii2 = dii.get(1, 0);
 
@@ -313,7 +312,7 @@ public class ShortCircuitResult {
         }
     }
 
-    public void updateFeedersResult(ShortCircuitParameters parameters) {
+    public void updateFeedersResult(ShortCircuitParameters parameters, OpenShortCircuitParameters openScParameters) {
         if (!isVoltageProfileUpdated) {
             return;
         }
@@ -342,7 +341,7 @@ public class ShortCircuitResult {
             feedersResultsInverse.put(bus, feedersAtBusResultInverse);
         }
 
-        calculateCurrentPerBus(parameters);
+        calculateCurrentPerBus(parameters, openScParameters);
 
         // Given the admittance of each feeder at bus, computed during building of AdmittanceEquationSystem,
         // we can then deduce the current contribution of each feeder, which is stored in feeder result

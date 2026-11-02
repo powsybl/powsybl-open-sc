@@ -44,7 +44,7 @@ public class TheveninEquivalent {
         LfNetwork lfNetwork = lfNetworks.getFirst();
         List<Complex> initialVoltages = fillInitialVoltages(lfNetwork, shortCircuitParameters);
         List<CalculationLocation> locationList = checkCalculationLocations(network, calculationLocations);
-        impedanceLinearResolution = new ImpedanceLinearResolution(network, lfNetwork, locationList, initialVoltages, AdmittanceType.ADM_THEVENIN, new ImpedanceLinearResolutionParameters(shortCircuitParameters));
+        impedanceLinearResolution = new ImpedanceLinearResolution(network, lfNetwork, locationList, initialVoltages, AdmittanceType.ADM_THEVENIN, shortCircuitParameters);
     }
 
     public ImpedanceLinearResolution getImpedanceLinearResolution() {

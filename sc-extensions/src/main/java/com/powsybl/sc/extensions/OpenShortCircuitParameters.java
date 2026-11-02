@@ -1,8 +1,16 @@
+/**
+ * Copyright (c) 2026, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * SPDX-License-Identifier: MPL-2.0
+ */
 package com.powsybl.sc.extensions;
 
 import com.powsybl.commons.extensions.AbstractExtension;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.MatrixFactory;
+import com.powsybl.math.matrix.SparseMatrixFactory;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 
 import java.util.Collection;
@@ -10,14 +18,24 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.powsybl.sc.extensions.ShortCircuitConstants.*;
-
 public class OpenShortCircuitParameters extends AbstractExtension<ShortCircuitParameters> {
+
     public static final String NAME = "open-short-circuit-parameters";
+
+    public static final MatrixFactory DEFAULT_MATRIX_FACTORY = new SparseMatrixFactory();
+    public static final ShortCircuitAnalysisType DEFAULT_ANALYSIS_TYPE = ShortCircuitAnalysisType.SELECTIVE;
+    public static final boolean DEFAULT_WITH_CAPACITIES = true;
+    public static final boolean DEFAULT_WITH_RESISTANCES = true;
+    public static final GeneratorSelectionMode DEFAULT_INNER_ZONE_GENERATOR_SELECTION_MODE = GeneratorSelectionMode.ALL;
+    public static final GeneratorSelectionMode DEFAULT_OUTER_ZONE_GENERATOR_SELECTION_MODE = GeneratorSelectionMode.ABOVE_POWER_THRESHOLD;
+    public static final double DEFAULT_RUNNING_GENERATOR_THRESHOLD = 0.0;
+
     private LoadFlowParameters loadFlowParameters;
     private MatrixFactory matrixFactory = DEFAULT_MATRIX_FACTORY;
     private ShortCircuitAnalysisType shortCircuitAnalysisType = DEFAULT_ANALYSIS_TYPE;
+    // Whether the shunt admittances at both ends of each branch should be taken into account
     private boolean withCapacities = DEFAULT_WITH_CAPACITIES;
+    // Whether the series resistance of each branch should be taken into account
     private boolean withResistances = DEFAULT_WITH_RESISTANCES;
 
     private Set<String> innerZoneBusIds = Collections.emptySet();
@@ -38,12 +56,10 @@ public class OpenShortCircuitParameters extends AbstractExtension<ShortCircuitPa
         return loadFlowParameters;
     }
 
-    // Whether the shunt admittances at both ends of each branch should be taken into account
     public boolean isWithCapacities() {
         return withCapacities;
     }
 
-     // Whether the series resistance of each branch should be taken into account
     public boolean isWithResistances() {
         return withResistances;
     }
@@ -64,7 +80,7 @@ public class OpenShortCircuitParameters extends AbstractExtension<ShortCircuitPa
     }
 
     public OpenShortCircuitParameters setMatrixFactory(MatrixFactory matrixFactory) {
-        this.matrixFactory = matrixFactory;
+        this.matrixFactory = Objects.requireNonNull(matrixFactory);
         return this;
     }
 
@@ -73,7 +89,7 @@ public class OpenShortCircuitParameters extends AbstractExtension<ShortCircuitPa
     }
 
     public OpenShortCircuitParameters setShortCircuitAnalysisType(ShortCircuitAnalysisType analysisType) {
-        this.shortCircuitAnalysisType = analysisType;
+        this.shortCircuitAnalysisType = Objects.requireNonNull(analysisType);
         return this;
     }
 

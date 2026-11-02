@@ -12,6 +12,8 @@ import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.sc.extensions.FrequencyType;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -19,8 +21,10 @@ import com.powsybl.sc.extensions.FrequencyType;
 public class AdmittanceEquationTermX1 extends AbstractAdmittanceEquationTerm {
 
     public AdmittanceEquationTermX1(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet,
-                                    ImpedanceLinearResolutionParameters parameters, AdmittanceType admittanceType, FrequencyType frequencyType) {
-        super(branch, bus1, bus2, variableSet, parameters, admittanceType, frequencyType);
+                                    ShortCircuitParameters parameters,
+                                    OpenShortCircuitParameters openScParameters,
+                                    AdmittanceType admittanceType, FrequencyType frequencyType) {
+        super(branch, bus1, bus2, variableSet, parameters, openScParameters, admittanceType, frequencyType);
     }
 
     @Override

@@ -12,10 +12,12 @@ import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.PiModel;
 import com.powsybl.openloadflow.network.PiModelArray;
 import com.powsybl.sc.extensions.FrequencyType;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.extensions.AdmittanceConstants;
 import com.powsybl.sc.util.extensions.HomopolarModel;
 import com.powsybl.sc.util.extensions.ScTransfo3wKt;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.apache.commons.math3.complex.Complex;
 
 public final class BranchAdmittance {
@@ -52,11 +54,12 @@ public final class BranchAdmittance {
         this.b2b21sum = b2b21sum;
     }
 
-    public static BranchAdmittance create(LfBranch branch, ImpedanceLinearResolutionParameters parameters,
+    public static BranchAdmittance create(LfBranch branch, ShortCircuitParameters parameters,
+                                          OpenShortCircuitParameters openScParameters,
                                           AdmittanceType admittanceType,
                                           FrequencyType frequencyType) {
         return create(branch, admittanceType, parameters.isWithNeutralPosition(),
-                parameters.isWithResistances(), parameters.isWithCapacities(), frequencyType);
+                openScParameters.isWithResistances(), openScParameters.isWithCapacities(), frequencyType);
     }
 
     public static BranchAdmittance create(LfBranch branch, AdmittanceType admittanceType,

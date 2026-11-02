@@ -44,15 +44,13 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         buildFaultListsFromInputs();
         List<CalculationLocation> solverLocationList = shortCircuitFaults.stream().map(ShortCircuitFault::getCalculationLocation).toList();
 
-        ImpedanceLinearResolutionParameters linearResolutionParameters = new ImpedanceLinearResolutionParameters(shortCircuitParameters);
-
         ImpedanceLinearResolution directResolution = new ImpedanceLinearResolution(
                 network,
                 lfNetwork,
                 solverLocationList,
                 initialVoltages,
                 AdmittanceType.ADM_THEVENIN,
-                linearResolutionParameters);
+                shortCircuitParameters);
 
         directResolution.run();
 
@@ -131,7 +129,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
         updateVoltageProfileIfNeeded(res, lfNetwork, id, linearResolutionResult.getBusToZknf());
 
-        res.updateFeedersResult(shortCircuitParameters); // feeders are updated only if voltageUpdate is made
+        res.updateFeedersResult(shortCircuitParameters, openShortCircuitParameters); // feeders are updated only if voltageUpdate is made
         resultsPerFault.put(shortCircuitFault, res);
     }
 
@@ -216,7 +214,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         }
         updateVoltageProfileIfNeeded(res, lfNetwork, id, combinedBusToZknf);
 
-        res.updateFeedersResult(shortCircuitParameters); // feeders are updated only if voltageUpdate is made
+        res.updateFeedersResult(shortCircuitParameters, openShortCircuitParameters); // feeders are updated only if voltageUpdate is made
         resultsPerFault.put(shortCircuitFault, res);
     }
 

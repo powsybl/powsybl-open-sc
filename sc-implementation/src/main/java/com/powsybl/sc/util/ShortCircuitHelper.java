@@ -62,13 +62,6 @@ public final class ShortCircuitHelper {
         return openScParameters;
     }
 
-    public static boolean isGeneratorSelected(LfGenerator generator, ImpedanceLinearResolutionParameters parameters, Network network,
-                                       Predicate<LfBus> innerZone) {
-        return isGeneratorSelected(generator, network, innerZone,
-                parameters.getInnerZoneGeneratorSelectionMode(), parameters.getOuterZoneGeneratorSelectionMode(),
-                parameters.getInnerZoneGeneratorPowerThreshold(), parameters.getOuterZoneGeneratorPowerThreshold());
-    }
-
     public static boolean isGeneratorSelected(LfGenerator generator, OpenShortCircuitParameters parameters, Network network,
                                        Predicate<LfBus> innerZone) {
         return isGeneratorSelected(generator, network, innerZone,

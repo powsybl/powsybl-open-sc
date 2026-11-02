@@ -12,6 +12,8 @@ import com.powsybl.openloadflow.equations.Variable;
 import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.extensions.FrequencyType;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,7 +35,12 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
     protected final BranchAdmittance admittance;
 
-    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet, ImpedanceLinearResolutionParameters parameters, AdmittanceType admittanceType, FrequencyType frequencyType) {
+    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2,
+                                             VariableSet<VariableType> variableSet,
+                                             ShortCircuitParameters parameters,
+                                             OpenShortCircuitParameters openScParameters,
+                                             AdmittanceType admittanceType,
+                                             FrequencyType frequencyType) {
         super(branch);
         Objects.requireNonNull(bus1);
         Objects.requireNonNull(bus2);
@@ -46,7 +53,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
         variables = List.of(v1rVar, v2rVar, v1iVar, v2iVar);
 
-        admittance = BranchAdmittance.create(branch, parameters, admittanceType, frequencyType);
+        admittance = BranchAdmittance.create(branch, parameters, openScParameters, admittanceType, frequencyType);
     }
 
     @Override
