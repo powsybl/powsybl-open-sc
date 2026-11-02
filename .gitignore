@@ -17,3 +17,6 @@ org.eclipse.jdt.groovy.core.prefs
 
 # Virtual Studio
 .vscode
+
+# Documentation
+docs/_build/
