@@ -241,14 +241,14 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
                 //direct
                 Complex zdBus = zd.getValue();
-                Complex deltaVd = zdBus.multiply(id);
+                Complex deltaVd = zdBus.multiply(id).multiply(-1);
 
                 //inverse
-                Complex deltaVi = zdBus.multiply(ii);
+                Complex deltaVi = zdBus.multiply(ii).multiply(-1);
 
                 //homopolar
                 Complex zo = homopolarResult.getBusToZknf().get(busNum);
-                Complex deltaVo = zo.multiply(io);
+                Complex deltaVo = zo.multiply(io).multiply(-1);
 
                 //System.out.println(" dVth(" + vdr.getKey() + ") = " + edVr + " + j(" + edVi + ")");
 
@@ -300,16 +300,16 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
                 //direct
                 Complex zdBus2 = biphasedDirectResult.getBus2ToZknf().get(busNum);
-                Complex deltaVd = id.multiply(zd.getValue()).add(i2d.multiply(zdBus2));
+                Complex deltaVd = id.multiply(zd.getValue()).add(i2d.multiply(zdBus2)).multiply(-1);
 
                 //inverse
-                Complex deltaVi = ii.multiply(zd.getValue()).add(i2i.multiply(zdBus2));
+                Complex deltaVi = ii.multiply(zd.getValue()).add(i2i.multiply(zdBus2)).multiply(-1);
 
                 //homopolar
                 Complex zoBus = homopolarResult.getBusToZknf().get(busNum);
                 Complex zoBus2 = biphasedHomopolarResult.getBus2ToZknf().get(busNum);
 
-                Complex deltaVo = io.multiply(zoBus).add(i2o.multiply(zoBus2));
+                Complex deltaVo = io.multiply(zoBus).add(i2o.multiply(zoBus2)).multiply(-1);
 
                 res.fillVoltageInFortescueVector(busNum, deltaVd, deltaVo, deltaVi);
             }

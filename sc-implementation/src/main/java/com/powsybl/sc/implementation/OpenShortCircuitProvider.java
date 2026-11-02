@@ -98,35 +98,24 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
     public void runUnbalancedAnalysis(Network network, ShortCircuitParameters shortCircuitParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<ShortCircuitFault> shortCircuitFaults, List<FaultResult> faultResults) {
         ShortCircuitUnbalancedEngine scuEngine = new ShortCircuitUnbalancedEngine(network, shortCircuitParameters, shortCircuitFaults, shortCircuitNorm);
-        scuEngine.run();
-
-        // the results per faults might be inconsistent if many buses per voltage level
-        // TODO : see how this could be improved by allowing results per electrical bus on the short circuit provider
-        for (Map.Entry<ShortCircuitFault, ShortCircuitResult> scResult : scuEngine.resultsPerFault.entrySet()) {
-            ShortCircuitFault scFault = scResult.getKey();
-
-            double iccMagnitude = scResult.getValue().getIk().abs() * 1000.; // kA to A conversion
-            double voltage = scResult.getValue().getVd().abs();
-
-            Fault fault = scFaultToFault.get(scFault);
-
-            List<FeederResult> feederResults = new ArrayList<>();
-            List<LimitViolation> limitViolations = new ArrayList<>();
-            List<ShortCircuitBusResults> busResults = new ArrayList<>();
-            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
-            faultResults.add(magnitudeFaultResult);
-        }
+        // TODO : feeder results only hold the positive sequence contribution, homopolar and negative ones are needed for unbalanced faults
+        runAnalysis(scuEngine, network, shortCircuitParameters, scFaultToFault, faultResults, false);
     }
 
     public void runBalancedAnalysis(Network network, ShortCircuitParameters shortCircuitParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<ShortCircuitFault> shortCircuitFaults, List<FaultResult> faultResults) {
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, shortCircuitParameters, shortCircuitFaults, shortCircuitNorm);
-        scbEngine.run();
+        runAnalysis(scbEngine, network, shortCircuitParameters, scFaultToFault, faultResults, true);
+    }
+
+    private void runAnalysis(AbstractShortCircuitEngine engine, Network network, ShortCircuitParameters shortCircuitParameters,
+                             Map<ShortCircuitFault, Fault> scFaultToFault, List<FaultResult> faultResults, boolean withFeederResults) {
+        engine.run();
         OpenShortCircuitParameters openScParameters = shortCircuitParameters.getExtension(OpenShortCircuitParameters.class);
         Predicate<LfBus> innerZone = createInnerZonePredicate(network, openScParameters.getInnerZoneBusIds());
 
         // the results per faults might be inconsistent if many buses per voltage level
         // TODO : see how this could be improved by allowing results per electrical bus on the short circuit provider
-        for (Map.Entry<ShortCircuitFault, ShortCircuitResult> scFaultResult : scbEngine.resultsPerFault.entrySet()) {
+        for (Map.Entry<ShortCircuitFault, ShortCircuitResult> scFaultResult : engine.getResultsPerFault().entrySet()) {
             ShortCircuitFault scFault = scFaultResult.getKey();
             ShortCircuitResult scResult = scFaultResult.getValue();
             Fault fault = scFaultToFault.get(scFault);
@@ -134,17 +123,19 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             double iccMagnitude = scResult.getIk().abs() * 1000.; // kA to A conversion
             double voltage = scResult.getVd().abs() * scResult.getLfBus().getNominalV();
 
-            List<FeederResult> feederResultsProvider = new ArrayList<>();
-            fillFeederResults(network, shortCircuitParameters, feederResultsProvider, scResult);
+            List<FeederResult> feederResults = new ArrayList<>();
+            if (withFeederResults) {
+                fillFeederResults(network, shortCircuitParameters, feederResults, scResult);
+            }
 
             List<LimitViolation> limitViolations = new ArrayList<>();
 
             List<ShortCircuitBusResults> busResults = new ArrayList<>();
             if (shortCircuitParameters.isWithVoltageResult()) {
-                fillBusResults(scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(),
+                fillBusResults(engine.getFirstLfNetwork(), busResults, scResult, engine.getInitialVoltages(),
                         shortCircuitParameters.getMinVoltageDropProportionalThreshold(), innerZone);
             }
-            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResultsProvider, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
+            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }
