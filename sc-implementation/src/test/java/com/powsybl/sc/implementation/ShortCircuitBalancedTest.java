@@ -150,8 +150,10 @@ public class ShortCircuitBalancedTest {
         BranchFault bf4 = new BranchFault("F4", "B1_B2", 10);
         BranchFault bf5 = new BranchFault("F5", "UNKNOWN_BRANCH", 10);
         BranchFault bf6 = new BranchFault("F6", "B1", 10);
+        BranchFault bf7 = new BranchFault("F7", "B1_B2", -1);
+        BranchFault bf8 = new BranchFault("F8", "B1_B2", 101);
 
-        List<Fault> faults = List.of(bf1, bf2, bf3, bf4, bf5, bf6);
+        List<Fault> faults = List.of(bf1, bf2, bf3, bf4, bf5, bf6, bf7, bf8);
 
         ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
 
@@ -160,6 +162,8 @@ public class ShortCircuitBalancedTest {
         assertNull(scar.getFaultResult("F3"));
         assertNull(scar.getFaultResult("F5"));
         assertNull(scar.getFaultResult("F6"));
+        assertNull(scar.getFaultResult("F7"));
+        assertNull(scar.getFaultResult("F8"));
 
         MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F1");
         MagnitudeFaultResult m4 = (MagnitudeFaultResult) scar.getFaultResult("F4");

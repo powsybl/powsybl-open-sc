@@ -231,7 +231,11 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 continue;
             }
 
-            fillFaultLists(fault, network, scType, balancedFaultsList, scFaultToFault);
+            try {
+                fillFaultLists(fault, network, scType, balancedFaultsList, scFaultToFault);
+            } catch (IllegalArgumentException e) {
+                LOGGER.warn("Invalid fault '{}': {}. Fault is ignored.", fault.getId(), e.getMessage());
+            }
         }
 
         return new Pair<>(existBalancedFaults, existUnbalancedFaults);
