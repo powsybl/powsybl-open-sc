@@ -23,6 +23,7 @@ public final class ReferenceNetwork {
     private ReferenceNetwork() {
     }
 
+    @SuppressWarnings("checkstyle:MethodLength")
     public static Network createShortCircuitReference() {
         Network network = Network.create("ShortCircuitReference", "reference");
 
@@ -434,6 +435,7 @@ public final class ReferenceNetwork {
         return network;
     }
 
+    @SuppressWarnings("checkstyle:MethodLength")
     public static Network create6NodesIec9094() {
         Network network = Network.create("ShortCircuit_IEC_3.1", "IEC_3.1");
         // This is a reference grid composed of 6 nodes with 20 kV and 400V nominal voltages
@@ -711,6 +713,7 @@ public final class ReferenceNetwork {
         return network;
     }
 
+    @SuppressWarnings("checkstyle:MethodLength")
     public static Network create8NodesIEC9094() {
         //This example grid represents the high-voltage testnetwork 380kV / 110kV / 30 kV / 10 kV with 8 bus bars
         Network network = Network.create("ShortCircuit_IEC_3.1", "IEC_3.1");
@@ -1353,6 +1356,7 @@ public final class ReferenceNetwork {
         return network;
     }
 
+    @SuppressWarnings("checkstyle:MethodLength")
     public static Network create6NodeIec9094Plus() {
         // This is the same grid as the 6 nodes but with additional nodes created
         // to split lines L2 (Bus 2 and Bus 4) and L4 (Bus 5 and Bus 6) into 2 pieces

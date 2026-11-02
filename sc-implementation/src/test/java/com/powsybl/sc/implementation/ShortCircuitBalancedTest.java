@@ -12,6 +12,7 @@ import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.ThreeWindingsTransformerFortescue;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.DenseMatrixFactory;
@@ -1166,6 +1167,7 @@ public class ShortCircuitBalancedTest {
         return network;
     }
 
+    @SuppressWarnings("checkstyle:MethodLength")
     public static Network create4nTfoRatioTapChanger(NetworkFactory networkFactory) {
 
         Objects.requireNonNull(networkFactory);
@@ -1382,7 +1384,7 @@ public class ShortCircuitBalancedTest {
                 .add();
 
         tfoB1B4.newRatioTapChanger()
-                .setRegulationMode(RatioTapChanger.RegulationMode.VOLTAGE)
+                .setRegulationMode(RegulationMode.VOLTAGE)
                 .setLowTapPosition(-1)
                 .setTapPosition(tapPosition1)
                 .setLoadTapChangingCapabilities(true)
@@ -1430,7 +1432,7 @@ public class ShortCircuitBalancedTest {
                 .add();
 
         tfoB3B4.newRatioTapChanger()
-                .setRegulationMode(RatioTapChanger.RegulationMode.VOLTAGE)
+                .setRegulationMode(RegulationMode.VOLTAGE)
                 .setLowTapPosition(-1)
                 .setTapPosition(tapPosition2)
                 .setLoadTapChangingCapabilities(true)
