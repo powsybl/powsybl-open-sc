@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) 2026, Jean-Baptiste Heyberger
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * SPDX-License-Identifier: MPL-2.0
+ */
 package com.powsybl.sc.implementation;
 
 import com.powsybl.commons.PowsyblException;
@@ -21,6 +28,9 @@ import java.util.List;
 import static com.powsybl.sc.util.Networks.create4nShunts;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * @author Thoi-Nay Vo <thoi-nay.vo at artelys.com>
+ */
 class ShortCircuitParametersTest {
 
     private static final double DELTA_I_A = 1e-2;

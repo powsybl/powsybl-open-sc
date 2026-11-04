@@ -18,6 +18,9 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * @author Thoi-Nay Vo <thoi-nay.vo at artelys.com>
+ */
 public class OpenShortCircuitParameters extends AbstractExtension<ShortCircuitParameters> {
 
     public static final String NAME = "open-short-circuit-parameters";
