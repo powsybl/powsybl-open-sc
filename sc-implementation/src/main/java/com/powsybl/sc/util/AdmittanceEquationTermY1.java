@@ -10,7 +10,6 @@ package com.powsybl.sc.util;
 import com.powsybl.openloadflow.equations.Variable;
 import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.LfBranch;
-import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.sc.extensions.FrequencyType;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
@@ -20,12 +19,12 @@ import com.powsybl.shortcircuit.ShortCircuitParameters;
  */
 public class AdmittanceEquationTermY1 extends AbstractAdmittanceEquationTerm {
 
-    public AdmittanceEquationTermY1(LfBranch branch, LfBus bus1, LfBus bus2, VariableSet<VariableType> variableSet,
+    public AdmittanceEquationTermY1(LfBranch branch, VariableSet<VariableType> variableSet,
                                     ShortCircuitParameters parameters,
                                     OpenShortCircuitParameters openScParameters,
                                     AdmittanceType admittanceType,
                                     FrequencyType frequencyType) {
-        super(branch, bus1, bus2, variableSet, parameters, openScParameters, admittanceType, frequencyType);
+        super(branch, variableSet, parameters, openScParameters, admittanceType, frequencyType);
     }
 
     @Override

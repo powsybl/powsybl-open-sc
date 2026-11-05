@@ -35,13 +35,12 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
     protected final BranchAdmittance admittance;
 
-    protected AbstractAdmittanceEquationTerm(LfBranch branch, LfBus bus1, LfBus bus2,
-                                             VariableSet<VariableType> variableSet,
-                                             ShortCircuitParameters parameters,
-                                             OpenShortCircuitParameters openScParameters,
-                                             AdmittanceType admittanceType,
+    protected AbstractAdmittanceEquationTerm(LfBranch branch, VariableSet<VariableType> variableSet, ShortCircuitParameters parameters,
+                                             OpenShortCircuitParameters openScParameters, AdmittanceType admittanceType,
                                              FrequencyType frequencyType) {
         super(branch);
+        LfBus bus1 = branch.getBus1();
+        LfBus bus2 = branch.getBus2();
         Objects.requireNonNull(bus1);
         Objects.requireNonNull(bus2);
         Objects.requireNonNull(variableSet);

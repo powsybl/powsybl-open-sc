@@ -20,6 +20,9 @@ import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.apache.commons.math3.complex.Complex;
 
+/**
+ * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
+ */
 public final class BranchAdmittance {
 
     private final double g12;

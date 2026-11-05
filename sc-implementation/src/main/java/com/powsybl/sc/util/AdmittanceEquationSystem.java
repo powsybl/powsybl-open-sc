@@ -47,22 +47,23 @@ public final class AdmittanceEquationSystem {
 
     //Equations are created based on the branches connections
     private static void createImpedantBranch(VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
-                                             LfBranch branch, LfBus bus1, LfBus bus2, ShortCircuitParameters parameters,
-                                             OpenShortCircuitParameters openScParameters,
+                                             LfBranch branch, ShortCircuitParameters parameters, OpenShortCircuitParameters openScParameters,
                                              AdmittanceType admittanceType, FrequencyType frequencyType) {
+        LfBus bus1 = branch.getBus1();
+        LfBus bus2 = branch.getBus2();
         if (bus1 != null && bus2 != null) {
             // Equation system Y*V = I (expressed in cartesian coordinates x,y)
             equationSystem.createEquation(bus1.getNum(), EquationType.BUS_YR)
-                    .addTerm(new AdmittanceEquationTermX1(branch, bus1, bus2, variableSet, parameters, openScParameters, admittanceType, frequencyType));
+                    .addTerm(new AdmittanceEquationTermX1(branch, variableSet, parameters, openScParameters, admittanceType, frequencyType));
 
             equationSystem.createEquation(bus1.getNum(), EquationType.BUS_YI)
-                    .addTerm(new AdmittanceEquationTermY1(branch, bus1, bus2, variableSet, parameters, openScParameters, admittanceType, frequencyType));
+                    .addTerm(new AdmittanceEquationTermY1(branch, variableSet, parameters, openScParameters, admittanceType, frequencyType));
 
             equationSystem.createEquation(bus2.getNum(), EquationType.BUS_YR)
-                    .addTerm(new AdmittanceEquationTermX2(branch, bus1, bus2, variableSet, parameters, openScParameters, admittanceType, frequencyType));
+                    .addTerm(new AdmittanceEquationTermX2(branch, variableSet, parameters, openScParameters, admittanceType, frequencyType));
 
             equationSystem.createEquation(bus2.getNum(), EquationType.BUS_YI)
-                    .addTerm(new AdmittanceEquationTermY2(branch, bus1, bus2, variableSet, parameters, openScParameters, admittanceType, frequencyType));
+                    .addTerm(new AdmittanceEquationTermY2(branch, variableSet, parameters, openScParameters, admittanceType, frequencyType));
         }
     }
 
@@ -80,7 +81,7 @@ public final class AdmittanceEquationSystem {
                             branch.getId());
                 }
             } else {
-                createImpedantBranch(variableSet, equationSystem, branch, bus1, bus2, parameters, openScParameters, admittanceType, frequencyType);
+                createImpedantBranch(variableSet, equationSystem, branch, parameters, openScParameters, admittanceType, frequencyType);
             }
         }
     }
