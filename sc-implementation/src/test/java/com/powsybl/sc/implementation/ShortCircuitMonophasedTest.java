@@ -47,9 +47,6 @@ public class ShortCircuitMonophasedTest {
     @Test
     void shortCircuitMono6NodesIec9094() {
 
-        LoadFlowParameters loadFlowParameters = LoadFlowParameters.load();
-        loadFlowParameters.setTwtSplitShuntAdmittance(true);
-
         Network network = ReferenceNetwork.create6NodesIec9094();
 
         List<ShortCircuitFault> faultList = List.of(createZeroImpedanceMonophasedFault("sc1", "B3"));
