@@ -28,7 +28,7 @@ Each fault gives a `MagnitudeFaultResult`.
 |---|---|---|
 | `current` | A | Magnitude of the initial symmetrical short-circuit current $I''_k$. |
 | `voltage` | kV | Magnitude of the direct-sequence voltage at the fault location. |
-| `feederResults` | A | Current of each feeder (branch side, generator, load, shunt) of every bus of the network. Only for three-phase faults, and only if `withVoltageResult` is `true`, because the feeder currents are computed from the bus voltages. |
+| `feederResults` | A | Current of each feeder (branch side, generator, load, shunt) of every bus of the network. Only for three-phase faults, and only if `withFeederResult` and `withVoltageResult` are both `true`, because the feeder currents are computed from the bus voltages. |
 | `shortCircuitBusResults` | kV | Initial and final voltage, and relative voltage drop, of the buses of the inner zone. Only if `withVoltageResult` is `true`, and only for the buses whose drop reaches `minVoltageDropProportionalThreshold`. |
 
 For unbalanced faults, the bus results give the direct-sequence voltage of each bus, not the voltage of the faulted

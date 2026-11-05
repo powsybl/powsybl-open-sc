@@ -41,7 +41,8 @@ The `sc-implementation` module has two packages.
 3. `ImpedanceLinearResolution` builds the admittance matrices (direct, and homopolar for unbalanced faults; at 50 Hz and
    20 Hz), factorizes them and extracts the Thevenin impedances.
 4. The engine computes the fault currents, and the bus voltages and feeder currents if `withVoltageResult` is `true`.
-5. The provider converts the per-unit results into `MagnitudeFaultResult`, in A and kV.
+5. The provider converts the per-unit results into `MagnitudeFaultResult`, in A and kV. It adds the feeder results
+   only for three-phase faults, and only if `withFeederResult` is `true`.
 
 ## Adding a parameter
 
