@@ -80,7 +80,7 @@ public abstract class AbstractShortCircuitEngine {
         boolean found = lfNetwork.getBuses().stream()
                 .flatMap(bus -> bus.getGenerators().stream())
                 .filter(lfGenerator -> network.getGenerator(lfGenerator.getOriginalId()) != null)
-                .anyMatch(lfGenerator -> isGeneratorSelected(lfGenerator, openShortCircuitParameters, network, innerZone));
+                .anyMatch(lfGenerator -> isGeneratorSelected(lfGenerator, openShortCircuitParameters, network, innerZone, shortCircuitParameters.getInitialVoltageProfileMode()));
         if (!found) {
             throw new PowsyblException("No generator contributes to the short-circuit current in network '" + network.getId()
                     + "': check the network connectivity and the inner/outer zone generator selection parameters");
@@ -203,6 +203,10 @@ public abstract class AbstractShortCircuitEngine {
 
     public List<Complex> getInitialVoltages() {
         return initialVoltages;
+    }
+
+    public ShortCircuitParameters getShortCircuitParameters() {
+        return shortCircuitParameters;
     }
 
     public abstract void run();

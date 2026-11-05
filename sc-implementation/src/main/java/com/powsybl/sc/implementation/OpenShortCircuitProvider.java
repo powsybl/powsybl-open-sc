@@ -99,17 +99,18 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     public void runUnbalancedAnalysis(Network network, ShortCircuitParameters shortCircuitParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<ShortCircuitFault> shortCircuitFaults, List<FaultResult> faultResults) {
         ShortCircuitUnbalancedEngine scuEngine = new ShortCircuitUnbalancedEngine(network, shortCircuitParameters, shortCircuitFaults, shortCircuitNorm);
         // TODO : feeder results only hold the positive sequence contribution, homopolar and negative ones are needed for unbalanced faults
-        runAnalysis(scuEngine, network, shortCircuitParameters, scFaultToFault, faultResults, false);
+        runAnalysis(scuEngine, network, scFaultToFault, faultResults, false);
     }
 
     public void runBalancedAnalysis(Network network, ShortCircuitParameters shortCircuitParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<ShortCircuitFault> shortCircuitFaults, List<FaultResult> faultResults) {
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, shortCircuitParameters, shortCircuitFaults, shortCircuitNorm);
-        runAnalysis(scbEngine, network, shortCircuitParameters, scFaultToFault, faultResults, true);
+        runAnalysis(scbEngine, network, scFaultToFault, faultResults, shortCircuitParameters.isWithFeederResult());
     }
 
-    private void runAnalysis(AbstractShortCircuitEngine engine, Network network, ShortCircuitParameters shortCircuitParameters,
-                             Map<ShortCircuitFault, Fault> scFaultToFault, List<FaultResult> faultResults, boolean withFeederResults) {
+    private void runAnalysis(AbstractShortCircuitEngine engine, Network network, Map<ShortCircuitFault, Fault> scFaultToFault,
+                             List<FaultResult> faultResults, boolean withFeederResults) {
         engine.run();
+        ShortCircuitParameters shortCircuitParameters = engine.getShortCircuitParameters();
         OpenShortCircuitParameters openScParameters = shortCircuitParameters.getExtension(OpenShortCircuitParameters.class);
         Predicate<LfBus> innerZone = createInnerZonePredicate(network, openScParameters.getInnerZoneBusIds());
 

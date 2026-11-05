@@ -111,19 +111,20 @@ public final class AdmittanceEquationSystem {
     }
 
     private static Complex getYtransfromRdXdAndUpdateFeederList(Network network, LfBus bus,
+                                                                ShortCircuitParameters parameters,
                                                                 OpenShortCircuitParameters openScParameters,
-                                                                Predicate<LfBus> innerZone,
-                                                                StudyType admittanceStudyType, List<Feeder> feederList, AdmittanceType admittanceType) {
+                                                                Predicate<LfBus> innerZone, List<Feeder> feederList,
+                                                                AdmittanceType admittanceType) {
         double vnomVl = bus.getNominalV();
         Complex tmpY = new Complex(0.);
         for (LfGenerator lfgen : bus.getGenerators()) { //compute R'd or R"d from generators at bus
-            if (!isGeneratorSelected(lfgen, openScParameters, network, innerZone)) {
+            if (!isGeneratorSelected(lfgen, openScParameters, network, innerZone, parameters.getInitialVoltageProfileMode())) {
                 continue;
             }
             ScGenerator scGen = (ScGenerator) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
             double kG = (Double) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
             Complex z = scGen.getTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
-            if (admittanceStudyType == StudyType.SUB_TRANSIENT) {
+            if (parameters.getStudyType() == StudyType.SUB_TRANSIENT) {
                 z = scGen.getSubTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
             }
 
@@ -187,7 +188,6 @@ public final class AdmittanceEquationSystem {
                                                     OpenShortCircuitParameters openScParameters,
                                                     Predicate<LfBus> innerZone,
                                                     LfBus bus, FeedersAtNetwork feeders,
-                                                    StudyType admittanceStudyType,
                                                     AdmittanceType admittanceType) {
         Complex y = Complex.ZERO;
         Complex yLoadEq = Complex.ZERO;
@@ -209,7 +209,8 @@ public final class AdmittanceEquationSystem {
             }
         }
 
-        Complex yGenEq = getYtransfromRdXdAndUpdateFeederList(network, bus, openScParameters, innerZone, admittanceStudyType, feederList, admittanceType); // ! updates feederList
+        Complex yGenEq = getYtransfromRdXdAndUpdateFeederList(network, bus, parameters, openScParameters, innerZone, feederList,
+                admittanceType); // ! updates feederList
         // TODO : check how to verify that the generators are operating
 
         FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
@@ -219,14 +220,15 @@ public final class AdmittanceEquationSystem {
     }
 
     private static Complex computeAdmForAdmTheveninHomopolar(Network network, LfBus bus,
+                                                             ShortCircuitParameters parameters,
                                                              OpenShortCircuitParameters openScParameters,
                                                              Predicate<LfBus> innerZone,
                                                              FeedersAtNetwork feeders,
-                                                             StudyType admittanceStudyType,
                                                              AdmittanceType admittanceType) {
         List<Feeder> feederList = new ArrayList<>(); // not used yet in homopolar
 
-        Complex y = getYtransfromRdXdAndUpdateFeederList(network, bus, openScParameters, innerZone, admittanceStudyType, feederList, admittanceType); // ! updates feederList
+        Complex y = getYtransfromRdXdAndUpdateFeederList(network, bus, parameters, openScParameters, innerZone, feederList,
+                admittanceType); // ! updates feederList
         //TODO : check how to verify that the generators are operating
 
         FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
@@ -244,7 +246,6 @@ public final class AdmittanceEquationSystem {
                                      FeedersAtNetwork feeders,
                                      AdmittanceType admittanceType,
                                      FrequencyType frequencyType) {
-        StudyType admittanceStudyType = parameters.getStudyType();
         Predicate<LfBus> innerZone = createInnerZonePredicate(network, openScParameters.getInnerZoneBusIds());
 
         for (LfBus bus : lfNetwork.getBuses()) {
@@ -259,8 +260,8 @@ public final class AdmittanceEquationSystem {
             Complex y = switch (admittanceType) {
                 case ADM_SHUNT -> computeAdmForAdmShunt(parameters, bus);
                 case ADM_ADMIT -> computeAdmForAdmAdmit(v, parameters, isBusPv, bus);
-                case ADM_THEVENIN -> computeAdmForAdmThevenin(network, v, parameters, openScParameters, innerZone, bus, feeders, admittanceStudyType, admittanceType);
-                case ADM_THEVENIN_HOMOPOLAR -> computeAdmForAdmTheveninHomopolar(network, bus, openScParameters, innerZone, feeders, admittanceStudyType, admittanceType);
+                case ADM_THEVENIN -> computeAdmForAdmThevenin(network, v, parameters, openScParameters, innerZone, bus, feeders, admittanceType);
+                case ADM_THEVENIN_HOMOPOLAR -> computeAdmForAdmTheveninHomopolar(network, bus, parameters, openScParameters, innerZone, feeders, admittanceType);
                 default -> new Complex(0.);
             };
 

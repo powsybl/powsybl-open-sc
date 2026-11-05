@@ -221,7 +221,7 @@ class ShortCircuitParametersTest {
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
-                .setInnerZoneGeneratorPowerThreshold(20.0);
+                .setInnerZoneGeneratorPowerThreshold(32.0);
         List<FaultResult> frs = run(n4nWithGenerators, scp);
 
         assertEquals(2, frs.size());
@@ -241,7 +241,7 @@ class ShortCircuitParametersTest {
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
-                .setInnerZoneGeneratorPowerThreshold(10.0);
+                .setInnerZoneGeneratorPowerThreshold(26.0);
         List<FaultResult> frs = run(n4nWithGenerators, scp);
 
         assertEquals(2, frs.size());
@@ -266,7 +266,7 @@ class ShortCircuitParametersTest {
 
         assertEquals(2, frs.size());
         assertEquals(2, frs.getFirst().getShortCircuitBusResults().size());
-        assertMagnitudeCurrents(frs, 8737.08594, 8684.00879);
+        assertMagnitudeCurrents(frs, 11049.2148, 11570.4268);
         assertBusVoltages(frs, 0.0, 8.68918419);
     }
 
@@ -294,7 +294,7 @@ class ShortCircuitParametersTest {
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setOuterZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
-                .setOuterZoneGeneratorPowerThreshold(1);
+                .setOuterZoneGeneratorPowerThreshold(1.0);
         List<FaultResult> frs = run(n4nWithGenerators, scp);
 
         assertEquals(2, frs.size());
@@ -314,7 +314,7 @@ class ShortCircuitParametersTest {
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setOuterZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
-                .setOuterZoneGeneratorPowerThreshold(20);
+                .setOuterZoneGeneratorPowerThreshold(25.0);
         List<FaultResult> frs = run(n4nWithGenerators, scp);
 
         assertEquals(2, frs.size());
@@ -334,7 +334,7 @@ class ShortCircuitParametersTest {
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setOuterZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
-                .setOuterZoneGeneratorPowerThreshold(5);
+                .setOuterZoneGeneratorPowerThreshold(21.0);
         List<FaultResult> frs = run(n4nWithGenerators, scp);
 
         assertEquals(2, frs.size());
@@ -355,8 +355,8 @@ class ShortCircuitParametersTest {
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
                 .setOuterZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
-                .setInnerZoneGeneratorPowerThreshold(10)
-                .setOuterZoneGeneratorPowerThreshold(5);
+                .setInnerZoneGeneratorPowerThreshold(26.0)
+                .setOuterZoneGeneratorPowerThreshold(21.0);
         List<FaultResult> frs = run(n4nWithGenerators, scp);
 
         assertEquals(2, frs.size());
@@ -373,7 +373,7 @@ class ShortCircuitParametersTest {
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
-                .setInnerZoneGeneratorPowerThreshold(Math.abs(n4nWithGenerators.getGenerator("G3").getTerminal().getP()));
+                .setInnerZoneGeneratorPowerThreshold(Math.abs(n4nWithGenerators.getGenerator("G3").getTargetP()));
         List<FaultResult> frs = run(n4nWithGenerators, scp);
 
         assertEquals(2, frs.size());
@@ -392,7 +392,7 @@ class ShortCircuitParametersTest {
         ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
-                .setInnerZoneGeneratorPowerThreshold(10);
+                .setInnerZoneGeneratorPowerThreshold(26.0);
         List<FaultResult> frs = run(n4nWithGenerators, scp);
 
         assertEquals(4, frs.size());
@@ -407,7 +407,7 @@ class ShortCircuitParametersTest {
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
         ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
-                .setOuterZoneGeneratorPowerThreshold(10);
+                .setOuterZoneGeneratorPowerThreshold(10.0);
         List<FaultResult> frs = run(n4nWithGenerators, scp);
 
         assertEquals(4, frs.size());
