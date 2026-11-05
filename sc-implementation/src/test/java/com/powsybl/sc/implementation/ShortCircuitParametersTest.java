@@ -124,7 +124,6 @@ class ShortCircuitParametersTest {
      * */
     @Test
     void open4nWithEmptyInnerZone() {
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         List<FaultResult> frs = run(create4nShuntsNetworkWithMoreGenerators(), scp);
 
         assertEquals(4, frs.size());
@@ -140,7 +139,6 @@ class ShortCircuitParametersTest {
     void simulateOnlyBusesInInnerZone() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"));
         List<FaultResult> frs = run(n4nWithGenerators, scp);
@@ -158,7 +156,6 @@ class ShortCircuitParametersTest {
     void allModeInBothZonesKeepsAllGenerators() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ALL)
@@ -179,7 +176,6 @@ class ShortCircuitParametersTest {
     void abovePowerThresholdInBothZonesDropsAllGenerators() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
@@ -197,7 +193,6 @@ class ShortCircuitParametersTest {
     void keepAllGeneratorsInInnerZoneWhenThresholdBelowTheirPower() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
@@ -217,7 +212,6 @@ class ShortCircuitParametersTest {
     void dropAllGeneratorsInInnerZoneWhenThresholdAboveTheirPower() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
@@ -237,7 +231,6 @@ class ShortCircuitParametersTest {
     void dropLowPowerGeneratorsInInnerZone() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
@@ -257,7 +250,6 @@ class ShortCircuitParametersTest {
     void unknowBusInInnerZoneBusIdsIgnored() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3", "B5"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
@@ -273,7 +265,6 @@ class ShortCircuitParametersTest {
     @Test
     void throwErrorForNoneValidInnerBusIds() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B5", "B6"));
 
@@ -290,7 +281,6 @@ class ShortCircuitParametersTest {
     void keepAllGeneratorsInOuterZoneWhenThresholdBelowTheirPower() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setOuterZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
@@ -310,7 +300,6 @@ class ShortCircuitParametersTest {
     void dropAllGeneratorsInOuterZoneWhenThresholdAboveTheirPower() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setOuterZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
@@ -330,7 +319,6 @@ class ShortCircuitParametersTest {
     void dropLowPowerGeneratorsInOuterZone() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setOuterZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
@@ -350,7 +338,6 @@ class ShortCircuitParametersTest {
     void dropLowPowerGeneratorsInTwoZones() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
@@ -369,7 +356,6 @@ class ShortCircuitParametersTest {
     void generatorAtThresholdIsNotRunning() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneBusIds(List.of("B2", "B3"))
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
@@ -389,7 +375,6 @@ class ShortCircuitParametersTest {
     void emptyInnerZoneAppliesInnerRulesToWholeNetwork() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setInnerZoneGeneratorSelectionMode(GeneratorSelectionMode.ABOVE_POWER_THRESHOLD)
                 .setInnerZoneGeneratorPowerThreshold(26.0);
@@ -405,7 +390,6 @@ class ShortCircuitParametersTest {
     void emptyInnerZoneIgnoresOuterRules() {
         Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
         LoadFlow.run(n4nWithGenerators, loadFlowParameters);
-        ShortCircuitParameters scp = createDefaultShortCircuitParameters();
         scp.getExtension(OpenShortCircuitParameters.class)
                 .setOuterZoneGeneratorPowerThreshold(10.0);
         List<FaultResult> frs = run(n4nWithGenerators, scp);
@@ -449,13 +433,6 @@ class ShortCircuitParametersTest {
                 .withDirectTransX(20.)
                 .withStepUpTransformerX(0.)
                 .add();
-    }
-
-    private ShortCircuitParameters createDefaultShortCircuitParameters() {
-        OpenShortCircuitParameters openScParametersScParameters = new OpenShortCircuitParameters().setLoadFlowParameters(loadFlowParameters);
-        ShortCircuitParameters scp = new ShortCircuitParameters().setStudyType(StudyType.SUB_TRANSIENT);
-        scp.addExtension(OpenShortCircuitParameters.class, openScParametersScParameters);
-        return scp;
     }
 
     private List<FaultResult> run(Network network, ShortCircuitParameters scp) {
