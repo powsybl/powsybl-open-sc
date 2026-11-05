@@ -10,7 +10,6 @@ package com.powsybl.sc.util;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.math.matrix.DenseMatrix;
 import com.powsybl.openloadflow.equations.EquationSystem;
-import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
@@ -228,14 +227,14 @@ public class ImpedanceLinearResolution {
     public void run() {
         OpenShortCircuitParameters openScParameters = getOrDefaultOpenScParameters(parameters);
         FeedersAtNetwork equationsSystemFeeders = new FeedersAtNetwork();
+        AdmittanceEquationSystemCreator equationSystemCreator = new AdmittanceEquationSystemCreator(network, lfNetwork, initialVoltages,
+                admittanceType, parameters, openScParameters);
         EquationSystem<VariableType, EquationType> equationSystem
-                = AdmittanceEquationSystem.create(network, lfNetwork, initialVoltages, new VariableSet<>(),
-                parameters, openScParameters, equationsSystemFeeders, admittanceType, FrequencyType.FREQ_50_HZ);
+                = equationSystemCreator.create(equationsSystemFeeders, FrequencyType.FREQ_50_HZ);
 
         FeedersAtNetwork equationsSystemFeeders20hz = new FeedersAtNetwork();
         EquationSystem<VariableType, EquationType> equationSystem20hz
-                = AdmittanceEquationSystem.create(network, lfNetwork, initialVoltages, new VariableSet<>(),
-                parameters, openScParameters, equationsSystemFeeders20hz, admittanceType, FrequencyType.FREQ_20_HZ);
+                = equationSystemCreator.create(equationsSystemFeeders20hz, FrequencyType.FREQ_20_HZ);
 
         List<LfBus> inputBuses = new ArrayList<>();
         List<Pair<LfBus, LfBus>> busPairList = new ArrayList<>();
