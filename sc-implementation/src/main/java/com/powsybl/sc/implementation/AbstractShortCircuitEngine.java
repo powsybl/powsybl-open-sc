@@ -45,7 +45,7 @@ public abstract class AbstractShortCircuitEngine {
 
     protected final ShortCircuitNorm shortCircuitNorm;
 
-    protected final List<LfNetwork> lfNetworks;
+    protected final LfNetwork lfNetwork;
 
     protected final Map<ShortCircuitFault, ShortCircuitResult> resultsPerFault = new LinkedHashMap<>();
 
@@ -59,15 +59,15 @@ public abstract class AbstractShortCircuitEngine {
         this.shortCircuitParameters = Objects.requireNonNull(shortCircuitParameters);
         this.openShortCircuitParameters = getOrDefaultOpenScParameters(shortCircuitParameters);
         AcLoadFlowParameters acLoadFlowParameters = getAcLfParametersFromOpenScParameters(openShortCircuitParameters);
-        this.lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), acLoadFlowParameters.getNetworkParameters());
+        this.lfNetwork = LfNetwork.load(network, new LfNetworkLoaderImpl(), acLoadFlowParameters.getNetworkParameters()).getFirst();
         this.shortCircuitFaults = shortCircuitFaults;
         this.shortCircuitNorm = shortCircuitNorm;
-        ShortCircuitExtensions.add(network, lfNetworks, shortCircuitNorm.getNormExtensions());
+        ShortCircuitExtensions.add(network, lfNetwork, shortCircuitNorm.getNormExtensions());
         processNetwork();
     }
 
     protected void processNetwork() {
-        checkAtLeastOneContributingGenerator(lfNetworks.getFirst());
+        checkAtLeastOneContributingGenerator(lfNetwork);
     }
 
     /**
@@ -197,8 +197,8 @@ public abstract class AbstractShortCircuitEngine {
         return resultsPerFault;
     }
 
-    public LfNetwork getFirstLfNetwork() {
-        return lfNetworks.getFirst();
+    public LfNetwork getLfNetwork() {
+        return lfNetwork;
     }
 
     public List<Complex> getInitialVoltages() {

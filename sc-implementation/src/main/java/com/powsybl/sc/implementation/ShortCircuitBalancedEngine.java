@@ -33,7 +33,6 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
     @Override
     public void run() { //can handle both selective and systematic analysis with one single matrix inversion
-        LfNetwork lfNetwork = lfNetworks.getFirst();
         initialVoltages = fillInitialVoltages(lfNetwork, shortCircuitParameters);
 
         // building a contingency list with all voltage levels

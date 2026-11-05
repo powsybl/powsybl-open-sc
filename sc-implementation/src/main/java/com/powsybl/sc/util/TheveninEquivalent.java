@@ -39,9 +39,8 @@ public class TheveninEquivalent {
     public TheveninEquivalent(Network network, List<CalculationLocation> calculationLocations, ShortCircuitParameters shortCircuitParameters) {
         OpenShortCircuitParameters openScParameters = getOrDefaultOpenScParameters(shortCircuitParameters);
         AcLoadFlowParameters acLoadFlowParameters = getAcLfParametersFromOpenScParameters(openScParameters);
-        List<LfNetwork> lfNetworks = LfNetwork.load(network, new LfNetworkLoaderImpl(), acLoadFlowParameters.getNetworkParameters());
-        ShortCircuitExtensions.add(network, lfNetworks);
-        LfNetwork lfNetwork = lfNetworks.getFirst();
+        LfNetwork lfNetwork = LfNetwork.load(network, new LfNetworkLoaderImpl(), acLoadFlowParameters.getNetworkParameters()).getFirst();
+        ShortCircuitExtensions.add(network, lfNetwork);
         List<Complex> initialVoltages = fillInitialVoltages(lfNetwork, shortCircuitParameters);
         List<CalculationLocation> locationList = checkCalculationLocations(network, calculationLocations);
         impedanceLinearResolution = new ImpedanceLinearResolution(network, lfNetwork, locationList, initialVoltages, AdmittanceType.ADM_THEVENIN, shortCircuitParameters);

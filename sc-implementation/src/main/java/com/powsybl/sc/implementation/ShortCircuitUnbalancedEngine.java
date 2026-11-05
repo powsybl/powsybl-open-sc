@@ -33,7 +33,6 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
     @Override
     public void run() {
-        LfNetwork lfNetwork = lfNetworks.getFirst();
         initialVoltages = fillInitialVoltages(lfNetwork, shortCircuitParameters);
 
         if (openShortCircuitParameters.getShortCircuitAnalysisType() == ShortCircuitAnalysisType.SYSTEMATIC) {

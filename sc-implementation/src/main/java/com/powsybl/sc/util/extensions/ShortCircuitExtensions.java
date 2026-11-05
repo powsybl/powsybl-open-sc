@@ -18,7 +18,6 @@ import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.extensions.*;
 import org.apache.commons.math3.complex.Complex;
 
-import java.util.List;
 import java.util.Objects;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
@@ -38,51 +37,49 @@ public final class ShortCircuitExtensions {
     private ShortCircuitExtensions() {
     }
 
-    public static void add(Network network, List<LfNetwork> lfNetworks) {
-        add(network, lfNetworks, new ShortCircuitNormExtensions());
+    public static void add(Network network, LfNetwork lfNetwork) {
+        add(network, lfNetwork, new ShortCircuitNormExtensions());
     }
 
-    public static void add(Network network, List<LfNetwork> lfNetworks, ShortCircuitNormExtensions shortCircuitNormExtensions) {
+    public static void add(Network network, LfNetwork lfNetwork, ShortCircuitNormExtensions shortCircuitNormExtensions) {
         Objects.requireNonNull(network);
-        Objects.requireNonNull(lfNetworks);
-        for (LfNetwork lfNetwork : lfNetworks) {
-            for (LfBus lfBus : lfNetwork.getBuses()) {
-                for (LfGenerator lfGenerator : lfBus.getGenerators()) {
-                    addGeneratorExtension(network, lfGenerator, shortCircuitNormExtensions);
-                }
-                addLoadExtension(network, lfBus);
+        Objects.requireNonNull(lfNetwork);
+        for (LfBus lfBus : lfNetwork.getBuses()) {
+            for (LfGenerator lfGenerator : lfBus.getGenerators()) {
+                addGeneratorExtension(network, lfGenerator, shortCircuitNormExtensions);
+            }
+            addLoadExtension(network, lfBus);
+        }
+
+        for (LfBranch lfBranch : lfNetwork.getBranches()) {
+            switch (lfBranch.getBranchType()) {
+                case LINE:
+                    addLineExtension(network, lfBranch);
+                    break;
+
+                case TRANSFO_2:
+                    addTransfo2Extension(network, lfBranch, shortCircuitNormExtensions);
+                    break;
+
+                case TRANSFO_3_LEG_1:
+                case TRANSFO_3_LEG_2:
+                case TRANSFO_3_LEG_3:
+                    addTransfo3Extension(network, lfBranch, shortCircuitNormExtensions);
+                    break;
+
+                case BOUNDARY_LINE:
+                    // FIXME something to do?
+                    break;
+
+                default:
+                    break;
             }
 
-            for (LfBranch lfBranch : lfNetwork.getBranches()) {
-                switch (lfBranch.getBranchType()) {
-                    case LINE:
-                        addLineExtension(network, lfBranch);
-                        break;
-
-                    case TRANSFO_2:
-                        addTransfo2Extension(network, lfBranch, shortCircuitNormExtensions);
-                        break;
-
-                    case TRANSFO_3_LEG_1:
-                    case TRANSFO_3_LEG_2:
-                    case TRANSFO_3_LEG_3:
-                        addTransfo3Extension(network, lfBranch, shortCircuitNormExtensions);
-                        break;
-
-                    case BOUNDARY_LINE:
-                        // FIXME something to do?
-                        break;
-
-                    default:
-                        break;
-                }
-
-                // build homopolar model
-                HomopolarModel homopolarModel = HomopolarModel.build(lfBranch, FrequencyType.FREQ_50_HZ);
-                HomopolarModel homopolarModel20hz = HomopolarModel.build(lfBranch, FrequencyType.FREQ_20_HZ);
-                lfBranch.setProperty(PROPERTY_HOMOPOLAR_MODEL, homopolarModel);
-                lfBranch.setProperty(PROPERTY_HOMOPOLAR_MODEL_20HZ, homopolarModel20hz);
-            }
+            // build homopolar model
+            HomopolarModel homopolarModel = HomopolarModel.build(lfBranch, FrequencyType.FREQ_50_HZ);
+            HomopolarModel homopolarModel20hz = HomopolarModel.build(lfBranch, FrequencyType.FREQ_20_HZ);
+            lfBranch.setProperty(PROPERTY_HOMOPOLAR_MODEL, homopolarModel);
+            lfBranch.setProperty(PROPERTY_HOMOPOLAR_MODEL_20HZ, homopolarModel20hz);
         }
     }
 
