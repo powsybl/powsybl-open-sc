@@ -204,8 +204,8 @@ class ShortCircuitFromCgmesTest {
         Map<String, Double> values = new HashMap<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.getResultsPerFault().entrySet()) {
             values.put(res.getKey().getFaultId(), res.getValue().getIk().abs());
-            ShortCircuitResultPrinter scp = new ShortCircuitResultPrinter(res.getValue());
-            scp.printShortCircuitResult();
+            ShortCircuitResultPrinter scPrinter = new ShortCircuitResultPrinter(res.getValue());
+            scPrinter.printShortCircuitResult();
         }
         return values;
     }
@@ -216,8 +216,8 @@ class ShortCircuitFromCgmesTest {
         Map<String, Double> results = new HashMap<>();
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.getResultsPerFault().entrySet()) {
             results.put(res.getKey().getFaultId(), res.getValue().getIk().abs());
-            ShortCircuitResultPrinter scp = new ShortCircuitResultPrinter(res.getValue());
-            scp.printShortCircuitResult();
+            ShortCircuitResultPrinter scPrinter = new ShortCircuitResultPrinter(res.getValue());
+            scPrinter.printShortCircuitResult();
         }
         return results;
     }
