@@ -36,29 +36,6 @@ public class ShortCircuitResult {
         INVERSE
     }
 
-    public class CommonSupportResult {
-
-        private final LfBus lfBus2; // FIXME : might be wrongly overwritten in the "resultsPerFault" presentation
-
-        private final Complex eth2;
-
-        private final FortescueValue i2Fortescue; //fortescue vector of currents
-        private final FortescueValue v2Fortescue; //fortescue vector of voltages
-
-        CommonSupportResult(LfBus lfBus2, Complex eth2,
-                            Complex i2d, Complex i2o, Complex i2i,
-                            Complex dv2d, Complex dv2o, Complex dv2i) {
-            this.lfBus2 = lfBus2;
-            this.eth2 = eth2;
-
-            this.i2Fortescue = new FortescueValue(i2d.abs(), i2o.abs(), i2i.abs(), i2d.getArgument(), i2o.getArgument(), i2i.getArgument());
-
-            //construction of the fortescue vector vFortescue = t[Vh, Vd, Vi]
-            Complex vd = eth2.add(dv2d);
-            this.v2Fortescue = new FortescueValue(vd.abs(), dv2o.abs(), dv2i.abs(), vd.getArgument(), dv2o.getArgument(), dv2i.getArgument());
-        }
-    }
-
     private final LfBus lfBus; // FIXME : might be wrongly overwritten in the "resultsPerFault" presentation
 
     private LfNetwork lfNetwork;
@@ -89,8 +66,6 @@ public class ShortCircuitResult {
     private Map<LfBus, FeedersAtBusResult> feedersResultsInverse;
 
     private final ShortCircuitFault shortCircuitFault;
-
-    private CommonSupportResult commonSupportResult; // used only for biphased with common support faults
 
     public ShortCircuitResult(ShortCircuitFault shortCircuitFault, LfBus lfBus,
                               Complex id, Complex zth, Complex eth, Complex dv,
@@ -163,10 +138,6 @@ public class ShortCircuitResult {
                 zd, zo, zi,
                 vdInit, dvd, dvo, dvi,
                 eqSysFeedersDirect, eqSysFeedersHomopolar, norm, zth20hz, zoth20hz);
-
-        this.commonSupportResult = new CommonSupportResult(lfBus2, v2dinit,
-                i2d, i2o, i2i, dv2d, dv2o, dv2i);
-
     }
 
     public Complex getZd() {
