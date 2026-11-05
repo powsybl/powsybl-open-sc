@@ -18,7 +18,7 @@ If the extension is not set, it is created with its default values when the anal
 | `withNeutralPosition` | `false` | yes | If `true`, the ratio and impedance of transformers are taken at the neutral tap position. |
 | `initialVoltageProfileMode` | `NOMINAL` | yes | `NOMINAL`: 1 pu on every bus. `CONFIGURED`: voltage given by `voltageRanges`. `PREVIOUS_VALUE`: voltage of the network state. |
 | `voltageRanges` | none | yes | Used with `initialVoltageProfileMode = CONFIGURED`. A bus outside every range is initialized at 1 pu. |
-| `withFeederResult` | `true` | no | Feeder results depend on `withVoltageResult`. |
+| `withFeederResult` | `true` | yes | If `false`, no feeder results are returned. Feeder results are only computed for three-phase faults, and require `withVoltageResult = true`, because the feeder currents are computed from the bus voltages. |
 | `withLimitViolations` | `true` | no | Limit violations are never computed. |
 | `withFortescueResult` | `true` | no | Results are always given as magnitudes. |
 | `withVSCConverterStations` | `true` | no | Ignored. |
