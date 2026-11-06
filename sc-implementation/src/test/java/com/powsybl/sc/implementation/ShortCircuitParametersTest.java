@@ -149,6 +149,27 @@ class ShortCircuitParametersTest {
         assertBusVoltages(frs, 0.0, 8.68918419);
     }
 
+    @Test
+    void branchFaultsWithInnerZone() {
+        Network n4nWithGenerators = create4nShuntsNetworkWithMoreGenerators();
+        LoadFlow.run(n4nWithGenerators, loadFlowParameters);
+        scp.getExtension(OpenShortCircuitParameters.class)
+                .setInnerZoneBusIds(List.of("B2", "B3"));
+        List<Fault> faultList = List.of(
+                new BranchFault("F1", "B1_B2", 50), // out
+                new BranchFault("F2", "B1_B4", 50), // out
+                new BranchFault("F3", "B2_B3", 50)); // in
+        List<FaultResult> frs = provider.run(n4nWithGenerators, faultList, scp, LocalComputationManager.getDefault(), Collections.emptyList())
+                .join()
+                .getFaultResults();
+
+        assertEquals(1, frs.size());
+        assertEquals("F3", frs.getFirst().getFault().getId());
+        assertEquals(2, frs.getFirst().getShortCircuitBusResults().size());
+        assertMagnitudeCurrents(frs, 11000.14746);
+        assertBusVoltages(frs, 6.81707478);
+    }
+
     /**
      * Keep all generators in both zones, whatever the thresholds
      * */

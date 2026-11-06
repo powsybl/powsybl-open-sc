@@ -205,7 +205,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         Set<String> innerZoneBusIds = parameters.getExtension(OpenShortCircuitParameters.class).getInnerZoneBusIds();
 
         for (Fault fault : faults) {
-            if (!isInInnerZone(fault, innerZoneBusIds)) {
+            if (!isInInnerZone(fault, innerZoneBusIds, network)) {
                 continue;
             }
             ShortCircuitFault.ShortCircuitType scType = toShortCircuitType(fault);
@@ -222,8 +222,17 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         return new Pair<>(existBalancedFaults, existUnbalancedFaults);
     }
 
-    private static boolean isInInnerZone(Fault fault, Set<String> innerZoneBusIds) {
-        return innerZoneBusIds.isEmpty() || innerZoneBusIds.contains(fault.getElementId());
+    private static boolean isInInnerZone(Fault fault, Set<String> innerZoneBusIds, Network network) {
+        if (innerZoneBusIds.isEmpty()) {
+            return true;
+        }
+        if (fault instanceof BusFault) {
+            return innerZoneBusIds.contains(fault.getElementId());
+        }
+        Pair<String, String> branchBusIds = getBranchBusIdsFromElementId(fault.getElementId(), fault.getId(), network);
+        return branchBusIds != null
+                && innerZoneBusIds.contains(branchBusIds.getFirst())
+                && innerZoneBusIds.contains(branchBusIds.getSecond());
     }
 
     private static ShortCircuitFault.ShortCircuitType toShortCircuitType(Fault fault) {
