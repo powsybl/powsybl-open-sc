@@ -363,7 +363,7 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{3516.67236328125, 3792.351318359375, 3649.132568359375, 2368.190673828125}
         );
-        // assertFeederCurrents(frs, new double[]{3592.60962, 3792.05566, 3601.41699, 3570.39941}, "G2"); FIXME
+        assertFeederCurrents(frs, new double[]{3592.53687, 3791.98267, 3601.34424, 3570.32666}, "G2");
         assertBusVoltages(frs, new double[]{6.90904474, 0.0, 6.60392666, 7.67868948}, 1);
     }
 
@@ -419,7 +419,7 @@ public class ShortCircuitBalancedTest {
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs, new double[]{2945.155029296875, 1879.8883056640625});
-        // assertFeederCurrents(frs, new double[]{2945.104, 2819.78149}, "G1"); FIXME
+        assertFeederCurrents(frs, new double[]{2945.07812, 2819.75586}, "G1");
         assertBusVoltages(frs, new double[]{0.0, 4.34129143}, 0);
         assertBusVoltages(frs, new double[]{0.000213178486, 0.0}, 1);
 
