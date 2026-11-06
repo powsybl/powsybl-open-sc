@@ -33,7 +33,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
     protected final List<Variable<VariableType>> variables;
 
-    protected final BranchAdmittance admittance;
+    protected final BranchAdmittance branchAdmittance;
 
     protected AbstractAdmittanceEquationTerm(LfBranch branch, VariableSet<VariableType> variableSet, ShortCircuitParameters parameters,
                                              OpenShortCircuitParameters openScParameters, AdmittanceType admittanceType,
@@ -52,7 +52,7 @@ public abstract class AbstractAdmittanceEquationTerm extends AbstractElementEqua
 
         variables = List.of(v1rVar, v2rVar, v1iVar, v2iVar);
 
-        admittance = BranchAdmittance.create(branch, parameters, openScParameters, admittanceType, frequencyType);
+        branchAdmittance = BranchAdmittance.create(branch, parameters, openScParameters, admittanceType, frequencyType);
     }
 
     @Override

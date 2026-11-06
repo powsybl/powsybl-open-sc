@@ -31,13 +31,13 @@ public class AdmittanceEquationTermY2 extends AbstractAdmittanceEquationTerm {
     public double getCoefficient(Variable<VariableType> variable) {
         // I2y = -b21 * V1x - g21 * V1y + (b2 + b21)V2x + (g2 + g21)V2y
         if (variable.equals(v1rVar)) {
-            return -admittance.getB21();
+            return -branchAdmittance.getY21().getImaginary();
         } else if (variable.equals(v2rVar)) {
-            return admittance.getB2b21sum();
+            return branchAdmittance.getY2y21sum().getImaginary();
         } else if (variable.equals(v1iVar)) {
-            return -admittance.getG21();
+            return -branchAdmittance.getY21().getReal();
         } else if (variable.equals(v2iVar)) {
-            return admittance.getG2g21sum();
+            return branchAdmittance.getY2y21sum().getReal();
         } else {
             throw new IllegalArgumentException("Unknown variable " + variable);
         }

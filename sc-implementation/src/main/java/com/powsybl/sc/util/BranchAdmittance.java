@@ -25,36 +25,23 @@ import org.apache.commons.math3.complex.Complex;
  */
 public final class BranchAdmittance {
 
-    private final double g12;
+    private final Complex y12;
 
-    private final double b12;
+    private final Complex y1y12sum;
 
-    private final double g1g12sum;
+    private final Complex y21;
 
-    private final double b1b12sum;
-
-    private final double g21;
-
-    private final double b21;
-
-    private final double g2g21sum;
-
-    private final double b2b21sum;
+    private final Complex y2y21sum;
 
     private record KTCoeff(double kTr, double kTx) {
 
     }
 
-    private BranchAdmittance(double g12, double b12, double g1g12sum, double b1b12sum,
-                             double g21, double b21, double g2g21sum, double b2b21sum) {
-        this.g12 = g12;
-        this.b12 = b12;
-        this.g1g12sum = g1g12sum;
-        this.b1b12sum = b1b12sum;
-        this.g21 = g21;
-        this.b21 = b21;
-        this.g2g21sum = g2g21sum;
-        this.b2b21sum = b2b21sum;
+    private BranchAdmittance(Complex y12, Complex y1y12sum, Complex y21, Complex y2y21sum) {
+        this.y12 = y12;
+        this.y1y12sum = y1y12sum;
+        this.y21 = y21;
+        this.y2y21sum = y2y21sum;
     }
 
     public static BranchAdmittance create(LfBranch branch, ShortCircuitParameters parameters,
@@ -109,59 +96,62 @@ public final class BranchAdmittance {
         double cosA = Math.cos(alpha);
         double sinA = Math.sin(alpha);
 
-        double gPi1 = isWithCapacities ? piModel.getG1() / kTr : 0.0;
-        double bPi1 = isWithCapacities ? piModel.getB1() / kTx : 0.0;
-        double gPi2 = isWithCapacities ? piModel.getG2() / kTr : 0.0;
-        double bPi2 = isWithCapacities ? piModel.getB2() / kTx : 0.0;
+        double gPi1 = 0.0;
+        double bPi1 = 0.0;
+        double gPi2 = 0.0;
+        double bPi2 = 0.0;
+        if (isWithCapacities) {
+            gPi1 = piModel.getG1() / kTr;
+            bPi1 = piModel.getB1() / kTx;
+            gPi2 = piModel.getG2() / kTr;
+            bPi2 = piModel.getB2() / kTx;
+        }
 
         if (admittanceType != AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
+            double seriesConductance = rho * zInvSquare * (r * cosA + x * sinA);
             return new BranchAdmittance(
-                    rho * zInvSquare * (r * cosA + x * sinA),
-                    -rho * zInvSquare * (x * cosA + r * sinA),
-                    rho * rho * (gPi1 + r * zInvSquare),
-                    rho * rho * (bPi1 - x * zInvSquare),
-                    rho * zInvSquare * (r * cosA + x * sinA),
-                    rho * zInvSquare * (r * sinA - x * cosA),
-                    r * zInvSquare + gPi2,
-                    -x * zInvSquare + bPi2);
+                    new Complex(seriesConductance, -rho * zInvSquare * (x * cosA + r * sinA)),
+                    new Complex(rho * rho * (gPi1 + r * zInvSquare), rho * rho * (bPi1 - x * zInvSquare)),
+                    new Complex(seriesConductance, rho * zInvSquare * (r * sinA - x * cosA)),
+                    new Complex(r * zInvSquare + gPi2, -x * zInvSquare + bPi2));
         }
+
+        return createHomopolar(branch, frequencyType, rho, cosA, sinA, gPi2, bPi2);
+    }
+
+    private static BranchAdmittance createHomopolar(LfBranch branch, FrequencyType frequencyType,
+                                                    double rho, double cosA, double sinA, double gPi2, double bPi2) {
 
         HomopolarModel homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL);
         if (frequencyType == FrequencyType.FREQ_20_HZ) {
             homopolarModel = (HomopolarModel) branch.getProperty(ShortCircuitExtensions.PROPERTY_HOMOPOLAR_MODEL_20HZ);
         }
-        if (branch.getBranchType() == LfBranch.BranchType.LINE) {
-            // case where branch is a line with available homopolar parameters
-            double zoInvSquare = homopolarModel.getZoInvSquare();
-            double ro = homopolarModel.getZo().getReal();
-            double xo = homopolarModel.getZo().getImaginary();
-            return new BranchAdmittance(
-                    rho * zoInvSquare * (ro * cosA + xo * sinA),
-                    -rho * zoInvSquare * (xo * cosA + ro * sinA),
-                    rho * rho * (homopolarModel.getYom().getReal() + ro * zoInvSquare),
-                    rho * rho * (homopolarModel.getYom().getImaginary() - xo * zoInvSquare),
-                    rho * zoInvSquare * (ro * cosA + xo * sinA),
-                    rho * zoInvSquare * (ro * sinA - xo * cosA),
-                    ro * zoInvSquare + gPi2 * AdmittanceConstants.COEF_XO_XD,
-                    -xo * zoInvSquare + bPi2 * AdmittanceConstants.COEF_XO_XD);
-        } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_2
-                || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_1
-                || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_2
-                || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_3) {
-            // case where branch is part of a transformer
-            ComplexMatrix mo = homopolarModel.getHomopolarAdmittanceMatrix();
-            return new BranchAdmittance(
-                    -mo.get(0, 1).getReal(),
-                    -mo.get(0, 1).getImaginary(),
-                    mo.get(0, 0).getReal(),
-                    mo.get(0, 0).getImaginary(),
-                    -mo.get(1, 0).getReal(),
-                    -mo.get(1, 0).getImaginary(),
-                    mo.get(1, 1).getReal(),
-                    mo.get(1, 1).getImaginary());
-        } else {
-            throw new IllegalArgumentException("branch type not yet handled");
-        }
+        return switch (branch.getBranchType()) {
+            case LINE -> {
+                // case where branch is a line with available homopolar parameters
+                double zoInvSquare = homopolarModel.getZoInvSquare();
+                double ro = homopolarModel.getZo().getReal();
+                double xo = homopolarModel.getZo().getImaginary();
+                double seriesConductance = rho * zoInvSquare * (ro * cosA + xo * sinA);
+                yield new BranchAdmittance(
+                        new Complex(seriesConductance, -rho * zoInvSquare * (xo * cosA + ro * sinA)),
+                        new Complex(rho * rho * (homopolarModel.getYom().getReal() + ro * zoInvSquare),
+                                rho * rho * (homopolarModel.getYom().getImaginary() - xo * zoInvSquare)),
+                        new Complex(seriesConductance, rho * zoInvSquare * (ro * sinA - xo * cosA)),
+                        new Complex(ro * zoInvSquare + gPi2 * AdmittanceConstants.COEF_XO_XD,
+                                -xo * zoInvSquare + bPi2 * AdmittanceConstants.COEF_XO_XD));
+            }
+            case TRANSFO_2, TRANSFO_3_LEG_1, TRANSFO_3_LEG_2, TRANSFO_3_LEG_3 -> {
+                // case where branch is part of a transformer
+                ComplexMatrix mo = homopolarModel.getHomopolarAdmittanceMatrix();
+                yield new BranchAdmittance(
+                        mo.get(0, 1).multiply(-1),
+                        mo.get(0, 0),
+                        mo.get(1, 0).multiply(-1),
+                        mo.get(1, 1));
+            }
+            default -> throw new IllegalArgumentException("branch type not yet handled");
+        };
     }
 
     private static KTCoeff computeKTCoeff(LfBranch branch) {
@@ -195,47 +185,28 @@ public final class BranchAdmittance {
         return new KTCoeff(kTr, kTx);
     }
 
-    /**
-     * @return the 2x2 complex admittance matrix such that [I1, I2] = [[y11, y12], [y21, y22]] [V1, V2]
-     */
     public ComplexMatrix toComplexMatrix() {
         ComplexMatrix admittance = new ComplexMatrix(2, 2);
-        admittance.set(0, 0, new Complex(g1g12sum, b1b12sum));
-        admittance.set(0, 1, new Complex(-g12, -b12));
-        admittance.set(1, 0, new Complex(-g21, -b21));
-        admittance.set(1, 1, new Complex(g2g21sum, b2b21sum));
+        admittance.set(0, 0, y1y12sum);
+        admittance.set(0, 1, y12.multiply(-1));
+        admittance.set(1, 0, y21.multiply(-1));
+        admittance.set(1, 1, y2y21sum);
         return admittance;
     }
 
-    public double getG12() {
-        return g12;
+    public Complex getY12() {
+        return y12;
     }
 
-    public double getB12() {
-        return b12;
+    public Complex getY1y12sum() {
+        return y1y12sum;
     }
 
-    public double getG1g12sum() {
-        return g1g12sum;
+    public Complex getY21() {
+        return y21;
     }
 
-    public double getB1b12sum() {
-        return b1b12sum;
-    }
-
-    public double getG21() {
-        return g21;
-    }
-
-    public double getB21() {
-        return b21;
-    }
-
-    public double getG2g21sum() {
-        return g2g21sum;
-    }
-
-    public double getB2b21sum() {
-        return b2b21sum;
+    public Complex getY2y21sum() {
+        return y2y21sum;
     }
 }
