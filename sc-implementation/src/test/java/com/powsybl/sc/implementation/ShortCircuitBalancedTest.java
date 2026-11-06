@@ -113,8 +113,8 @@ public class ShortCircuitBalancedTest {
 
         assertEquals(2945.047378902121, m0.getCurrent(), DELTA_I_A);
         assertEquals(2682.67577453832, m1.getCurrent(), DELTA_I_A);
-        // assertEquals(2886.75171, m0.getFeederCurrent("G1"), DELTA_I_A); TODO: Add with next Core release
-        // assertEquals(2624.31941, m1.getFeederCurrent("G1"), DELTA_I_A); TODO: Add with next Core release
+        assertEquals(2886.75171, m0.getFeederCurrent("G1"), DELTA_I_A);
+        assertEquals(2624.31941, m1.getFeederCurrent("G1"), DELTA_I_A);
         assertEquals(6.662151249755523E-14, m0.getVoltage(), DELTA_V);
         assertEquals(6.662151249755523E-14, m1.getVoltage(), DELTA_V);
         assertEquals(0.28227759385913187, ((MagnitudeShortCircuitBusResults) m0.getShortCircuitBusResults().get(1)).getVoltage(), DELTA_V);
@@ -277,7 +277,7 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{3547.165283203125, 3747.61083984375, 3592.37939453125, 3411.642578125}
         );
-        // assertFeederCurrents(frs, new double[]{2700.28195, 2886.75122, 2725.79395, 2586.51782}, "G2"); TODO: Add with next Core release
+        assertFeederCurrents(frs, new double[]{2700.28195, 2886.75122, 2725.79395, 2586.51782}, "G2");
         assertBusVoltages(frs, new double[]{6.46059465, 0.0, 5.57589579, 10.400857}, 1);
     }
 
@@ -339,7 +339,7 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{3523.270263671875, 3767.30078125, 3557.220458984375, 3374.391845703125}
         );
-        // assertFeederCurrents(frs, new double[]{3547.77686, 3767.2981, 3564.29761, 3424.16235}, "G2"); // TODO: Add with next Core release
+        assertFeederCurrents(frs, new double[]{3547.77686, 3767.2981, 3564.29761, 3424.16235}, "G2");
         assertBusVoltages(frs, new double[]{7.60443974, 0.0, 7.03214169, 11.8865681}, 1);
     }
 
@@ -363,7 +363,7 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{3516.67236328125, 3792.351318359375, 3649.132568359375, 2368.190673828125}
         );
-        // assertFeederCurrents(frs, new double[]{3592.60962, 3792.05566, 3601.41699, 3570.39941}, "G2"); // TODO: Add with next Core release
+        // assertFeederCurrents(frs, new double[]{3592.60962, 3792.05566, 3601.41699, 3570.39941}, "G2"); FIXME
         assertBusVoltages(frs, new double[]{6.90904474, 0.0, 6.60392666, 7.67868948}, 1);
     }
 
@@ -419,7 +419,7 @@ public class ShortCircuitBalancedTest {
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs, new double[]{2945.155029296875, 1879.8883056640625});
-        // assertFeederCurrents(frs, new double[]{2945.104, 2819.78149}, "G1"); // TODO: Add with next Core release
+        // assertFeederCurrents(frs, new double[]{2945.104, 2819.78149}, "G1"); FIXME
         assertBusVoltages(frs, new double[]{0.0, 4.34129143}, 0);
         assertBusVoltages(frs, new double[]{0.000213178486, 0.0}, 1);
 
@@ -451,7 +451,7 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{2641.36792, 2062.15551}
         );
-        // assertFeederCurrents(frs, new double[]{2598.07642, 3040.30176}, "G1"); // TODO: Add with next Core release
+        assertFeederCurrents(frs, new double[]{2598.07642, 3040.30176}, "G1");
         assertBusVoltages(frs, new double[]{30.09933, 0.0}, 1);
     }
 
@@ -805,7 +805,7 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{3222.086181640625, 3486.87646484375, 3462.0830078125, 2701.750732421875}
         );
-        // assertFeederCurrents(frs, new double[]{2407.81299, 2598.07642, 2500.03687, 2972.69214}, "G2"); // TODO: Add with next Core release
+        assertFeederCurrents(frs, new double[]{2407.81299, 2598.07642, 2500.03687, 2972.69214}, "G2");
         assertBusVoltages(frs, new double[]{6.59124184, 0.0, 3.39618897, 12.9770918}, 1);
     }
 
