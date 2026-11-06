@@ -539,14 +539,14 @@ public class ShortCircuitResult {
 
     public double getMaxROverX() {
         double maxRatio = 0.0;
-        Map<LfBranch, FortescueValue> branchDi1 = getBranchDi1();
-        Map<LfBranch, FortescueValue> branchDi2 = getBranchDi2();
+        Map<LfBranch, FortescueValue> branchDeltaI1 = getBranchDi1();
+        Map<LfBranch, FortescueValue> branchDeltaI2 = getBranchDi2();
         for (LfBranch branch : getLfNetwork().getBranches()) {
             PiModel piModel = branch.getPiModel();
             // we only look at ratio for branches with significant short circuit currents
             if (piModel.getX() >= IMPEDANCE_EPSILON_PU
-                    && (branchDi1.get(branch).getPositiveMagnitude() > CURRENT_EPSILON_PU
-                    || branchDi2.get(branch).getPositiveMagnitude() > CURRENT_EPSILON_PU)) {
+                    && (branchDeltaI1.get(branch).getPositiveMagnitude() > CURRENT_EPSILON_PU
+                    || branchDeltaI2.get(branch).getPositiveMagnitude() > CURRENT_EPSILON_PU)) {
                 maxRatio = Math.max(maxRatio, piModel.getR() / piModel.getX());
             }
         }

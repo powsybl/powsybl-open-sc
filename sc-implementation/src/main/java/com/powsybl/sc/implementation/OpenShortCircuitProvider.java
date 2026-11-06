@@ -202,32 +202,39 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                                                   Map<ShortCircuitFault, Fault> scFaultToFault, ShortCircuitParameters parameters) {
         boolean existBalancedFaults = false;
         boolean existUnbalancedFaults = false;
+        Set<String> innerZoneBusIds = parameters.getExtension(OpenShortCircuitParameters.class).getInnerZoneBusIds();
 
         for (Fault fault : faults) {
-            String elementId = fault.getElementId();
-            Bus bus = network.getBusBreakerView().getBus(elementId);
-
-            Set<String> innerZoneBusIds = parameters.getExtension(OpenShortCircuitParameters.class).getInnerZoneBusIds();
-
-            if (!innerZoneBusIds.isEmpty() && !innerZoneBusIds.contains(bus.getId())) {
+            if (!isInInnerZone(fault, innerZoneBusIds)) {
                 continue;
             }
-            ShortCircuitFault.ShortCircuitType scType = ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND; // Default type
-
-            if (fault.getFaultType() == Fault.FaultType.SINGLE_PHASE) {
-                existUnbalancedFaults = true;
-                scType = ShortCircuitFault.ShortCircuitType.MONOPHASED;
-            } else if (fault.getFaultType() == Fault.FaultType.THREE_PHASE) {
-                existBalancedFaults = true;
-            } else {
-                LOGGER.warn("Short circuit of unknown type, fault: {} is ignored", fault.getId());
-                continue;
+            ShortCircuitFault.ShortCircuitType scType = toShortCircuitType(fault);
+            if (scType != null) {
+                if (scType == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+                    existBalancedFaults = true;
+                } else if (scType == ShortCircuitFault.ShortCircuitType.MONOPHASED) {
+                    existUnbalancedFaults = true;
+                }
+                fillFaultLists(fault, network, scType, balancedFaultsList, scFaultToFault);
             }
-
-            fillFaultLists(fault, network, scType, balancedFaultsList, scFaultToFault);
         }
 
         return new Pair<>(existBalancedFaults, existUnbalancedFaults);
+    }
+
+    private static boolean isInInnerZone(Fault fault, Set<String> innerZoneBusIds) {
+        return innerZoneBusIds.isEmpty() || innerZoneBusIds.contains(fault.getElementId());
+    }
+
+    private static ShortCircuitFault.ShortCircuitType toShortCircuitType(Fault fault) {
+        return switch (fault.getFaultType()) {
+            case THREE_PHASE -> ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND;
+            case SINGLE_PHASE -> ShortCircuitFault.ShortCircuitType.MONOPHASED;
+            default -> {
+                LOGGER.warn("Short circuit of unknown type, fault: {} is ignored", fault.getId());
+                yield null;
+            }
+        };
     }
 
     private void checkForBranchNominalVoltageCoherency(Network network, String busId1, String busId2) {

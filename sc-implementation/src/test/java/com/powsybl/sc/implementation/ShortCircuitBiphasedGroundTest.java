@@ -9,8 +9,6 @@ package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.math.matrix.DenseMatrixFactory;
-import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.ReferenceNetwork;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
@@ -30,13 +28,10 @@ class ShortCircuitBiphasedGroundTest {
 
     private LoadFlowParameters loadFlowParameters;
 
-    private MatrixFactory matrixFactory;
-
     @BeforeEach
     void setUp() {
         loadFlowParameters = new LoadFlowParameters()
                 .setTwtSplitShuntAdmittance(true);
-        matrixFactory = new DenseMatrixFactory();
     }
 
     @Test

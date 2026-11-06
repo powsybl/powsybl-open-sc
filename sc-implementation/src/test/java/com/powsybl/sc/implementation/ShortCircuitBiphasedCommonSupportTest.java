@@ -54,8 +54,6 @@ class ShortCircuitBiphasedCommonSupportTest {
     void shortCircuitIec31MultiBiphasedCommonSupport() {
 
         Network network = ReferenceNetwork.create6NodesIec9094();
-        Complex zFaultToGround = new Complex(0.);
-        ShortCircuitFaultImpedance scz = new ShortCircuitFaultImpedance(zFaultToGround);
         ShortCircuitFault sc1 = createZeroImpedanceBiphasedCommonSupportFault("B2", "B3", "sc1", "B2", ShortCircuitFault.ShortCircuitBiphasedType.C1_B2);
         ShortCircuitFault sc2 = createZeroImpedanceBiphasedCommonSupportFault("B4", "B5", "sc2", "B4", ShortCircuitFault.ShortCircuitBiphasedType.C1_C2);
         // TODO : a list that contains BIPHASED_COMMON_SUPPORT with the same nodes is not supported yet : FIX_ME
