@@ -306,6 +306,22 @@ public class ShortCircuitBalancedTest {
     }
 
     @Test
+    void sc2nTfoWithPst() {
+        Network nt2 = create2nPst(NetworkFactory.findDefault());
+
+        List<Fault> faults = List.of(
+                new BusFault("F1", "B1"),
+                new BusFault("F2", "B2"));
+
+        ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
+        List<FaultResult> frs = scar.getFaultResults();
+
+        assertMagnitudeCurrents(frs,
+                new double[]{2805.140380859375, 1298.51513671875}
+        );
+    }
+
+    @Test
     void openShortCircuitProvider2nTfoLoadFlowVoltages() {
         Network nt2Tfo = create2nTfo(NetworkFactory.findDefault());
         LoadFlow.run(nt2Tfo, loadFlowParameters);

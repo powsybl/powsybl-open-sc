@@ -618,6 +618,40 @@ public final class Networks {
         return network;
     }
 
+    public static Network create2nPst(NetworkFactory networkFactory) {
+        Objects.requireNonNull(networkFactory);
+        Network network = create2nTfo(networkFactory);
+
+        double[] rho = {0.85, 1.0, 1.20};
+        double[] alpha = {-30.0, 0.0, 45.0}; // degrees
+        double[] r = {50.0, 0.0, 100.0};     // % deviation from transformer R
+        double[] x = {-50.0, 0.0, 100.0};    // % deviation from transformer X
+
+        TwoWindingsTransformer twt = network.getTwoWindingsTransformer("B1_B2");
+        PhaseTapChangerAdder ptcAdder = twt.newPhaseTapChanger()
+                .setLowTapPosition(0)
+                .setTapPosition(2)
+                .setRegulating(false)
+                .setRegulationMode(PhaseTapChanger.RegulationMode.ACTIVE_POWER_CONTROL)
+                .setRegulationTerminal(twt.getTerminal1())
+                .setRegulationValue(0.0)
+                .setTargetDeadband(1.0);
+
+        for (int i = 0; i < alpha.length; i++) {
+            ptcAdder.beginStep()
+                    .setRho(rho[i])
+                    .setAlpha(alpha[i])
+                    .setR(r[i])
+                    .setX(x[i])
+                    .setG(0.0)
+                    .setB(0.0)
+                    .endStep();
+        }
+        ptcAdder.add();
+
+        return network;
+    }
+
     public static Network create4nShunts(NetworkFactory networkFactory) {
         Objects.requireNonNull(networkFactory);
         //      2                               3
