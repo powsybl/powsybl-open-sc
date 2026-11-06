@@ -91,7 +91,8 @@ public abstract class AbstractShortCircuitEngine {
         List<ShortCircuitFault> scfSystematic = new ArrayList<>();
         shortCircuitParameters.setWithVoltageResult(false);
         for (Bus bus : network.getBusBreakerView().getBuses()) {
-            ShortCircuitFault sc = new ShortCircuitFault(bus.getId(), bus.getId(), bus.getId(), new ShortCircuitFaultImpedance(new Complex(0.)), type); //TODO : check validity of voltage levels if no connexity
+            ShortCircuitFault sc = new ShortCircuitFault(bus.getId(), bus.getId(), bus.getId(),
+                    new ShortCircuitFaultImpedance(new Complex(0.)), type); //TODO : check validity of voltage levels if no connexity
             scfSystematic.add(sc);
         }
         shortCircuitFaults = scfSystematic;
@@ -119,8 +120,8 @@ public abstract class AbstractShortCircuitEngine {
         }
     }
 
-    protected static Pair<String, Integer > buildFaultBranchFromBusId(String busId, Network tmpNetwork) {
-        Pair<String, Integer > branchFaultInfo = buildFaultDipoleFromBusId(busId, tmpNetwork);
+    protected static Pair<String, Integer> buildFaultBranchFromBusId(String busId, Network tmpNetwork) {
+        Pair<String, Integer> branchFaultInfo = buildFaultDipoleFromBusId(busId, tmpNetwork);
         if (branchFaultInfo.getKey().isEmpty()) {
             // Bus not found in branches, try three windings transformers
             branchFaultInfo = buildFaultT3WbranchFromBusId(busId, tmpNetwork);
@@ -128,7 +129,7 @@ public abstract class AbstractShortCircuitEngine {
         return branchFaultInfo;
     }
 
-    protected static Pair<String, Integer > buildFaultDipoleFromBusId(String busId, Network tmpNetwork) {
+    protected static Pair<String, Integer> buildFaultDipoleFromBusId(String busId, Network tmpNetwork) {
         // improve with direct correspondence between iidm buses and lfBuses when available in PowSyBl, because this loop is not very efficient
         Bus bus = tmpNetwork.getBusBreakerView().getBus(busId);
         String branchId = "";

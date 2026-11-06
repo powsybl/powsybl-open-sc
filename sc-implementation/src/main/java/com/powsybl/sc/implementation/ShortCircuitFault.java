@@ -29,7 +29,8 @@ public class ShortCircuitFault {
     /**
      * Biphased common support fault, tying together two buses.
      */
-    public ShortCircuitFault(String busLocation, String secondBiphasedBusLocation, String faultId, String elementId, ShortCircuitFaultImpedance zf, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
+    public ShortCircuitFault(String busLocation, String secondBiphasedBusLocation, String faultId, String elementId,
+                             ShortCircuitFaultImpedance zf, ShortCircuitType type, ShortCircuitBiphasedType biphasedType) {
         if (type != ShortCircuitType.BIPHASED_COMMON_SUPPORT) {
             throw new IllegalArgumentException("ShortCircuitType must be BIPHASED_COMMON_SUPPORT for a bi-phased common support fault, got" + type);
         }
@@ -72,6 +73,7 @@ public class ShortCircuitFault {
         C1_B2,
         C1_A2
     }
+
     private final CalculationLocation location;
 
     private final String faultId;

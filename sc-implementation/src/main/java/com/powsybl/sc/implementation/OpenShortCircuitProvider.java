@@ -65,7 +65,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
     }
 
     @Override
-    public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters, ComputationManager computationManager, List<FaultParameters> faultParameters) {
+    public CompletableFuture<ShortCircuitAnalysisResult> run(Network network, List<Fault> faults, ShortCircuitParameters parameters,
+                                                             ComputationManager computationManager, List<FaultParameters> faultParameters) {
 
         Objects.requireNonNull(network);
         Objects.requireNonNull(parameters);
@@ -215,7 +216,11 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 } else if (scType == ShortCircuitFault.ShortCircuitType.MONOPHASED) {
                     existUnbalancedFaults = true;
                 }
-                fillFaultLists(fault, network, scType, balancedFaultsList, scFaultToFault);
+                try {
+                    fillFaultLists(fault, network, scType, balancedFaultsList, scFaultToFault);
+                } catch (IllegalArgumentException e) {
+                    LOGGER.warn("Invalid fault '{}': {}. Fault is ignored.", fault.getId(), e.getMessage());
+                }
             }
         }
 

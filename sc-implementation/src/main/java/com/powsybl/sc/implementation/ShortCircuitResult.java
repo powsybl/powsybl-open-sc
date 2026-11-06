@@ -58,7 +58,9 @@ public class ShortCircuitResult {
     private Map<LfBranch, FortescueValue> branchDi1;
     private Map<LfBranch, FortescueValue> branchDi2;
 
-    private final FeedersAtNetwork eqSysFeedersDirect; // This contains the equivalent admittance of feeders's injectors, they are built when the AdmittanceEquationSystem is built and put in input of the sc result
+    // eqSysFeedersDirect contains the equivalent admittance of feeders's injectors,
+    // they are built when the AdmittanceEquationSystem is built and put in input of the sc result
+    private FeedersAtNetwork eqSysFeedersDirect;
     private FeedersAtNetwork eqSysFeedersHomopolar;
 
     private Map<LfBus, FeedersAtBusResult> feedersResultDirect; // For each feeder in eqSysFeedersDirect, this map contains the results

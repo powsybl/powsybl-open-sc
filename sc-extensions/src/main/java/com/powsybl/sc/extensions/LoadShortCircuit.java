@@ -81,7 +81,7 @@ public class LoadShortCircuit extends AbstractExtension<Load> {
     public enum LoadShortCircuitType {
         UNKNOWN,
         CONSTANT_LOAD,
-        ASYNCHRONOUS_MACHINE;
+        ASYNCHRONOUS_MACHINE
     }
 
     private final LoadShortCircuitType loadShortCircuitType;
