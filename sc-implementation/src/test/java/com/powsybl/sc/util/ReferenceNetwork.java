@@ -289,14 +289,12 @@ public final class ReferenceNetwork {
         double coeffRoL4 = 2.;
         double coeffXoL4 = 3.;
 
-        // we model the feeder through a load: TODO : check if relevant for all IEC examples
+        // we model the network feeder through a generator of type FEEDER (no IEC correction factor kG)
         // Given the formula: |Zfeeder| = c.Un/(sqrt(3).Ik".rho²) at Vnom = 0.41 kV
         // Then Xfeeder = |Zfeeder| * 0.995 and Rfeeder = 0.1 * Xfeeder
         // Impedance to be applied at feeder : Zfeeder = 0.126115 +j1.26353 ohms at 20 kV (or Zfeeder = 0.053 +j0.531 mohms at 0.41kV as given in the example with rho)
-
-        //using formula P(MW) = Re(Z) * |V|² / |Z|² and Q(MVA) = Im(Z) * |V|² / |Z|² we transform the feeder into a load
-        double pEquivalentFeeder = 31.286;
-        double qEquivalentFeeder = 313.451;
+        double rFeeder = 0.126115;
+        double xFeeder = 1.26353;
 
         Substation frSubstation = network.newSubstation()
                 .setId("S1")
@@ -320,11 +318,31 @@ public final class ReferenceNetwork {
         VoltageLevel vl6 = addNewVoltageLevel(frSubstation, "VL_6", bus2Vnom);
         Bus bus6 = addNewBus(vl6, "B6", bus2Vnom, 0);
 
-        vl1.newLoad()
-                .setId("LOAD_FEEDER") // we try to model the feeder through a load that will be transformed into an impedance
+        Generator feeder = vl1.newGenerator()
+                .setId("FEEDER")
                 .setBus(bus1.getId())
-                .setP0(pEquivalentFeeder)
-                .setQ0(qEquivalentFeeder)
+                .setConnectableBus(bus1.getId())
+                .setMinP(0.0)
+                .setMaxP(100.)
+                .setTargetP(0.)
+                .setTargetQ(0.)
+                .setTargetV(vl1.getNominalV())
+                .setVoltageRegulatorOn(false)
+                .add();
+        feeder.newExtension(GeneratorShortCircuitAdder.class)
+                .withDirectSubtransX(xFeeder)
+                .withDirectTransX(xFeeder)
+                .withStepUpTransformerX(0.)
+                .add();
+        feeder.newExtension(GeneratorShortCircuitAdder2.class)
+                .withTransRd(rFeeder)
+                .withSubTransRd(rFeeder)
+                .add();
+        feeder.newExtension(GeneratorFortescueAdder.class)
+                .withGrounded(false)
+                .add();
+        feeder.newExtension(GeneratorFortescueTypeAdder.class)
+                .withGeneratorType(GeneratorFortescueType.GeneratorType.FEEDER)
                 .add();
 
         var t1 = frSubstation.newTwoWindingsTransformer()
@@ -531,7 +549,7 @@ public final class ReferenceNetwork {
                 .add();
 
         // This feeder is changed into a machine because it is not yet possible to model a grounded feeder with a load
-        /*vl5.newLoad()
+        /* vl5.newLoad()
                 .setId("LOAD_FEEDER2") // we try to model the feeder through a load that will be transformed into an impedance
                 .setBus(bus5.getId())
                 .setP0(pEquivalentFeeder2)
@@ -673,14 +691,12 @@ public final class ReferenceNetwork {
         double coeffRoL4 = 2.;
         double coeffXoL4 = 3.;
 
-        // we model the feeder through a load: TODO : check if relevant for all IEC examples
+        // we model the network feeder through a generator of type FEEDER (no IEC correction factor kG)
         // Given the formula: |Zfeeder| = c.Un/(sqrt(3).Ik".rho²) at Vnom = 0.41 kV
         // Then Xfeeder = |Zfeeder| * 0.995 and Rfeeder = 0.1 * Xfeeder
         // Impedance to be applied at feeder : Zfeeder = 0.126115 +j1.26353 ohms at 20 kV (or Zfeeder = 0.053 +j0.531 mohms at 0.41kV as given in the example with rho)
-
-        //using formula P(MW) = Re(Z) * |V|² / |Z|² and Q(MVA) = Im(Z) * |V|² / |Z|² we transform the feeder into a load
-        double pEquivalentFeeder = 31.286;
-        double qEquivalentFeeder = 313.451;
+        double rFeeder = 0.126115;
+        double xFeeder = 1.26353;
 
         Substation frSubstation = network.newSubstation()
                 .setId("S1")
@@ -711,11 +727,31 @@ public final class ReferenceNetwork {
         VoltageLevel vl6 = addNewVoltageLevel(frSubstation, "VL_6", bus2Vnom);
         Bus bus6 = addNewBus(vl6, "B6", bus2Vnom, 0);
 
-        vl1.newLoad()
-                .setId("LOAD_FEEDER") // we try to model the feeder through a load that will be transformed into an impedance
+        Generator feeder = vl1.newGenerator()
+                .setId("FEEDER")
                 .setBus(bus1.getId())
-                .setP0(pEquivalentFeeder)
-                .setQ0(qEquivalentFeeder)
+                .setConnectableBus(bus1.getId())
+                .setMinP(0.0)
+                .setMaxP(100.)
+                .setTargetP(0.)
+                .setTargetQ(0.)
+                .setTargetV(vl1.getNominalV())
+                .setVoltageRegulatorOn(false)
+                .add();
+        feeder.newExtension(GeneratorShortCircuitAdder.class)
+                .withDirectSubtransX(xFeeder)
+                .withDirectTransX(xFeeder)
+                .withStepUpTransformerX(0.)
+                .add();
+        feeder.newExtension(GeneratorShortCircuitAdder2.class)
+                .withTransRd(rFeeder)
+                .withSubTransRd(rFeeder)
+                .add();
+        feeder.newExtension(GeneratorFortescueAdder.class)
+                .withGrounded(false)
+                .add();
+        feeder.newExtension(GeneratorFortescueTypeAdder.class)
+                .withGeneratorType(GeneratorFortescueType.GeneratorType.FEEDER)
                 .add();
 
         var t1 = frSubstation.newTwoWindingsTransformer()
@@ -938,4 +974,3 @@ public final class ReferenceNetwork {
                 .add();
     }
 }
-

@@ -8,7 +8,6 @@
 package com.powsybl.sc.implementation;
 
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.util.FastMath;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -46,13 +45,5 @@ public abstract class AbstractShortCircuitCalculator {
     }
 
     public abstract void computeCurrents();
-
-    public Complex geta() {
-        return new Complex(-0.5, FastMath.sqrt(3.) / 2);
-    }
-
-    public Complex geta2() {
-        return geta().multiply(geta());
-    }
 
 }

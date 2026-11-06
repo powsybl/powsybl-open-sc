@@ -10,35 +10,14 @@ package com.powsybl.sc.implementation;
 import org.apache.commons.math3.complex.Complex;
 
 /**
+ * @param zg Fault impedance to the ground
+ * @param zb Fault impedance linked to the second phase
+ * @param zc Fault impedance linked to the third phase
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
-public class ShortCircuitFaultImpedance {
-
-    private final Complex zg; // Fault impedance to the ground
-
-    private final Complex zb; // Fault impedance linked to the second phase
-
-    private final Complex zc; // Fault impedance linked to the third phase
-
-    public ShortCircuitFaultImpedance(Complex zg, Complex zb, Complex zc) {
-        this.zg = zg;
-        this.zb = zb;
-        this.zc = zc;
-    }
+public record ShortCircuitFaultImpedance(Complex zg, Complex zb, Complex zc) {
 
     public ShortCircuitFaultImpedance(Complex zg) {
         this(zg, new Complex(0.), new Complex(0.));
-    }
-
-    public Complex getZg() {
-        return zg;
-    }
-
-    public Complex getZb() {
-        return zb;
-    }
-
-    public Complex getZc() {
-        return zc;
     }
 }
