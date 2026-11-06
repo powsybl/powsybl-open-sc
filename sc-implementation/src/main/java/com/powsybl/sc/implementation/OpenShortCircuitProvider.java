@@ -11,14 +11,17 @@ import com.google.auto.service.AutoService;
 import com.google.common.base.Stopwatch;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.computation.ComputationManager;
-import com.powsybl.iidm.network.*;
-import com.powsybl.openloadflow.network.LfBus;
-import com.powsybl.sc.util.CalculationLocation;
-import com.powsybl.openloadflow.network.LfNetwork;
-import com.powsybl.sc.util.Feeder;
-import com.powsybl.sc.extensions.OpenShortCircuitParameters;
-import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.contingency.violations.LimitViolation;
+import com.powsybl.iidm.network.Branch;
+import com.powsybl.iidm.network.Bus;
+import com.powsybl.iidm.network.Identifiable;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.openloadflow.network.LfBus;
+import com.powsybl.openloadflow.network.LfNetwork;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
+import com.powsybl.sc.util.CalculationLocation;
+import com.powsybl.sc.util.Feeder;
+import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.shortcircuit.*;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
@@ -97,13 +100,15 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         return CompletableFuture.completedFuture(new ShortCircuitAnalysisResult(faultResults));
     }
 
-    public void runUnbalancedAnalysis(Network network, ShortCircuitParameters shortCircuitParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<ShortCircuitFault> shortCircuitFaults, List<FaultResult> faultResults) {
+    public void runUnbalancedAnalysis(Network network, ShortCircuitParameters shortCircuitParameters,
+                                      Map<ShortCircuitFault, Fault> scFaultToFault, List<ShortCircuitFault> shortCircuitFaults, List<FaultResult> faultResults) {
         ShortCircuitUnbalancedEngine scuEngine = new ShortCircuitUnbalancedEngine(network, shortCircuitParameters, shortCircuitFaults, shortCircuitNorm);
         // TODO : feeder results only hold the positive sequence contribution, homopolar and negative ones are needed for unbalanced faults
         runAnalysis(scuEngine, network, scFaultToFault, faultResults, false);
     }
 
-    public void runBalancedAnalysis(Network network, ShortCircuitParameters shortCircuitParameters, Map<ShortCircuitFault, Fault> scFaultToFault, List<ShortCircuitFault> shortCircuitFaults, List<FaultResult> faultResults) {
+    public void runBalancedAnalysis(Network network, ShortCircuitParameters shortCircuitParameters,
+                                    Map<ShortCircuitFault, Fault> scFaultToFault, List<ShortCircuitFault> shortCircuitFaults, List<FaultResult> faultResults) {
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, shortCircuitParameters, shortCircuitFaults, shortCircuitNorm);
         runAnalysis(scbEngine, network, scFaultToFault, faultResults, shortCircuitParameters.isWithFeederResult());
     }
@@ -137,7 +142,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 fillBusResults(engine.getLfNetwork(), busResults, scResult, engine.getInitialVoltages(),
                         shortCircuitParameters.getMinVoltageDropProportionalThreshold(), innerZone);
             }
-            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults, limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
+            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults,
+                    limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }
@@ -176,7 +182,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         }
     }
 
-    private void fillBusResults(LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult, List<Complex> initialVoltages, double minVoltDropProportional, Predicate<LfBus> innerZone) {
+    private void fillBusResults(LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult,
+                                List<Complex> initialVoltages, double minVoltDropProportional, Predicate<LfBus> innerZone) {
         List<FortescueValue> dVoltages = scResult.getBusNum2Dv();
         for (LfBus lfBus : lfNetwork.getBuses()) {
             if (innerZone.test(lfBus)) {
