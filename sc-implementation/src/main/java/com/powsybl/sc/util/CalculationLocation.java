@@ -47,12 +47,6 @@ public class CalculationLocation {
         validate();
     }
 
-    private void validate() {
-        if (locationType == LocationType.LINE && (proportionalLocationOnLine < 0.0 || proportionalLocationOnLine > 100.0)) {
-            throw new IllegalArgumentException("percentageFromBus1 must be between 0 and 100 inclusive");
-        }
-    }
-
     /**
      * Single bus fault.
      */
@@ -72,6 +66,12 @@ public class CalculationLocation {
      */
     public CalculationLocation(String busLocation, String bus2Location, double proportionalLocationOnLine) {
         this(busLocation, Objects.requireNonNull(bus2Location), proportionalLocationOnLine, LocationType.LINE);
+    }
+
+    private void validate() {
+        if (locationType == LocationType.LINE && (proportionalLocationOnLine < 0.0 || proportionalLocationOnLine > 100.0)) {
+            throw new IllegalArgumentException("percentageFromBus1 must be between 0 and 100 inclusive");
+        }
     }
 
     public LocationType getLocationType() {

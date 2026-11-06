@@ -42,7 +42,8 @@ class ShortCircuitBiphasedCommonSupportTest {
 
         Network network = ReferenceNetwork.create6NodesIec9094();
 
-        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", "B2", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_A2);
+        ShortCircuitFault sc1 = new ShortCircuitFault("B2", "B3", "sc1", "B2",
+                new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.BIPHASED_COMMON_SUPPORT, ShortCircuitFault.ShortCircuitBiphasedType.C1_A2);
         List<ShortCircuitFault> faultList = List.of(sc1);
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
@@ -50,7 +51,8 @@ class ShortCircuitBiphasedCommonSupportTest {
                 .setStudyType(StudyType.SUB_TRANSIENT)
                 .setWithNeutralPosition(true);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory,
+                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -75,7 +77,8 @@ class ShortCircuitBiphasedCommonSupportTest {
                 .setStudyType(StudyType.SUB_TRANSIENT)
                 .setWithNeutralPosition(true);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory,
+                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
         ShortCircuitUnbalancedEngine scbEngine = new ShortCircuitUnbalancedEngine(network, scbParameters);
 
         scbEngine.run();

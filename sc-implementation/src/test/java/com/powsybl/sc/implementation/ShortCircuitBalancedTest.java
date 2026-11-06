@@ -12,6 +12,7 @@ import com.powsybl.computation.local.LocalComputationManager;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.ThreeWindingsTransformerFortescue;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.math.matrix.DenseMatrixFactory;
@@ -112,8 +113,8 @@ public class ShortCircuitBalancedTest {
 
         assertEquals(2945.047378902121, m0.getCurrent(), DELTA_I_A);
         assertEquals(2682.67577453832, m1.getCurrent(), DELTA_I_A);
-        // assertEquals(2886.75171, m0.getFeederCurrent("G1"), DELTA_I_A); TODO: Add with next Core release
-        // assertEquals(2624.31941, m1.getFeederCurrent("G1"), DELTA_I_A); TODO: Add with next Core release
+        assertEquals(2886.75171, m0.getFeederCurrent("G1"), DELTA_I_A);
+        assertEquals(2624.31941, m1.getFeederCurrent("G1"), DELTA_I_A);
         assertEquals(6.662151249755523E-14, m0.getVoltage(), DELTA_V);
         assertEquals(6.662151249755523E-14, m1.getVoltage(), DELTA_V);
         assertEquals(0.28227759385913187, ((MagnitudeShortCircuitBusResults) m0.getShortCircuitBusResults().get(1)).getVoltage(), DELTA_V);
@@ -149,8 +150,10 @@ public class ShortCircuitBalancedTest {
         BranchFault bf4 = new BranchFault("F4", "B1_B2", 10);
         BranchFault bf5 = new BranchFault("F5", "UNKNOWN_BRANCH", 10);
         BranchFault bf6 = new BranchFault("F6", "B1", 10);
+        BranchFault bf7 = new BranchFault("F7", "B1_B2", -1);
+        BranchFault bf8 = new BranchFault("F8", "B1_B2", 101);
 
-        List<Fault> faults = List.of(bf1, bf2, bf3, bf4, bf5, bf6);
+        List<Fault> faults = List.of(bf1, bf2, bf3, bf4, bf5, bf6, bf7, bf8);
 
         ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
 
@@ -159,6 +162,8 @@ public class ShortCircuitBalancedTest {
         assertNull(scar.getFaultResult("F3"));
         assertNull(scar.getFaultResult("F5"));
         assertNull(scar.getFaultResult("F6"));
+        assertNull(scar.getFaultResult("F7"));
+        assertNull(scar.getFaultResult("F8"));
 
         MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F1");
         MagnitudeFaultResult m4 = (MagnitudeFaultResult) scar.getFaultResult("F4");
@@ -272,7 +277,7 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{3547.165283203125, 3747.61083984375, 3592.37939453125, 3411.642578125}
         );
-        // assertFeederCurrents(frs, new double[]{2700.28195, 2886.75122, 2725.79395, 2586.51782}, "G2"); TODO: Add with next Core release
+        assertFeederCurrents(frs, new double[]{2700.28195, 2886.75122, 2725.79395, 2586.51782}, "G2");
         assertBusVoltages(frs, new double[]{6.46059465, 0.0, 5.57589579, 10.400857}, 1);
     }
 
@@ -334,7 +339,7 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{3523.270263671875, 3767.30078125, 3557.220458984375, 3374.391845703125}
         );
-        // assertFeederCurrents(frs, new double[]{3547.77686, 3767.2981, 3564.29761, 3424.16235}, "G2"); // TODO: Add with next Core release
+        assertFeederCurrents(frs, new double[]{3547.77686, 3767.2981, 3564.29761, 3424.16235}, "G2");
         assertBusVoltages(frs, new double[]{7.60443974, 0.0, 7.03214169, 11.8865681}, 1);
     }
 
@@ -358,7 +363,7 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{3516.67236328125, 3792.351318359375, 3649.132568359375, 2368.190673828125}
         );
-        // assertFeederCurrents(frs, new double[]{3592.60962, 3792.05566, 3601.41699, 3570.39941}, "G2"); // TODO: Add with next Core release
+        assertFeederCurrents(frs, new double[]{3592.53687, 3791.98267, 3601.34424, 3570.32666}, "G2");
         assertBusVoltages(frs, new double[]{6.90904474, 0.0, 6.60392666, 7.67868948}, 1);
     }
 
@@ -414,7 +419,7 @@ public class ShortCircuitBalancedTest {
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs, new double[]{2945.155029296875, 1879.8883056640625});
-        // assertFeederCurrents(frs, new double[]{2945.104, 2819.78149}, "G1"); // TODO: Add with next Core release
+        assertFeederCurrents(frs, new double[]{2945.07812, 2819.75586}, "G1");
         assertBusVoltages(frs, new double[]{0.0, 4.34129143}, 0);
         assertBusVoltages(frs, new double[]{0.000213178486, 0.0}, 1);
 
@@ -446,7 +451,7 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{2641.36792, 2062.15551}
         );
-        // assertFeederCurrents(frs, new double[]{2598.07642, 3040.30176}, "G1"); // TODO: Add with next Core release
+        assertFeederCurrents(frs, new double[]{2598.07642, 3040.30176}, "G1");
         assertBusVoltages(frs, new double[]{30.09933, 0.0}, 1);
     }
 
@@ -463,7 +468,8 @@ public class ShortCircuitBalancedTest {
                 .setWithVoltageResult(false)
                 .setWithNeutralPosition(true);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC, tmpV, scParameters, shortCircuitNorm);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory,
+                ShortCircuitEngineParameters.AnalysisType.SYSTEMATIC, tmpV, scParameters, shortCircuitNorm);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(nt2, scbParameters);
 
         scbEngine.run();
@@ -508,7 +514,8 @@ public class ShortCircuitBalancedTest {
         ShortCircuitParameters scParameters = new ShortCircuitParameters()
                 .setWithNeutralPosition(true);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory,
+                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -614,7 +621,8 @@ public class ShortCircuitBalancedTest {
                 .setStudyType(StudyType.SUB_TRANSIENT)
                 .setWithNeutralPosition(true);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory,
+                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNormIec);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -656,7 +664,8 @@ public class ShortCircuitBalancedTest {
                 .setStudyType(StudyType.SUB_TRANSIENT)
                 .setWithNeutralPosition(true);
 
-        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory, ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNorm);
+        ShortCircuitEngineParameters scbParameters = new ShortCircuitEngineParameters(loadFlowParameters, matrixFactory,
+                ShortCircuitEngineParameters.AnalysisType.SELECTIVE, faultList, scParameters, shortCircuitNorm);
         ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(network, scbParameters);
 
         scbEngine.run();
@@ -796,7 +805,7 @@ public class ShortCircuitBalancedTest {
         assertMagnitudeCurrents(frs,
                 new double[]{3222.086181640625, 3486.87646484375, 3462.0830078125, 2701.750732421875}
         );
-        // assertFeederCurrents(frs, new double[]{2407.81299, 2598.07642, 2500.03687, 2972.69214}, "G2"); // TODO: Add with next Core release
+        assertFeederCurrents(frs, new double[]{2407.81299, 2598.07642, 2500.03687, 2972.69214}, "G2");
         assertBusVoltages(frs, new double[]{6.59124184, 0.0, 3.39618897, 12.9770918}, 1);
     }
 
@@ -809,11 +818,11 @@ public class ShortCircuitBalancedTest {
         double xl = 2.;
 
         Network network = networkFactory.createNetwork("2n", "test");
-        Substation substation1 = network.newSubstation()
+        Substation frSubstation = network.newSubstation()
                 .setId("S1")
                 .setCountry(Country.FR)
                 .add();
-        VoltageLevel vl1 = substation1.newVoltageLevel()
+        VoltageLevel vl1 = frSubstation.newVoltageLevel()
                 .setId("VL_1")
                 .setNominalV(100.0)
                 .setLowVoltageLimit(0)
@@ -840,11 +849,7 @@ public class ShortCircuitBalancedTest {
                 .withStepUpTransformerX(0.)
                 .add();
 
-        Substation substation2 = network.newSubstation()
-                .setId("S2")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl2 = substation2.newVoltageLevel()
+        VoltageLevel vl2 = frSubstation.newVoltageLevel()
                 .setId("VL_2")
                 .setNominalV(100.0)
                 .setLowVoltageLimit(0)
@@ -881,6 +886,36 @@ public class ShortCircuitBalancedTest {
         return network;
     }
 
+    public static Network create2nTfo(NetworkFactory networkFactory) {
+        Objects.requireNonNull(networkFactory);
+        double xl = 2.;
+        double nominalV2 = 150;
+
+        Network network = create2n(networkFactory);
+
+        network.getLine("B1_B2").remove();
+        network.getVoltageLevel("VL_2").setNominalV(nominalV2);
+        network.getBusBreakerView().getBus("B2").setV(nominalV2);
+
+        Substation substation1 = network.getSubstation("S1");
+        substation1.newTwoWindingsTransformer()
+                .setId("B1_B2")
+                .setVoltageLevel1("VL_1")
+                .setBus1("B1")
+                .setConnectableBus1("B1")
+                .setVoltageLevel2("VL_2")
+                .setBus2("B2")
+                .setConnectableBus2("B2")
+                .setR(0.0)
+                .setX(xl)
+                .setRatedU1(100.0)
+                .setRatedU2(nominalV2)
+                .setG(0.0)
+                .setB(0.0)
+                .add();
+        return network;
+    }
+
     public static Network create4n(NetworkFactory networkFactory) {
         Objects.requireNonNull(networkFactory);
         //      2                               3
@@ -900,11 +935,11 @@ public class ShortCircuitBalancedTest {
         //   B1
 
         Network network = networkFactory.createNetwork("4n", "test");
-        Substation substation1 = network.newSubstation()
+        Substation frSubstation = network.newSubstation()
                 .setId("S1")
                 .setCountry(Country.FR)
                 .add();
-        VoltageLevel vl1 = substation1.newVoltageLevel()
+        VoltageLevel vl1 = frSubstation.newVoltageLevel()
                 .setId("VL_1")
                 .setNominalV(100.0)
                 .setLowVoltageLimit(0)
@@ -924,11 +959,7 @@ public class ShortCircuitBalancedTest {
                 .newLinearModel().setMaximumSectionCount(1).setBPerSection(-0.003).add()
                 .add();
 
-        Substation substation2 = network.newSubstation()
-                .setId("S2")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl2 = substation2.newVoltageLevel()
+        VoltageLevel vl2 = frSubstation.newVoltageLevel()
                 .setId("VL_2")
                 .setNominalV(100.0)
                 .setLowVoltageLimit(0)
@@ -954,11 +985,7 @@ public class ShortCircuitBalancedTest {
                 .withStepUpTransformerX(0.)
                 .add();
 
-        Substation substation3 = network.newSubstation()
-                .setId("S3")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl3 = substation3.newVoltageLevel()
+        VoltageLevel vl3 = frSubstation.newVoltageLevel()
                 .setId("VL_3")
                 .setNominalV(100.0)
                 .setLowVoltageLimit(0)
@@ -976,11 +1003,7 @@ public class ShortCircuitBalancedTest {
                 .setQ0(100.)
                 .add();
 
-        Substation substation4 = network.newSubstation()
-                .setId("S4")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl4 = substation4.newVoltageLevel()
+        VoltageLevel vl4 = frSubstation.newVoltageLevel()
                 .setId("VL_4")
                 .setNominalV(100.0)
                 .setLowVoltageLimit(0)
@@ -1084,84 +1107,6 @@ public class ShortCircuitBalancedTest {
         return network;
     }
 
-    public static Network create2nTfo(NetworkFactory networkFactory) {
-        Objects.requireNonNull(networkFactory);
-
-        double p0l2 = 10;
-        double q0l2 = 10;
-        double pGen = 10;
-        double xl = 2.;
-
-        Network network = networkFactory.createNetwork("2nTfo", "test");
-        Substation substation1 = network.newSubstation()
-                .setId("S1")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl1 = substation1.newVoltageLevel()
-                .setId("VL_1")
-                .setNominalV(100.0)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(200)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus1 = vl1.getBusBreakerView().newBus()
-                .setId("B1")
-                .add();
-        bus1.setV(100.0).setAngle(0.);
-
-        Generator gen1 = vl1.newGenerator()
-                .setId("G1")
-                .setBus(bus1.getId())
-                .setMinP(0.0)
-                .setMaxP(150)
-                .setTargetP(pGen)
-                .setTargetV(100.0)
-                .setVoltageRegulatorOn(true)
-                .add();
-
-        gen1.newExtension(GeneratorShortCircuitAdder.class)
-                .withDirectSubtransX(20)
-                .withDirectTransX(20)
-                .withStepUpTransformerX(0.)
-                .add();
-
-        VoltageLevel vl2 = substation1.newVoltageLevel()
-                .setId("VL_2")
-                .setNominalV(150.0)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(200)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus2 = vl2.getBusBreakerView().newBus()
-                .setId("B2")
-                .add();
-        bus2.setV(150.0).setAngle(0);
-        vl2.newLoad()
-                .setId("LOAD_2")
-                .setBus(bus2.getId())
-                .setP0(p0l2)
-                .setQ0(q0l2)
-                .add();
-
-        TwoWindingsTransformer t2w = substation1.newTwoWindingsTransformer()
-                .setId("B1_B2")
-                .setVoltageLevel1(vl1.getId())
-                .setBus1(bus1.getId())
-                .setConnectableBus1(bus1.getId())
-                .setVoltageLevel2(vl2.getId())
-                .setBus2(bus2.getId())
-                .setConnectableBus2(bus2.getId())
-                .setR(0.0)
-                .setX(xl)
-                .setRatedU1(100.0)
-                .setRatedU2(150.0)
-                .setG(0.0)
-                .setB(0.0)
-                .add();
-
-        return network;
-    }
-
     public static Network create4nTfoRatioTapChanger(NetworkFactory networkFactory) {
 
         Objects.requireNonNull(networkFactory);
@@ -1192,180 +1137,23 @@ public class ShortCircuitBalancedTest {
         final int tapPosition1 = -1;
         final int tapPosition2 = 1;
 
-        Network network = networkFactory.createNetwork("4nTfo", "test");
+        Network network = create4n(networkFactory);
 
-        Substation substation1 = network.newSubstation()
-                .setId("S1")
-                .setCountry(Country.FR)
-                .add();
+        Substation substation1 = network.getSubstation("S1");
 
-        VoltageLevel vl1 = substation1.newVoltageLevel()
-                .setId("VL_1")
-                .setNominalV(100.0)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(200)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
+        VoltageLevel vl4 = network.getVoltageLevel("VL_4");
+        vl4.setNominalV(nominalV4);
+        Bus bus4 = network.getBusBreakerView().getBus("B4");
+        bus4.setV(nominalV4);
 
-        Bus bus1 = vl1.getBusBreakerView().newBus()
-                .setId("B1")
-                .add();
-
-        bus1.setV(100.0).setAngle(0.0);
-
-        vl1.newShuntCompensator()
-                .setId("SHUNT_1")
-                .setBus(bus1.getId())
-                .setSectionCount(1)
-                .setVoltageRegulatorOn(false)
-                .newLinearModel()
-                .setMaximumSectionCount(1)
-                .setBPerSection(-0.003)
-                .add()
-                .add();
-
-        Substation substation2 = network.newSubstation()
-                .setId("S2")
-                .setCountry(Country.FR)
-                .add();
-
-        VoltageLevel vl2 = substation2.newVoltageLevel()
-                .setId("VL_2")
-                .setNominalV(100.0)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(200)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-
-        Bus bus2 = vl2.getBusBreakerView().newBus()
-                .setId("B2")
-                .add();
-
-        bus2.setV(100.0).setAngle(0.0);
-
-        Generator gen2 = vl2.newGenerator()
-                .setId("G2")
-                .setBus(bus2.getId())
-                .setMinP(0.0)
-                .setMaxP(150.0)
-                .setTargetP(30.0)
-                .setTargetV(100.0)
-                .setVoltageRegulatorOn(true)
-                .add();
-
-        gen2.newExtension(GeneratorShortCircuitAdder.class)
-                .withDirectTransX(20.0)
-                .withDirectSubtransX(20.0)
-                .withStepUpTransformerX(0.0)
-                .add();
-
-        VoltageLevel vl3 = substation1.newVoltageLevel()
-                .setId("VL_3")
-                .setNominalV(100.0)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(200)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-
-        Bus bus3 = vl3.getBusBreakerView().newBus()
-                .setId("B3")
-                .add();
-
-        bus3.setV(100.0).setAngle(0.0);
-
-        vl3.newLoad()
-                .setId("LOAD_3")
-                .setBus(bus3.getId())
-                .setP0(10.0)
-                .setQ0(100.0)
-                .add();
-
-        VoltageLevel vl4 = substation1.newVoltageLevel()
-                .setId("VL_4")
-                .setNominalV(nominalV4)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(200)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-
-        Bus bus4 = vl4.getBusBreakerView().newBus()
-                .setId("B4")
-                .add();
-
-        bus4.setV(nominalV4).setAngle(0.0);
-
-        vl4.newShuntCompensator()
-                .setId("SHUNT_4")
-                .setBus(bus4.getId())
-                .setSectionCount(1)
-                .setVoltageRegulatorOn(false)
-                .newLinearModel()
-                .setMaximumSectionCount(1)
-                .setBPerSection(-0.00105)
-                .add()
-                .add();
-
-        vl4.newLoad()
-                .setId("LOAD_4")
-                .setBus(bus4.getId())
-                .setP0(20.0)
-                .setQ0(10.0)
-                .add();
-
-        network.newLine()
-                .setId("B1_B2")
-                .setVoltageLevel1(vl1.getId())
-                .setBus1(bus1.getId())
-                .setConnectableBus1(bus1.getId())
-                .setVoltageLevel2(vl2.getId())
-                .setBus2(bus2.getId())
-                .setConnectableBus2(bus2.getId())
-                .setR(0.0)
-                .setX(1 / 0.5)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
-
-        network.newLine()
-                .setId("B1_B3")
-                .setVoltageLevel1(vl1.getId())
-                .setBus1(bus1.getId())
-                .setConnectableBus1(bus1.getId())
-                .setVoltageLevel2(vl3.getId())
-                .setBus2(bus3.getId())
-                .setConnectableBus2(bus3.getId())
-                .setR(0.0)
-                .setX(1 / 0.4)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
-
-        network.newLine()
-                .setId("B2_B3")
-                .setVoltageLevel1(vl2.getId())
-                .setBus1(bus2.getId())
-                .setConnectableBus1(bus2.getId())
-                .setVoltageLevel2(vl3.getId())
-                .setBus2(bus3.getId())
-                .setConnectableBus2(bus3.getId())
-                .setR(0.0)
-                .setX(1 / 0.6)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
-
+        network.getLine("B1_B4").remove();
+        network.getLine("B3_B4").remove();
         // Transformers
         TwoWindingsTransformer tfoB1B4 = substation1.newTwoWindingsTransformer()
                 .setId("TFO_B1_B4")
-                .setVoltageLevel1(vl1.getId())
-                .setBus1(bus1.getId())
-                .setConnectableBus1(bus1.getId())
+                .setVoltageLevel1("VL_1")
+                .setBus1("B1")
+                .setConnectableBus1("B1")
                 .setVoltageLevel2(vl4.getId())
                 .setBus2(bus4.getId())
                 .setConnectableBus2(bus4.getId())
@@ -1378,7 +1166,7 @@ public class ShortCircuitBalancedTest {
                 .add();
 
         tfoB1B4.newRatioTapChanger()
-                .setRegulationMode(RatioTapChanger.RegulationMode.VOLTAGE)
+                .setRegulationMode(RegulationMode.VOLTAGE)
                 .setLowTapPosition(-1)
                 .setTapPosition(tapPosition1)
                 .setLoadTapChangingCapabilities(true)
@@ -1411,9 +1199,9 @@ public class ShortCircuitBalancedTest {
 
         TwoWindingsTransformer tfoB3B4 = substation1.newTwoWindingsTransformer()
                 .setId("TFO_B3_B4")
-                .setVoltageLevel1(vl3.getId())
-                .setBus1(bus3.getId())
-                .setConnectableBus1(bus3.getId())
+                .setVoltageLevel1("VL_3")
+                .setBus1("B3")
+                .setConnectableBus1("B3")
                 .setVoltageLevel2(vl4.getId())
                 .setBus2(bus4.getId())
                 .setConnectableBus2(bus4.getId())
@@ -1426,7 +1214,7 @@ public class ShortCircuitBalancedTest {
                 .add();
 
         tfoB3B4.newRatioTapChanger()
-                .setRegulationMode(RatioTapChanger.RegulationMode.VOLTAGE)
+                .setRegulationMode(RegulationMode.VOLTAGE)
                 .setLowTapPosition(-1)
                 .setTapPosition(tapPosition2)
                 .setLoadTapChangingCapabilities(true)

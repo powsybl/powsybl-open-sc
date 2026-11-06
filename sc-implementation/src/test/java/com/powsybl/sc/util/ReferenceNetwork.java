@@ -8,11 +8,11 @@
 package com.powsybl.sc.util;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.LineFortescueAdder;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
-import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.sc.extensions.*;
 
 /**
@@ -100,131 +100,33 @@ public final class ReferenceNetwork {
         double xl78 = 0.6966 * bus7Vnom * bus7Vnom / sbase; //0.0107;
         double rl78 = 0.8691 * bus7Vnom * bus7Vnom / sbase; //0.01335;
 
-        Substation substation12 = network.newSubstation()
-                .setId("S12")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl1 = substation12.newVoltageLevel()
-                .setId("VL_1")
-                .setNominalV(bus1Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus1Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus1 = vl1.getBusBreakerView().newBus()
-                .setId("B1")
-                .add();
-        bus1.setV(bus1Vnom).setAngle(0.);
+        Substation frSubstation = network.newSubstation().setId("S1")
+                .setCountry(Country.FR).add();
+        VoltageLevel vl1 = addNewVoltageLevel(frSubstation, "VL_1", bus1Vnom);
+        Bus bus1 = addNewBus(vl1, "B1", bus1Vnom, 0);
 
-        VoltageLevel vl2 = substation12.newVoltageLevel()
-                .setId("VL_2")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus2 = vl2.getBusBreakerView().newBus()
-                .setId("B2")
-                .add();
-        bus2.setV(bus2Vnom).setAngle(0);
+        VoltageLevel vl2 = addNewVoltageLevel(frSubstation, "VL_2", bus2Vnom);
+        Bus bus2 = addNewBus(vl2, "B2", bus2Vnom, 0);
 
-        Substation substation3 = network.newSubstation()
-                .setId("S3")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl3 = substation3.newVoltageLevel()
-                .setId("VL_3")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus3 = vl3.getBusBreakerView().newBus()
-                .setId("B3")
-                .add();
-        bus3.setV(bus2Vnom).setAngle(0);
+        VoltageLevel vl3 = addNewVoltageLevel(frSubstation, "VL_3", bus2Vnom);
+        Bus bus3 = addNewBus(vl3, "B3", bus2Vnom, 0);
 
-        Substation substation45 = network.newSubstation()
-                .setId("S45")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl4 = substation45.newVoltageLevel()
-                .setId("VL_4")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus4 = vl4.getBusBreakerView().newBus()
-                .setId("B4")
-                .add();
-        bus4.setV(bus2Vnom).setAngle(0);
+        VoltageLevel vl4 = addNewVoltageLevel(frSubstation, "VL_4", bus2Vnom);
+        Bus bus4 = addNewBus(vl4, "B4", bus2Vnom, 0);
 
-        VoltageLevel vl5 = substation45.newVoltageLevel()
-                .setId("VL_5")
-                .setNominalV(bus5Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus5Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus5 = vl5.getBusBreakerView().newBus()
-                .setId("B5")
-                .add();
-        bus5.setV(bus5Vnom).setAngle(0);
+        VoltageLevel vl5 = addNewVoltageLevel(frSubstation, "VL_5", bus5Vnom);
+        Bus bus5 = addNewBus(vl5, "B5", bus5Vnom, 0);
 
-        Substation substation67 = network.newSubstation()
-                .setId("S6")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl6 = substation67.newVoltageLevel()
-                .setId("VL_6")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus6 = vl6.getBusBreakerView().newBus()
-                .setId("B6")
-                .add();
-        bus6.setV(bus2Vnom).setAngle(0);
+        VoltageLevel vl6 = addNewVoltageLevel(frSubstation, "VL_6", bus2Vnom);
+        Bus bus6 = addNewBus(vl6, "B6", bus2Vnom, 0);
 
-        VoltageLevel vl7 = substation67.newVoltageLevel()
-                .setId("VL_7")
-                .setNominalV(bus7Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus7Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus7 = vl7.getBusBreakerView().newBus()
-                .setId("B7")
-                .add();
-        bus7.setV(bus7Vnom).setAngle(0);
+        VoltageLevel vl7 = addNewVoltageLevel(frSubstation, "VL_7", bus7Vnom);
+        Bus bus7 = addNewBus(vl7, "B7", bus7Vnom, 0);
 
-        Substation substation8 = network.newSubstation()
-                .setId("S8")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl8 = substation8.newVoltageLevel()
-                .setId("VL_8")
-                .setNominalV(bus7Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus7Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus8 = vl8.getBusBreakerView().newBus()
-                .setId("B8")
-                .add();
-        bus8.setV(bus7Vnom).setAngle(0);
+        VoltageLevel vl8 = addNewVoltageLevel(frSubstation, "VL_8", bus7Vnom);
+        Bus bus8 = addNewBus(vl8, "B8", bus7Vnom, 0);
 
-        Generator utility = vl1.newGenerator()
-                .setId("Utility")
-                .setBus(bus1.getId())
-                .setMinP(0.0)
-                .setMaxP(100.)
-                .setTargetP(0.)
-                .setTargetV(bus1Vnom)
-                .setVoltageRegulatorOn(true)
-                .add();
+        Generator utility = addNewGenerator(vl1, bus1, "Utility", 0.0, 100, 0, 0, bus1Vnom, true);
 
         utility.newExtension(GeneratorShortCircuitAdder.class)
                 .withDirectSubtransX(xdUtility)
@@ -232,16 +134,7 @@ public final class ReferenceNetwork {
                 .withStepUpTransformerX(0.)
                 .add();
 
-        Generator m1 = vl3.newGenerator()
-                .setId("M1")
-                .setBus(bus3.getId())
-                .setMinP(-100.0)
-                .setMaxP(0.)
-                .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(bus2Vnom)
-                .setVoltageRegulatorOn(false)
-                .add();
+        Generator m1 = addNewGenerator(vl3, bus3, "M1", -100.0, 0, 0, 0, bus2Vnom, false);
 
         m1.newExtension(GeneratorShortCircuitAdder.class)
                 .withDirectSubtransX(xM1)
@@ -249,16 +142,7 @@ public final class ReferenceNetwork {
                 .withStepUpTransformerX(0.)
                 .add();
 
-        Generator m2 = vl5.newGenerator()
-                .setId("M2")
-                .setBus(bus5.getId())
-                .setMinP(-100.0)
-                .setMaxP(0.)
-                .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(bus5Vnom)
-                .setVoltageRegulatorOn(false)
-                .add();
+        Generator m2 = addNewGenerator(vl5, bus5, "M2", -100.0, 0, 0, 0, bus5Vnom, false);
 
         m2.newExtension(GeneratorShortCircuitAdder.class)
                 .withDirectSubtransX(xM2)
@@ -266,16 +150,7 @@ public final class ReferenceNetwork {
                 .withStepUpTransformerX(0.)
                 .add();
 
-        Generator m3 = vl5.newGenerator()
-                .setId("M3")
-                .setBus(bus5.getId())
-                .setMinP(-100.0)
-                .setMaxP(0.)
-                .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(bus5Vnom)
-                .setVoltageRegulatorOn(false)
-                .add();
+        Generator m3 = addNewGenerator(vl5, bus5, "M3", -100.0, 0, 0, 0, bus7Vnom, false);
 
         m3.newExtension(GeneratorShortCircuitAdder.class)
                 .withDirectSubtransX(xM3)
@@ -283,16 +158,7 @@ public final class ReferenceNetwork {
                 .withStepUpTransformerX(0.)
                 .add();
 
-        Generator m4 = vl7.newGenerator()
-                .setId("M4")
-                .setBus(bus7.getId())
-                .setMinP(-100.0)
-                .setMaxP(0.)
-                .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(bus7Vnom)
-                .setVoltageRegulatorOn(false)
-                .add();
+        Generator m4 = addNewGenerator(vl7, bus7, "M4", -100.0, 0, 0, 0, bus7Vnom, false);
 
         m4.newExtension(GeneratorShortCircuitAdder.class)
                 .withDirectSubtransX(xM4SubTrans)
@@ -300,71 +166,19 @@ public final class ReferenceNetwork {
                 .withStepUpTransformerX(0.)
                 .add();
 
-        network.newLine()
-                .setId("B2_B3")
-                .setVoltageLevel1(vl2.getId())
-                .setBus1(bus2.getId())
-                .setConnectableBus1(bus2.getId())
-                .setVoltageLevel2(vl3.getId())
-                .setBus2(bus3.getId())
-                .setConnectableBus2(bus3.getId())
-                .setR(rl23)
-                .setX(xl23)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        addNewLine(network, "B2_B3", vl2, vl3, bus2, bus3,
+                rl23, xl23);
 
-        network.newLine()
-                .setId("B2_B4")
-                .setVoltageLevel1(vl2.getId())
-                .setBus1(bus2.getId())
-                .setConnectableBus1(bus2.getId())
-                .setVoltageLevel2(vl4.getId())
-                .setBus2(bus4.getId())
-                .setConnectableBus2(bus4.getId())
-                .setR(rl24)
-                .setX(xl24)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        addNewLine(network, "B2_B4", vl2, vl4, bus2, bus4,
+                rl24, xl24);
 
-        network.newLine()
-                .setId("B2_B6")
-                .setVoltageLevel1(vl2.getId())
-                .setBus1(bus2.getId())
-                .setConnectableBus1(bus2.getId())
-                .setVoltageLevel2(vl6.getId())
-                .setBus2(bus6.getId())
-                .setConnectableBus2(bus6.getId())
-                .setR(rl26)
-                .setX(xl26)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        addNewLine(network, "B2_B6", vl2, vl6, bus2, bus6,
+                rl26, xl26);
 
-        network.newLine()
-                .setId("B7_B8")
-                .setVoltageLevel1(vl7.getId())
-                .setBus1(bus7.getId())
-                .setConnectableBus1(bus7.getId())
-                .setVoltageLevel2(vl8.getId())
-                .setBus2(bus8.getId())
-                .setConnectableBus2(bus8.getId())
-                .setR(rl78)
-                .setX(xl78)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        addNewLine(network, "B7_B8", vl7, vl8, bus7, bus8,
+                rl78, xl78);
 
-        substation12.newTwoWindingsTransformer()
+        frSubstation.newTwoWindingsTransformer()
                 .setId("T1")
                 .setVoltageLevel1(vl1.getId())
                 .setBus1(bus1.getId())
@@ -378,7 +192,7 @@ public final class ReferenceNetwork {
                 .setX(xT1)
                 .setG(0.0D)
                 .setB(0.0D).add();
-        substation45.newTwoWindingsTransformer()
+        frSubstation.newTwoWindingsTransformer()
                 .setId("T2")
                 .setVoltageLevel1(vl4.getId())
                 .setBus1(bus4.getId())
@@ -393,7 +207,7 @@ public final class ReferenceNetwork {
                 .setG(0.0D)
                 .setB(0.0D)
                 .add();
-        substation67.newTwoWindingsTransformer()
+        frSubstation.newTwoWindingsTransformer()
                 .setId("T3")
                 .setVoltageLevel1(vl6.getId())
                 .setBus1(bus6.getId())
@@ -484,93 +298,27 @@ public final class ReferenceNetwork {
         double pEquivalentFeeder = 31.286;
         double qEquivalentFeeder = 313.451;
 
-        Substation substation123 = network.newSubstation()
-                .setId("S123")
+        Substation frSubstation = network.newSubstation()
+                .setId("S1")
                 .setCountry(Country.FR)
                 .add();
-        VoltageLevel vl1 = substation123.newVoltageLevel()
-                .setId("VL_1")
-                .setNominalV(bus1Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus1Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus1 = vl1.getBusBreakerView().newBus()
-                .setId("B1")
-                .add();
-        bus1.setV(bus1Vnom).setAngle(0.);
+        VoltageLevel vl1 = addNewVoltageLevel(frSubstation, "VL_1", bus1Vnom);
+        Bus bus1 = addNewBus(vl1, "B1", bus1Vnom, 0);
 
-        VoltageLevel vl2 = substation123.newVoltageLevel()
-                .setId("VL_2")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus2 = vl2.getBusBreakerView().newBus()
-                .setId("B2")
-                .add();
-        bus2.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl2 = addNewVoltageLevel(frSubstation, "VL_2", bus2Vnom);
+        Bus bus2 = addNewBus(vl2, "B2", bus2Vnom, 0);
 
-        VoltageLevel vl3 = substation123.newVoltageLevel()
-                .setId("VL_3")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus3 = vl3.getBusBreakerView().newBus()
-                .setId("B3")
-                .add();
-        bus3.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl3 = addNewVoltageLevel(frSubstation, "VL_3", bus2Vnom);
+        Bus bus3 = addNewBus(vl3, "B3", bus2Vnom, 0);
 
-        Substation substation4 = network.newSubstation()
-                .setId("S4")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl4 = substation4.newVoltageLevel()
-                .setId("VL_4")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus4 = vl4.getBusBreakerView().newBus()
-                .setId("B4")
-                .add();
-        bus4.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl4 = addNewVoltageLevel(frSubstation, "VL_4", bus2Vnom);
+        Bus bus4 = addNewBus(vl4, "B4", bus2Vnom, 0);
 
-        Substation substation5 = network.newSubstation()
-                .setId("S5")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl5 = substation5.newVoltageLevel()
-                .setId("VL_5")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus5 = vl5.getBusBreakerView().newBus()
-                .setId("B5")
-                .add();
-        bus5.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl5 = addNewVoltageLevel(frSubstation, "VL_5", bus2Vnom);
+        Bus bus5 = addNewBus(vl5, "B5", bus2Vnom, 0);
 
-        Substation substation6 = network.newSubstation()
-                .setId("S6")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl6 = substation6.newVoltageLevel()
-                .setId("VL_6")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus6 = vl6.getBusBreakerView().newBus()
-                .setId("B6")
-                .add();
-        bus6.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl6 = addNewVoltageLevel(frSubstation, "VL_6", bus2Vnom);
+        Bus bus6 = addNewBus(vl6, "B6", bus2Vnom, 0);
 
         vl1.newLoad()
                 .setId("LOAD_FEEDER") // we try to model the feeder through a load that will be transformed into an impedance
@@ -579,7 +327,7 @@ public final class ReferenceNetwork {
                 .setQ0(qEquivalentFeeder)
                 .add();
 
-        var t1 = substation123.newTwoWindingsTransformer()
+        var t1 = frSubstation.newTwoWindingsTransformer()
                 .setId("T1")
                 .setVoltageLevel1(vl1.getId())
                 .setBus1(bus1.getId())
@@ -595,7 +343,7 @@ public final class ReferenceNetwork {
                 .setB(0.0D)
                 .setRatedS(630.)
                 .add();
-        var t2 = substation123.newTwoWindingsTransformer()
+        var t2 = frSubstation.newTwoWindingsTransformer()
                 .setId("T2")
                 .setVoltageLevel1(vl1.getId())
                 .setBus1(bus1.getId())
@@ -612,69 +360,17 @@ public final class ReferenceNetwork {
                 .setRatedS(400.)
                 .add();
 
-        Line l2 = network.newLine()
-                .setId("L2_B2_B4")
-                .setVoltageLevel1(vl2.getId())
-                .setBus1(bus2.getId())
-                .setConnectableBus1(bus2.getId())
-                .setVoltageLevel2(vl4.getId())
-                .setBus2(bus4.getId())
-                .setConnectableBus2(bus4.getId())
-                .setR(rL2)
-                .setX(xL2)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        Line l2 = addNewLine(network, "L2_B2_B4", vl2, vl4, bus2, bus4,
+                rL2, xL2);
 
-        Line l1 = network.newLine()
-                .setId("L1_B3_B4")
-                .setVoltageLevel1(vl3.getId())
-                .setBus1(bus3.getId())
-                .setConnectableBus1(bus3.getId())
-                .setVoltageLevel2(vl4.getId())
-                .setBus2(bus4.getId())
-                .setConnectableBus2(bus4.getId())
-                .setR(rL1)
-                .setX(xL1)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        Line l1 = addNewLine(network, "L1_B3_B4", vl3, vl4, bus3, bus4,
+                rL1, xL1);
 
-        Line l3 = network.newLine()
-                .setId("L3_B4_B5")
-                .setVoltageLevel1(vl4.getId())
-                .setBus1(bus4.getId())
-                .setConnectableBus1(bus4.getId())
-                .setVoltageLevel2(vl5.getId())
-                .setBus2(bus5.getId())
-                .setConnectableBus2(bus5.getId())
-                .setR(rL3)
-                .setX(xL3)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        Line l3 = addNewLine(network, "L3_B4_B5", vl4, vl5, bus4, bus5,
+                rL3, xL3);
 
-        Line l4 = network.newLine()
-                .setId("L4_B5_B6")
-                .setVoltageLevel1(vl5.getId())
-                .setBus1(bus5.getId())
-                .setConnectableBus1(bus5.getId())
-                .setVoltageLevel2(vl6.getId())
-                .setBus2(bus6.getId())
-                .setConnectableBus2(bus6.getId())
-                .setR(rL4)
-                .setX(xL4)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        Line l4 = addNewLine(network, "L4_B5_B6", vl5, vl6, bus5, bus6,
+                rL4, xL4);
 
         //additional data
 
@@ -786,133 +482,36 @@ public final class ReferenceNetwork {
         double coeffRoT4 = 0.107281 / (rT3b + rT3c) * rhoB2;
         double coeffXoT4 = 18.195035 / (xT3b + xT3c) * rhoB2;
 
-        Substation substation1289 = network.newSubstation()
-                .setId("S1289")
+        Substation frSubstation = network.newSubstation()
+                .setId("S1")
                 .setCountry(Country.FR)
                 .add();
-        VoltageLevel vl1 = substation1289.newVoltageLevel()
-                .setId("VL_1")
-                .setNominalV(vEhv)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * vEhv)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus1 = vl1.getBusBreakerView().newBus()
-                .setId("B1")
-                .add();
-        bus1.setV(vEhv).setAngle(0.);
+        VoltageLevel vl1 = addNewVoltageLevel(frSubstation, "VL_1", vEhv);
+        Bus bus1 = addNewBus(vl1, "B1", vEhv, 0);
 
-        VoltageLevel vl2 = substation1289.newVoltageLevel()
-                .setId("VL_2")
-                .setNominalV(vHv)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * vHv)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus2 = vl2.getBusBreakerView().newBus()
-                .setId("B2")
-                .add();
-        bus2.setV(vHv).setAngle(0.);
+        VoltageLevel vl2 = addNewVoltageLevel(frSubstation, "VL_2", vHv);
+        Bus bus2 = addNewBus(vl2, "B2", vHv, 0);
 
-        VoltageLevel vl8 = substation1289.newVoltageLevel()
-                .setId("VL_8")
-                .setNominalV(vMv)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * vMv)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus8 = vl8.getBusBreakerView().newBus()
-                .setId("B8")
-                .add();
-        bus8.setV(vMv).setAngle(0.);
+        VoltageLevel vl8 = addNewVoltageLevel(frSubstation, "VL_8", vMv);
+        Bus bus8 = addNewBus(vl8, "B8", vMv, 0);
 
-        VoltageLevel vl9 = substation1289.newVoltageLevel()
-                .setId("VL_9")
-                .setNominalV(vMv)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * vMv)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus9 = vl9.getBusBreakerView().newBus()
-                .setId("B9")
-                .add();
-        bus9.setV(vMv).setAngle(0.);
+        VoltageLevel vl9 = addNewVoltageLevel(frSubstation, "VL_9", vMv);
+        Bus bus9 = addNewBus(vl9, "B9", vMv, 0);
 
-        Substation substation3 = network.newSubstation()
-                .setId("S3")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl3 = substation3.newVoltageLevel()
-                .setId("VL_3")
-                .setNominalV(vHv)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * vHv)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus3 = vl3.getBusBreakerView().newBus()
-                .setId("B3")
-                .add();
-        bus3.setV(vHv).setAngle(0.);
+        VoltageLevel vl3 = addNewVoltageLevel(frSubstation, "VL_3", vHv);
+        Bus bus3 = addNewBus(vl3, "B3", vHv, 0);
 
-        Substation substation4 = network.newSubstation()
-                .setId("S4")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl4 = substation4.newVoltageLevel()
-                .setId("VL_4")
-                .setNominalV(vHv)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * vHv)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus4 = vl4.getBusBreakerView().newBus()
-                .setId("B4")
-                .add();
-        bus4.setV(vHv).setAngle(0.);
+        VoltageLevel vl4 = addNewVoltageLevel(frSubstation, "VL_4", vHv);
+        Bus bus4 = addNewBus(vl4, "B4", vHv, 0);
 
-        Substation substation56 = network.newSubstation()
-                .setId("S56")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl5 = substation56.newVoltageLevel()
-                .setId("VL_5")
-                .setNominalV(vHv)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * vHv)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus5 = vl5.getBusBreakerView().newBus()
-                .setId("B5")
-                .add();
-        bus5.setV(vHv).setAngle(0.);
+        VoltageLevel vl5 = addNewVoltageLevel(frSubstation, "VL_5", vHv);
+        Bus bus5 = addNewBus(vl5, "B5", vHv, 0);
 
-        VoltageLevel vl6 = substation56.newVoltageLevel()
-                .setId("VL_6")
-                .setNominalV(vLv)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * vLv)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus6 = vl6.getBusBreakerView().newBus()
-                .setId("B6")
-                .add();
-        bus6.setV(vLv).setAngle(0.);
+        VoltageLevel vl6 = addNewVoltageLevel(frSubstation, "VL_6", vLv);
+        Bus bus6 = addNewBus(vl6, "B6", vLv, 0);
 
-        Substation substation7 = network.newSubstation()
-                .setId("S7")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl7 = substation7.newVoltageLevel()
-                .setId("VL_7")
-                .setNominalV(vLv)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * vLv)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus7 = vl7.getBusBreakerView().newBus()
-                .setId("B7")
-                .add();
-        bus7.setV(vLv).setAngle(0.);
+        VoltageLevel vl7 = addNewVoltageLevel(frSubstation, "VL_7", vLv);
+        Bus bus7 = addNewBus(vl7, "B7", vLv, 0);
 
         // Feeders :
         // Same as previous IEC example : we model the feeder through a load: TODO : check if relevant for all IEC examples
@@ -939,332 +538,49 @@ public final class ReferenceNetwork {
                 .setQ0(qEquivalentFeeder2)
                 .add();*/
 
-        Generator q2 = vl5.newGenerator() //alternative modelling
-                .setId("Q2")
-                .setBus(bus5.getId())
-                .setMinP(0.0)
-                .setMaxP(100.)
-                .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(vHv)
-                .setVoltageRegulatorOn(false)
-                .add();
-
+        // TODO : add table to store coeffs for homopolar values
         double xFeeder2 = 4.344543;
         double rFeeder2 = 0.434454;
-        q2.newExtension(GeneratorShortCircuitAdder.class)
-                .withDirectSubtransX(xFeeder2) // TODO : add table to store coeffs for homopolar values
-                .withDirectTransX(xFeeder2)
-                .withStepUpTransformerX(0.)
-                .add();
+        Generator q2 = addNewScGenerator(vl5, bus5, "Q2", 0.0, 100, vHv, xFeeder2, rFeeder2);
 
         // Generating units :
-        Generator g1 = vl4.newGenerator()
-                .setId("G1")
-                .setBus(bus4.getId())
-                .setMinP(0.0)
-                .setMaxP(100.)
-                .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(vHv)
-                .setVoltageRegulatorOn(false)
-                .setRatedS(150.)
-                .add();
-
-        g1.newExtension(GeneratorShortCircuitAdder.class)
-                .withDirectSubtransX(xG1) // TODO : add table to store coeffs for homopolar values
-                .withDirectTransX(xG1)
-                .withStepUpTransformerX(0.)
-                .add();
-
-        Generator g2 = vl3.newGenerator()
-                .setId("G2")
-                .setBus(bus3.getId())
-                .setMinP(0.0)
-                .setMaxP(100.)
-                .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(vHv)
-                .setVoltageRegulatorOn(false)
-                .add();
-
-        g2.newExtension(GeneratorShortCircuitAdder.class)
-                .withDirectSubtransX(xG2) // TODO : add table to store coeffs for homopolar values
-                .withDirectTransX(xG2)
-                .withStepUpTransformerX(0.)
-                .add();
-
-        Generator g3 = vl6.newGenerator()
-                .setId("G3")
-                .setBus(bus6.getId())
-                .setMinP(0.0)
-                .setMaxP(100.)
-                .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(vLv)
-                .setVoltageRegulatorOn(false)
-                .add();
-
-        g3.newExtension(GeneratorShortCircuitAdder.class)
-                .withDirectSubtransX(xG3) // TODO : add table to store coeffs for homopolar values
-                .withDirectTransX(xG3)
-                .withStepUpTransformerX(0.)
-                .add();
+        Generator g1 = addNewScGenerator(vl4, bus4, "G1", 0.0, 100, vHv, xG1, rG1);
+        g1.setRatedS(150);
+        addNewScGenerator(vl3, bus3, "G2", 0.0, 100, vHv, xG2, rG2);
+        addNewScGenerator(vl6, bus6, "G3", 0.0, 100, vLv, xG3, rG3);
 
         // Machines :
         // They are considered as non-grounded generating units
-        Generator m1 = vl7.newGenerator()
-                .setId("M1")
-                .setBus(bus7.getId())
-                .setMinP(-100.0)
-                .setMaxP(0.)
-                .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(vLv)
-                .setVoltageRegulatorOn(false)
-                .add();
+        addNewScGenerator(vl7, bus7, "M1", -100.0, 0, vLv, xM1, rM1);
+        addNewScGenerator(vl7, bus7, "M2", -100.0, 0, vLv, xM2, rM2);
 
-        m1.newExtension(GeneratorShortCircuitAdder.class)
-                .withDirectSubtransX(xM1) // TODO : add table to store coeffs for homopolar values
-                .withDirectTransX(xM1)
-                .withStepUpTransformerX(0.)
-                .add();
+        addNewFortescueLine(network, "L1_B2_B3", vl2, vl3, bus2, bus3, rL1, xL1, coeffRoL1, coeffXoL1);
+        addNewFortescueLine(network, "L2_B3_B4", vl3, vl4, bus3, bus4, rL2, xL2, coeffRoL2, coeffXoL2);
+        addNewFortescueLine(network, "L3_B2_B5", vl2, vl5, bus2, bus5, rL3, xL3, coeffRoL3, coeffXoL3);
+        addNewFortescueLine(network, "L4_B5_B3", vl5, vl3, bus5, bus3, rL4, xL4, coeffRoL4, coeffXoL4);
+        addNewFortescueLine(network, "L5_B5_B4", vl5, vl4, bus5, bus4, rL5, xL5, coeffRoL5, coeffXoL5);
+        addNewFortescueLine(network, "L6_B6_B7", vl6, vl7, bus6, bus7, rL6, xL6, coeffRoL6, coeffXoL6);
 
-        Generator m2 = vl7.newGenerator()
-                .setId("M2")
-                .setBus(bus7.getId())
-                .setMinP(-100.0)
-                .setMaxP(0.)
-                .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(vLv)
-                .setVoltageRegulatorOn(false)
-                .add();
+        addNewTwoWindingsTransformer(frSubstation, "T5", vl5, bus5, 115., vl6, bus6, 10.5,
+                rT5, xT5, 31.5, rT5, xT5, WindingConnectionType.Y, WindingConnectionType.Y);
+        addNewTwoWindingsTransformer(frSubstation, "T6", vl5, bus5, 115., vl6, bus6, 10.5,
+                rT6, xT6, 31.5, rT6, xT6, WindingConnectionType.Y, WindingConnectionType.Y_GROUNDED);
 
-        m2.newExtension(GeneratorShortCircuitAdder.class)
-                .withDirectSubtransX(xM2) // TODO : add table to store coeffs for homopolar values
-                .withDirectTransX(xM2)
-                .withStepUpTransformerX(0.)
-                .add();
+        ThreeWindingsTransformerAdder t3Adder = frSubstation.newThreeWindingsTransformer().setId("T3").setRatedU0(1.0D);
+        addNewLeg(t3Adder.newLeg1(), rT3a, xT3a, 400.0D, 100.0D, vl1, bus1);
+        addNewLeg(t3Adder.newLeg2(), rT3b, xT3b, 120.0D, 100.0D, vl2, bus2);
+        addNewLeg(t3Adder.newLeg3(), rT3c, xT3c, 30., 100.0D, vl8, bus8);
+        ThreeWindingsTransformer twt3 = t3Adder.add();
 
-        Line l1 = network.newLine()
-                .setId("L1_B2_B3")
-                .setVoltageLevel1(vl2.getId())
-                .setBus1(bus2.getId())
-                .setConnectableBus1(bus2.getId())
-                .setVoltageLevel2(vl3.getId())
-                .setBus2(bus3.getId())
-                .setConnectableBus2(bus3.getId())
-                .setR(rL1)
-                .setX(xL1)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
-
-        Line l2 = network.newLine()
-                .setId("L2_B3_B4")
-                .setVoltageLevel1(vl3.getId())
-                .setBus1(bus3.getId())
-                .setConnectableBus1(bus3.getId())
-                .setVoltageLevel2(vl4.getId())
-                .setBus2(bus4.getId())
-                .setConnectableBus2(bus4.getId())
-                .setR(rL2)
-                .setX(xL2)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
-
-        Line l3 = network.newLine()
-                .setId("L3_B2_B5")
-                .setVoltageLevel1(vl2.getId())
-                .setBus1(bus2.getId())
-                .setConnectableBus1(bus2.getId())
-                .setVoltageLevel2(vl5.getId())
-                .setBus2(bus5.getId())
-                .setConnectableBus2(bus5.getId())
-                .setR(rL3)
-                .setX(xL3)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
-
-        Line l4 = network.newLine()
-                .setId("L4_B5_B3")
-                .setVoltageLevel1(vl5.getId())
-                .setBus1(bus5.getId())
-                .setConnectableBus1(bus5.getId())
-                .setVoltageLevel2(vl3.getId())
-                .setBus2(bus3.getId())
-                .setConnectableBus2(bus3.getId())
-                .setR(rL4)
-                .setX(xL4)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
-
-        Line l5 = network.newLine()
-                .setId("L5_B5_B4")
-                .setVoltageLevel1(vl5.getId())
-                .setBus1(bus5.getId())
-                .setConnectableBus1(bus5.getId())
-                .setVoltageLevel2(vl4.getId())
-                .setBus2(bus4.getId())
-                .setConnectableBus2(bus4.getId())
-                .setR(rL5)
-                .setX(xL5)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
-
-        Line l6 = network.newLine()
-                .setId("L6_B6_B7")
-                .setVoltageLevel1(vl6.getId())
-                .setBus1(bus6.getId())
-                .setConnectableBus1(bus6.getId())
-                .setVoltageLevel2(vl7.getId())
-                .setBus2(bus7.getId())
-                .setConnectableBus2(bus7.getId())
-                .setR(rL6)
-                .setX(xL6)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
-
-        var t5 = substation56.newTwoWindingsTransformer()
-                .setId("T5")
-                .setVoltageLevel1(vl5.getId())
-                .setBus1(bus5.getId())
-                .setConnectableBus1(bus5.getId())
-                .setRatedU1(115.)
-                .setRatedS(100.)
-                .setVoltageLevel2(vl6.getId())
-                .setBus2(bus6.getId())
-                .setConnectableBus2(bus6.getId())
-                .setRatedU2(10.5)
-                .setR(rT5)
-                .setX(xT5)
-                .setG(0.0D)
-                .setB(0.0D)
-                .setRatedS(31.5)
-                .add();
-
-        var t6 = substation56.newTwoWindingsTransformer()
-                .setId("T6")
-                .setVoltageLevel1(vl5.getId())
-                .setBus1(bus5.getId())
-                .setConnectableBus1(bus5.getId())
-                .setRatedU1(115.)
-                .setVoltageLevel2(vl6.getId())
-                .setBus2(bus6.getId())
-                .setConnectableBus2(bus6.getId())
-                .setRatedU2(10.5)
-                .setR(rT6)
-                .setX(xT6)
-                .setG(0.0D)
-                .setB(0.0D)
-                .setRatedS(31.5)
-                .add();
-
-        ThreeWindingsTransformer twt3 = substation1289.newThreeWindingsTransformer()
-                .setId("T3")
-                .setRatedU0(1.0D)
-                .newLeg1()
-                .setR(rT3a)
-                .setX(xT3a)
-                .setG(0.)
-                .setB(0.)
-                .setRatedU(400.0D)
-                .setRatedS(100.0D)
-                .setVoltageLevel(vl1.getId())
-                .setBus(bus1.getId())
-                .add()
-                .newLeg2()
-                .setR(rT3b)
-                .setX(xT3b)
-                .setG(0.0D)
-                .setB(0.0D)
-                .setRatedU(120.0D)
-                .setRatedS(100.0D)
-                .setVoltageLevel(vl2.getId())
-                .setBus(bus2.getId())
-                .add()
-                .newLeg3()
-                .setR(rT3c)
-                .setX(xT3c)
-                .setG(0.0D)
-                .setB(0.0D)
-                .setRatedU(30.)
-                .setRatedS(100.0D)
-                .setVoltageLevel(vl8.getId())
-                .setBus(bus8.getId())
-                .add()
-                .add();
-        ThreeWindingsTransformer twt4 = substation1289.newThreeWindingsTransformer()
-                .setId("T4")
-                .setRatedU0(1.0D)
-                .newLeg1()
-                .setR(rT3a)
-                .setX(xT3a)
-                .setG(0.)
-                .setB(0.)
-                .setRatedU(400.0D)
-                .setVoltageLevel(vl1.getId())
-                .setBus(bus1.getId())
-                .add()
-                .newLeg2()
-                .setR(rT3b)
-                .setX(xT3b)
-                .setG(0.0D)
-                .setB(0.0D)
-                .setRatedU(120.0D)
-                .setVoltageLevel(vl2.getId())
-                .setBus(bus2.getId())
-                .add()
-                .newLeg3()
-                .setR(rT3c)
-                .setX(xT3c)
-                .setG(0.0D)
-                .setB(0.0D)
-                .setRatedU(30.)
-                .setVoltageLevel(vl9.getId())
-                .setBus(bus9.getId())
-                .add()
-                .add();
+        // T4 legs have no rated power
+        ThreeWindingsTransformerAdder t4Adder = frSubstation.newThreeWindingsTransformer().setId("T4").setRatedU0(1.0D);
+        addNewLeg(t4Adder.newLeg1(), rT3a, xT3a, 400.0D, Double.NaN, vl1, bus1);
+        addNewLeg(t4Adder.newLeg2(), rT3b, xT3b, 120.0D, Double.NaN, vl2, bus2);
+        addNewLeg(t4Adder.newLeg3(), rT3c, xT3c, 30., Double.NaN, vl9, bus9);
+        ThreeWindingsTransformer twt4 = t4Adder.add();
 
         //additional data
         // Machines :
-        g1.newExtension(GeneratorShortCircuitAdder2.class)
-                .withTransRd(rG1)
-                .add();
-        g2.newExtension(GeneratorShortCircuitAdder2.class)
-                .withTransRd(rG2)
-                .add();
-        g3.newExtension(GeneratorShortCircuitAdder2.class)
-                .withTransRd(rG3)
-                .add();
-        m1.newExtension(GeneratorShortCircuitAdder2.class)
-                .withTransRd(rM1)
-                .add();
-        m2.newExtension(GeneratorShortCircuitAdder2.class)
-                .withTransRd(rM2)
-                .add();
-        q2.newExtension(GeneratorShortCircuitAdder2.class)
-                .withTransRd(rFeeder2)
-                .add();
-
         g1.newExtension(GeneratorFortescueAdder.class)
                 .withGrounded(true)
                 .withXz(xG1 * coeffXoG1)
@@ -1309,45 +625,6 @@ public final class ReferenceNetwork {
                 .leg3().withXz(twt4.getLeg3().getX() * coeffXoT4)
                 .leg3().withRz(twt4.getLeg3().getR() * coeffRoT4)
                 .leg3().withFreeFluxes(true)
-                .add();
-
-        t5.newExtension(TwoWindingsTransformerFortescueAdder.class)
-                .withXz(xT5)
-                .withRz(rT5)
-                .withConnectionType1(WindingConnectionType.Y)
-                .withConnectionType2(WindingConnectionType.Y)
-                .add();
-        t6.newExtension(TwoWindingsTransformerFortescueAdder.class)
-                .withXz(xT6)
-                .withRz(rT6)
-                .withConnectionType1(WindingConnectionType.Y)
-                .withConnectionType2(WindingConnectionType.Y_GROUNDED)
-                .add();
-
-        // Lines :
-        l1.newExtension(LineFortescueAdder.class)
-                .withRz(coeffRoL1 * rL1)
-                .withXz(coeffXoL1 * xL1)
-                .add();
-        l2.newExtension(LineFortescueAdder.class)
-                .withRz(coeffRoL2 * rL2)
-                .withXz(coeffXoL2 * xL2)
-                .add();
-        l3.newExtension(LineFortescueAdder.class)
-                .withRz(coeffRoL3 * rL3)
-                .withXz(coeffXoL3 * xL3)
-                .add();
-        l4.newExtension(LineFortescueAdder.class)
-                .withRz(coeffRoL4 * rL4)
-                .withXz(coeffXoL4 * xL4)
-                .add();
-        l5.newExtension(LineFortescueAdder.class)
-                .withRz(coeffRoL5 * rL5)
-                .withXz(coeffXoL5 * xL5)
-                .add();
-        l6.newExtension(LineFortescueAdder.class)
-                .withRz(coeffRoL6 * rL6)
-                .withXz(coeffXoL6 * xL6)
                 .add();
 
         return network;
@@ -1405,126 +682,34 @@ public final class ReferenceNetwork {
         double pEquivalentFeeder = 31.286;
         double qEquivalentFeeder = 313.451;
 
-        Substation substation123 = network.newSubstation()
-                .setId("S123")
+        Substation frSubstation = network.newSubstation()
+                .setId("S1")
                 .setCountry(Country.FR)
                 .add();
-        VoltageLevel vl1 = substation123.newVoltageLevel()
-                .setId("VL_1")
-                .setNominalV(bus1Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus1Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus1 = vl1.getBusBreakerView().newBus()
-                .setId("B1")
-                .add();
-        bus1.setV(bus1Vnom).setAngle(0.);
+        VoltageLevel vl1 = addNewVoltageLevel(frSubstation, "VL_1", bus1Vnom);
+        Bus bus1 = addNewBus(vl1, "B1", bus2Vnom, 0);
 
-        VoltageLevel vl2 = substation123.newVoltageLevel()
-                .setId("VL_2")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus2 = vl2.getBusBreakerView().newBus()
-                .setId("B2")
-                .add();
-        bus2.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl2 = addNewVoltageLevel(frSubstation, "VL_2", bus2Vnom);
+        Bus bus2 = addNewBus(vl2, "B2", bus2Vnom, 0);
 
-        VoltageLevel vl3 = substation123.newVoltageLevel()
-                .setId("VL_3")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus3 = vl3.getBusBreakerView().newBus()
-                .setId("B3")
-                .add();
-        bus3.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl3 = addNewVoltageLevel(frSubstation, "VL_3", bus2Vnom);
+        Bus bus3 = addNewBus(vl3, "B3", bus2Vnom, 0);
 
-        Substation substation4 = network.newSubstation()
-                .setId("S4")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl4 = substation4.newVoltageLevel()
-                .setId("VL_4")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus4 = vl4.getBusBreakerView().newBus()
-                .setId("B4")
-                .add();
-        bus4.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl4 = addNewVoltageLevel(frSubstation, "VL_4", bus2Vnom);
+        Bus bus4 = addNewBus(vl4, "B4", bus2Vnom, 0);
 
-        Substation substation25 = network.newSubstation()
-                .setId("S25")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl25 = substation25.newVoltageLevel()
-                .setId("VL_25")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus25 = vl25.getBusBreakerView().newBus()
-                .setId("B25")
-                .add();
-        bus25.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl25 = addNewVoltageLevel(frSubstation, "VL_25", bus2Vnom);
+        Bus bus25 = addNewBus(vl25, "B25", bus2Vnom, 0);
 
-        Substation substation5 = network.newSubstation()
-                .setId("S5")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl5 = substation5.newVoltageLevel()
-                .setId("VL_5")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus5 = vl5.getBusBreakerView().newBus()
-                .setId("B5")
-                .add();
-        bus5.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl5 = addNewVoltageLevel(frSubstation, "VL_5", bus2Vnom);
+        Bus bus5 = addNewBus(vl5, "B5", bus2Vnom, 0);
 
         // we create a node in between to verify formula of short circuit in the middle of a line
-        Substation substation55 = network.newSubstation()
-                .setId("S55")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl55 = substation55.newVoltageLevel()
-                .setId("VL_55")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus55 = vl55.getBusBreakerView().newBus()
-                .setId("B55")
-                .add();
-        bus55.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl55 = addNewVoltageLevel(frSubstation, "VL_55", bus2Vnom);
+        Bus bus55 = addNewBus(vl55, "B55", bus2Vnom, 0);
 
-        Substation substation6 = network.newSubstation()
-                .setId("S6")
-                .setCountry(Country.FR)
-                .add();
-        VoltageLevel vl6 = substation6.newVoltageLevel()
-                .setId("VL_6")
-                .setNominalV(bus2Vnom)
-                .setLowVoltageLimit(0)
-                .setHighVoltageLimit(2 * bus2Vnom)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        Bus bus6 = vl6.getBusBreakerView().newBus()
-                .setId("B6")
-                .add();
-        bus6.setV(bus2Vnom).setAngle(0.);
+        VoltageLevel vl6 = addNewVoltageLevel(frSubstation, "VL_6", bus2Vnom);
+        Bus bus6 = addNewBus(vl6, "B6", bus2Vnom, 0);
 
         vl1.newLoad()
                 .setId("LOAD_FEEDER") // we try to model the feeder through a load that will be transformed into an impedance
@@ -1533,7 +718,7 @@ public final class ReferenceNetwork {
                 .setQ0(qEquivalentFeeder)
                 .add();
 
-        var t1 = substation123.newTwoWindingsTransformer()
+        var t1 = frSubstation.newTwoWindingsTransformer()
                 .setId("T1")
                 .setVoltageLevel1(vl1.getId())
                 .setBus1(bus1.getId())
@@ -1549,7 +734,7 @@ public final class ReferenceNetwork {
                 .setB(0.0D)
                 .setRatedS(630.)
                 .add();
-        var t2 = substation123.newTwoWindingsTransformer()
+        var t2 = frSubstation.newTwoWindingsTransformer()
                 .setId("T2")
                 .setVoltageLevel1(vl1.getId())
                 .setBus1(bus1.getId())
@@ -1566,102 +751,23 @@ public final class ReferenceNetwork {
                 .setRatedS(400.)
                 .add();
 
-        Line l25 = network.newLine()
-                .setId("L2_B2_B25")
-                .setVoltageLevel1(vl2.getId())
-                .setBus1(bus2.getId())
-                .setConnectableBus1(bus2.getId())
-                .setVoltageLevel2(vl25.getId())
-                .setBus2(bus25.getId())
-                .setConnectableBus2(bus25.getId())
-                .setR(rL2 * 0.3)
-                .setX(xL2 * 0.3)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        Line l25 = addNewLine(network, "L2_B2_B25", vl2, vl25, bus2, bus25,
+                rL2 * 0.3, xL2 * 0.3);
 
-        Line l54 = network.newLine()
-                .setId("L2_B25_B4")
-                .setVoltageLevel1(vl25.getId())
-                .setBus1(bus25.getId())
-                .setConnectableBus1(bus25.getId())
-                .setVoltageLevel2(vl4.getId())
-                .setBus2(bus4.getId())
-                .setConnectableBus2(bus4.getId())
-                .setR(rL2 * 0.7)
-                .setX(xL2 * 0.7)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        Line l54 = addNewLine(network, "L2_B25_B4", vl25, vl4, bus25, bus4,
+                rL2 * 0.7, xL2 * 0.7);
 
-        Line l1 = network.newLine()
-                .setId("L1_B3_B4")
-                .setVoltageLevel1(vl3.getId())
-                .setBus1(bus3.getId())
-                .setConnectableBus1(bus3.getId())
-                .setVoltageLevel2(vl4.getId())
-                .setBus2(bus4.getId())
-                .setConnectableBus2(bus4.getId())
-                .setR(rL1)
-                .setX(xL1)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        Line l1 = addNewLine(network, "L1_B3_B4", vl3, vl4, bus3, bus4,
+                rL1, xL1);
 
-        Line l3 = network.newLine()
-                .setId("L3_B4_B5")
-                .setVoltageLevel1(vl4.getId())
-                .setBus1(bus4.getId())
-                .setConnectableBus1(bus4.getId())
-                .setVoltageLevel2(vl5.getId())
-                .setBus2(bus5.getId())
-                .setConnectableBus2(bus5.getId())
-                .setR(rL3)
-                .setX(xL3)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        Line l3 = addNewLine(network, "L3_B4_B5", vl4, vl5, bus4, bus5,
+                rL3, xL3);
 
-        Line l455 = network.newLine()
-                .setId("L455_B5_B55")
-                .setVoltageLevel1(vl5.getId())
-                .setBus1(bus5.getId())
-                .setConnectableBus1(bus5.getId())
-                .setVoltageLevel2(vl55.getId())
-                .setBus2(bus55.getId())
-                .setConnectableBus2(bus55.getId())
-                .setR(rL4 * 0.3)
-                .setX(xL4 * 0.3)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
+        Line l455 = addNewLine(network, "L455_B5_B55", vl5, vl55, bus5, bus55,
+                rL4 * 0.3, xL4 * 0.3);
 
-        Line l456 = network.newLine()
-                .setId("L4_B55_B6")
-                .setVoltageLevel1(vl55.getId())
-                .setBus1(bus55.getId())
-                .setConnectableBus1(bus55.getId())
-                .setVoltageLevel2(vl6.getId())
-                .setBus2(bus6.getId())
-                .setConnectableBus2(bus6.getId())
-                .setR(rL4 * 0.7)
-                .setX(xL4 * 0.7)
-                .setG1(0.0)
-                .setB1(0.0)
-                .setG2(0.0)
-                .setB2(0.0)
-                .add();
-
+        Line l456 = addNewLine(network, "L4_B55_B6", vl55, vl6, bus55, bus6,
+                rL4 * 0.7, xL4 * 0.7);
         //additional data
 
         l1.newExtension(LineFortescueAdder.class)
@@ -1709,5 +815,127 @@ public final class ReferenceNetwork {
         return network;
     }
 
+    private static Generator addNewScGenerator(VoltageLevel voltageLevel, Bus bus, String id,
+                                               double minP, double maxP, double targetV, double x, double r) {
+        Generator generator = addNewGenerator(voltageLevel, bus, id, minP, maxP, 0, 0, targetV, false);
+        generator.newExtension(GeneratorShortCircuitAdder.class)
+                .withDirectSubtransX(x)
+                .withDirectTransX(x)
+                .withStepUpTransformerX(0.)
+                .add();
+        generator.newExtension(GeneratorShortCircuitAdder2.class)
+                .withTransRd(r)
+                .add();
+        return generator;
+    }
+
+    private static Line addNewFortescueLine(Network network, String id, VoltageLevel vl1, VoltageLevel vl2,
+                                            Bus bus1, Bus bus2, double r, double x, double coeffRo, double coeffXo) {
+        Line line = addNewLine(network, id, vl1, vl2, bus1, bus2, r, x);
+        line.newExtension(LineFortescueAdder.class)
+                .withRz(coeffRo * r)
+                .withXz(coeffXo * x)
+                .add();
+        return line;
+    }
+
+    private static void addNewTwoWindingsTransformer(Substation substation, String id,
+                                                     VoltageLevel vl1, Bus bus1, double ratedU1,
+                                                     VoltageLevel vl2, Bus bus2, double ratedU2,
+                                                     double r, double x, double ratedS, double rz, double xz,
+                                                     WindingConnectionType connectionType1,
+                                                     WindingConnectionType connectionType2) {
+        TwoWindingsTransformer twt = substation.newTwoWindingsTransformer()
+                .setId(id)
+                .setVoltageLevel1(vl1.getId())
+                .setBus1(bus1.getId())
+                .setConnectableBus1(bus1.getId())
+                .setRatedU1(ratedU1)
+                .setVoltageLevel2(vl2.getId())
+                .setBus2(bus2.getId())
+                .setConnectableBus2(bus2.getId())
+                .setRatedU2(ratedU2)
+                .setR(r)
+                .setX(x)
+                .setG(0.0D)
+                .setB(0.0D)
+                .setRatedS(ratedS)
+                .add();
+        twt.newExtension(TwoWindingsTransformerFortescueAdder.class)
+                .withRz(rz)
+                .withXz(xz)
+                .withConnectionType1(connectionType1)
+                .withConnectionType2(connectionType2)
+                .add();
+    }
+
+    private static void addNewLeg(ThreeWindingsTransformerAdder.LegAdder leg, double r, double x,
+                                  double ratedU, double ratedS, VoltageLevel voltageLevel, Bus bus) {
+        leg.setR(r)
+                .setX(x)
+                .setG(0.0D)
+                .setB(0.0D)
+                .setRatedU(ratedU)
+                .setRatedS(ratedS)
+                .setVoltageLevel(voltageLevel.getId())
+                .setBus(bus.getId())
+                .add();
+    }
+
+    private static VoltageLevel addNewVoltageLevel(Substation substation, String id, double nominalV) {
+        return substation.newVoltageLevel()
+                .setId(id)
+                .setNominalV(nominalV)
+                .setLowVoltageLimit(0)
+                .setHighVoltageLimit(2 * nominalV)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+    }
+
+    private static Bus addNewBus(VoltageLevel voltageLevel, String id, double voltage, double angle) {
+        Bus bus = voltageLevel.getBusBreakerView().newBus()
+                .setId(id)
+                .add();
+        bus.setV(voltage).setAngle(angle);
+        return bus;
+    }
+
+    private static Line addNewLine(Network network, String id, VoltageLevel vl1, VoltageLevel vl2,
+                                   Bus bus1, Bus bus2, double r, double x) {
+        return addNewLine(network, id, vl1, vl2, bus1, bus2, r, x, 0, 0, 0, 0);
+    }
+
+    private static Line addNewLine(Network network, String id, VoltageLevel vl1, VoltageLevel vl2,
+                                Bus bus1, Bus bus2, double r, double x, double g1, double b1, double g2, double b2) {
+        return network.newLine()
+                .setId(id)
+                .setVoltageLevel1(vl1.getId())
+                .setBus1(bus1.getId())
+                .setConnectableBus1(bus1.getId())
+                .setVoltageLevel2(vl2.getId())
+                .setBus2(bus2.getId())
+                .setConnectableBus2(bus2.getId())
+                .setR(r)
+                .setX(x)
+                .setG1(g1)
+                .setB1(b1)
+                .setG2(g2)
+                .setB2(b2)
+                .add();
+    }
+
+    private static Generator addNewGenerator(VoltageLevel voltageLevel, Bus bus, String id,
+                                             double minP, double maxP, double targetP, double targetQ, double targetV, boolean isRegulatorOn) {
+        return voltageLevel.newGenerator() //alternative modelling
+                .setId(id)
+                .setBus(bus.getId())
+                .setMinP(minP)
+                .setMaxP(maxP)
+                .setTargetP(targetP)
+                .setTargetQ(targetQ)
+                .setTargetV(targetV)
+                .setVoltageRegulatorOn(isRegulatorOn)
+                .add();
+    }
 }
 

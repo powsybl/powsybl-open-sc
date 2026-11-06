@@ -51,7 +51,7 @@ public class TheveninEquivalent {
         impedanceLinearResolution.run();
     }
 
-    private static Pair<String, Integer > buildFaultBranchFromBusId(String busId, Network network) {
+    private static Pair<String, Integer> buildFaultBranchFromBusId(String busId, Network network) {
         Bus bus = network.getBusBreakerView().getBus(busId);
         String branchId = "";
         int branchSide = 0;

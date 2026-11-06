@@ -309,5 +309,3 @@ public class ShortCircuitNormTest {
         return network;
     }
 }
-
-
