@@ -60,6 +60,7 @@ public abstract class AbstractShortCircuitEngine {
 
     protected AcLoadFlowParameters getAcLoadFlowParametersFromParam() {
         OpenLoadFlowParameters loadflowParametersExt = OpenLoadFlowParameters.get(parameters.getLoadFlowParameters());
+        // TODO: DTreeGraphConnectivityFactor instead of EvenShiloachGraphDecrementalConnectivityFactory to be more performant
         return OpenLoadFlowParameters.createAcParameters(parameters.getLoadFlowParameters(), loadflowParametersExt,
                 parameters.getMatrixFactory(), new EvenShiloachGraphDecrementalConnectivityFactory<>(), false, false);
     }
