@@ -167,16 +167,16 @@ public final class ReferenceNetwork {
                 .add();
 
         addNewLine(network, "B2_B3", vl2, vl3, bus2, bus3,
-                rl23, xl23, 0, 0, 0, 0);
+                rl23, xl23);
 
         addNewLine(network, "B2_B4", vl2, vl4, bus2, bus4,
-                rl24, xl24, 0, 0, 0, 0);
+                rl24, xl24);
 
         addNewLine(network, "B2_B6", vl2, vl6, bus2, bus6,
-                rl26, xl26, 0, 0, 0, 0);
+                rl26, xl26);
 
         addNewLine(network, "B7_B8", vl7, vl8, bus7, bus8,
-                rl78, xl78, 0, 0, 0, 0);
+                rl78, xl78);
 
         frSubstation.newTwoWindingsTransformer()
                 .setId("T1")
@@ -361,16 +361,16 @@ public final class ReferenceNetwork {
                 .add();
 
         Line l2 = addNewLine(network, "L2_B2_B4", vl2, vl4, bus2, bus4,
-                rL2, xL2, 0, 0, 0, 0);
+                rL2, xL2);
 
         Line l1 = addNewLine(network, "L1_B3_B4", vl3, vl4, bus3, bus4,
-                rL1, xL1, 0, 0, 0, 0);
+                rL1, xL1);
 
         Line l3 = addNewLine(network, "L3_B4_B5", vl4, vl5, bus4, bus5,
-                rL3, xL3, 0, 0, 0, 0);
+                rL3, xL3);
 
         Line l4 = addNewLine(network, "L4_B5_B6", vl5, vl6, bus5, bus6,
-                rL4, xL4, 0, 0, 0, 0);
+                rL4, xL4);
 
         //additional data
 
@@ -752,22 +752,22 @@ public final class ReferenceNetwork {
                 .add();
 
         Line l25 = addNewLine(network, "L2_B2_B25", vl2, vl25, bus2, bus25,
-                rL2 * 0.3, xL2 * 0.3, 0, 0, 0, 0);
+                rL2 * 0.3, xL2 * 0.3);
 
         Line l54 = addNewLine(network, "L2_B25_B4", vl25, vl4, bus25, bus4,
-                rL2 * 0.7, xL2 * 0.7, 0, 0, 0, 0);
+                rL2 * 0.7, xL2 * 0.7);
 
         Line l1 = addNewLine(network, "L1_B3_B4", vl3, vl4, bus3, bus4,
-                rL1, xL1, 0, 0, 0, 0);
+                rL1, xL1);
 
         Line l3 = addNewLine(network, "L3_B4_B5", vl4, vl5, bus4, bus5,
-                rL3, xL3, 0, 0, 0, 0);
+                rL3, xL3);
 
         Line l455 = addNewLine(network, "L455_B5_B55", vl5, vl55, bus5, bus55,
-                rL4 * 0.3, xL4 * 0.3, 0, 0, 0, 0);
+                rL4 * 0.3, xL4 * 0.3);
 
         Line l456 = addNewLine(network, "L4_B55_B6", vl55, vl6, bus55, bus6,
-                rL4 * 0.7, xL4 * 0.7, 0, 0, 0, 0);
+                rL4 * 0.7, xL4 * 0.7);
         //additional data
 
         l1.newExtension(LineFortescueAdder.class)
@@ -831,7 +831,7 @@ public final class ReferenceNetwork {
 
     private static Line addNewFortescueLine(Network network, String id, VoltageLevel vl1, VoltageLevel vl2,
                                             Bus bus1, Bus bus2, double r, double x, double coeffRo, double coeffXo) {
-        Line line = addNewLine(network, id, vl1, vl2, bus1, bus2, r, x, 0, 0, 0, 0);
+        Line line = addNewLine(network, id, vl1, vl2, bus1, bus2, r, x);
         line.newExtension(LineFortescueAdder.class)
                 .withRz(coeffRo * r)
                 .withXz(coeffXo * x)
@@ -901,6 +901,11 @@ public final class ReferenceNetwork {
     }
 
     private static Line addNewLine(Network network, String id, VoltageLevel vl1, VoltageLevel vl2,
+                                   Bus bus1, Bus bus2, double r, double x) {
+        return addNewLine(network, id, vl1, vl2, bus1, bus2, r, x, 0, 0, 0, 0);
+    }
+
+    private static Line addNewLine(Network network, String id, VoltageLevel vl1, VoltageLevel vl2,
                                 Bus bus1, Bus bus2, double r, double x, double g1, double b1, double g2, double b2) {
         return network.newLine()
                 .setId(id)
@@ -920,7 +925,7 @@ public final class ReferenceNetwork {
     }
 
     private static Generator addNewGenerator(VoltageLevel voltageLevel, Bus bus, String id,
-                                             double minP, double maxP, double targetP, double targetQ, double targetV, boolean isRegalutorOn) {
+                                             double minP, double maxP, double targetP, double targetQ, double targetV, boolean isRegulatorOn) {
         return voltageLevel.newGenerator() //alternative modelling
                 .setId(id)
                 .setBus(bus.getId())
@@ -929,7 +934,7 @@ public final class ReferenceNetwork {
                 .setTargetP(targetP)
                 .setTargetQ(targetQ)
                 .setTargetV(targetV)
-                .setVoltageRegulatorOn(isRegalutorOn)
+                .setVoltageRegulatorOn(isRegulatorOn)
                 .add();
     }
 }
