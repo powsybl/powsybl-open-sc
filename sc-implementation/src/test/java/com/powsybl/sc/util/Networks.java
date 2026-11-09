@@ -590,7 +590,8 @@ public final class Networks {
 
     public static Network create2nTfo(NetworkFactory networkFactory) {
         Objects.requireNonNull(networkFactory);
-        double xl = 2.;
+        double rTfo = 0.0;
+        double xTfo = 2.;
         double nominalV2 = 150;
 
         Network network = create2n(networkFactory);
@@ -608,8 +609,8 @@ public final class Networks {
                 .setVoltageLevel2("VL_2")
                 .setBus2("B2")
                 .setConnectableBus2("B2")
-                .setR(0.0)
-                .setX(xl)
+                .setR(rTfo)
+                .setX(xTfo)
                 .setRatedU1(100.0)
                 .setRatedU2(nominalV2)
                 .setG(0.0)

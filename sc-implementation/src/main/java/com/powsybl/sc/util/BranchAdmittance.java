@@ -86,37 +86,41 @@ public final class BranchAdmittance {
         if (!isWithResistances) {
             r = 0.0;
         }
-        double zk2 = r * r + x * x;
-        if (zk2 == 0) {
+        Complex zd = new Complex(r, x);
+        if (zd.abs() == 0) {
             throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
         }
-        double zInvSquare = 1 / zk2;
-
         double alpha = piModel.getA1();
-        double cosA = Math.cos(alpha);
-        double sinA = Math.sin(alpha);
+        Complex d1 = new Complex(Math.cos(-alpha), Math.sin(-alpha));
+        Complex d2 = new Complex(Math.cos(alpha), Math.sin(alpha));
 
-        double gPi1 = 0.0;
-        double bPi1 = 0.0;
-        double gPi2 = 0.0;
-        double bPi2 = 0.0;
+        Complex yPi1 = Complex.ZERO;
+        Complex yPi2 = Complex.ZERO;
         if (isWithCapacities) {
-            gPi1 = piModel.getG1() / kTr;
-            bPi1 = piModel.getB1() / kTx;
-            gPi2 = piModel.getG2() / kTr;
-            bPi2 = piModel.getB2() / kTx;
+            yPi1 = new Complex(piModel.getG1() / kTr, piModel.getB1() / kTx);
+            yPi2 = new Complex(piModel.getG2() / kTr, piModel.getB2() / kTx);
         }
 
         if (admittanceType != AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
+            /*
             double seriesConductance = rho * zInvSquare * (r * cosA + x * sinA);
+            Complex oldY12 = new Complex(seriesConductance, -rho * zInvSquare * (x * cosA + r * sinA));
+            Complex oldY1y12sum = new Complex(rho * rho * (gPi1 + r * zInvSquare), rho * rho * (bPi1 - x * zInvSquare));
+            Complex oldY21 = new Complex(seriesConductance, rho * zInvSquare * (r * sinA - x * cosA));
+            Complex oldY2y21sum = new Complex(r * zInvSquare + gPi2, -x * zInvSquare + bPi2); */
+
+            Complex y12 = d1.multiply(rho).divide(zd);
+            Complex y1y12sum = d1.pow(2).multiply(yPi1.add(Complex.ONE.divide(zd))).multiply(rho * rho);
+            Complex y21 = d2.multiply(rho).divide(zd);
+            Complex y2y21sum = d2.pow(2).multiply(yPi2.add(Complex.ONE.divide(zd)));
             return new BranchAdmittance(
-                    new Complex(seriesConductance, -rho * zInvSquare * (x * cosA + r * sinA)),
-                    new Complex(rho * rho * (gPi1 + r * zInvSquare), rho * rho * (bPi1 - x * zInvSquare)),
-                    new Complex(seriesConductance, rho * zInvSquare * (r * sinA - x * cosA)),
-                    new Complex(r * zInvSquare + gPi2, -x * zInvSquare + bPi2));
+                    y12,
+                    y1y12sum,
+                    y21,
+                    y2y21sum);
         }
 
-        return createHomopolar(branch, frequencyType, rho, cosA, sinA, gPi2, bPi2);
+        return createHomopolar(branch, frequencyType, rho, Math.cos(alpha), Math.sin(alpha), yPi2.getReal(), yPi2.getImaginary());
     }
 
     private static BranchAdmittance createHomopolar(LfBranch branch, FrequencyType frequencyType,
