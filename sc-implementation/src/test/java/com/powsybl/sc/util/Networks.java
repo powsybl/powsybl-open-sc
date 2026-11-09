@@ -518,7 +518,7 @@ public final class Networks {
                 .setSectionCount(1)
                 .newVoltageRegulation()
                     .withMode(RegulationMode.VOLTAGE)
-                    .withRegulating(true)
+                    .withRegulating(false)
                     .add()
                 .newLinearModel().setMaximumSectionCount(1).setBPerSection(-0.00046612).add() //lf pu = / 100
                 .add();
