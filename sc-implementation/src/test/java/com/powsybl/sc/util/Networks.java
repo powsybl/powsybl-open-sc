@@ -9,6 +9,7 @@ package com.powsybl.sc.util;
 
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -57,8 +58,11 @@ public final class Networks {
                 .setMinP(0.0)
                 .setMaxP(150)
                 .setTargetP(10)
-                .setTargetV(100.0)
-                .setVoltageRegulatorOn(true)
+                .setLocalTargetV(100.0)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(true)
+                    .add()
                 .add();
 
         gen2.newExtension(GeneratorShortCircuitAdder.class)
@@ -223,8 +227,11 @@ public final class Networks {
                 .setMinP(0.0)
                 .setMaxP(150)
                 .setTargetP(10)
-                .setTargetV(100.0)
-                .setVoltageRegulatorOn(true)
+                .setLocalTargetV(100.0)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(true)
+                    .add()
                 .add();
 
         Substation substation3 = network.newSubstation()
@@ -269,7 +276,10 @@ public final class Networks {
                 .setId("SHUNT_4")
                 .setBus(bus4.getId())
                 .setSectionCount(1)
-                .setVoltageRegulatorOn(false)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(false)
+                    .add()
                 .newLinearModel().setMaximumSectionCount(1).setBPerSection(-0.00105).add()
                 .add();
 
@@ -391,8 +401,11 @@ public final class Networks {
                 .setMinP(0.0)
                 .setMaxP(150)
                 .setTargetP(10)
-                .setTargetV(100.0)
-                .setVoltageRegulatorOn(true)
+                .setLocalTargetV(100.0)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(true)
+                    .add()
                 .add();
 
         Substation substation3 = network.newSubstation()
@@ -493,14 +506,20 @@ public final class Networks {
                 .setId("SHUNT_3_EQ")
                 .setBus(bus3.getId())
                 .setSectionCount(1)
-                .setVoltageRegulatorOn(false)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(false)
+                    .add()
                 .newLinearModel().setMaximumSectionCount(1).setBPerSection(-0.00058265).add() //lf pu = / 100
                 .add();
         vl1.newShuntCompensator()
                 .setId("SHUNT_1_EQ")
                 .setBus(bus1.getId())
                 .setSectionCount(1)
-                .setVoltageRegulatorOn(false)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(true)
+                    .add()
                 .newLinearModel().setMaximumSectionCount(1).setBPerSection(-0.00046612).add() //lf pu = / 100
                 .add();
 
