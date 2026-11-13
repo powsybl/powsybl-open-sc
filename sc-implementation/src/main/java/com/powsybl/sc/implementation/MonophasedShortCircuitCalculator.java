@@ -9,6 +9,9 @@ package com.powsybl.sc.implementation;
 
 import org.apache.commons.math3.complex.Complex;
 
+import static com.powsybl.sc.extensions.FortescueConstants.FORTESCUE_A;
+import static com.powsybl.sc.extensions.FortescueConstants.FORTESCUE_A2;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -66,11 +69,11 @@ public class MonophasedShortCircuitCalculator extends AbstractShortCircuitCalcul
 
         Complex z1 = zdf.multiply(2.).add(zof);
         Complex z2 = z1.divide(3.);
-        Complex zt = zfault.getZg().add(z2);
-        Complex ic = initV.multiply(geta()).divide(zt);
+        Complex zt = zfault.zg().add(z2);
+        Complex ic = initV.multiply(FORTESCUE_A).divide(zt);
 
         io = ic.divide(3.);
-        id = io.multiply(geta2());
-        ii = io.multiply(geta());
+        id = io.multiply(FORTESCUE_A2);
+        ii = io.multiply(FORTESCUE_A);
     }
 }

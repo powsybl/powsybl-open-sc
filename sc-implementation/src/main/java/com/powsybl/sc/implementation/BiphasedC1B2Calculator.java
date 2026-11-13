@@ -9,6 +9,9 @@ package com.powsybl.sc.implementation;
 
 import org.apache.commons.math3.complex.Complex;
 
+import static com.powsybl.sc.extensions.FortescueConstants.FORTESCUE_A;
+import static com.powsybl.sc.extensions.FortescueConstants.FORTESCUE_A2;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -88,27 +91,26 @@ public class BiphasedC1B2Calculator extends BiphasedCommonSupportShortCircuitCal
         //
 
         //compute the numerator matrix = a * V1d(init) - a² * V2d(init)
-        Complex numerator = geta().multiply(initV).subtract(geta2().multiply(v2dInit));
+        Complex numerator = FORTESCUE_A.multiply(initV).subtract(FORTESCUE_A2.multiply(v2dInit));
         ic = numerator.divide(zt);
     }
 
     @Override
     public void computeZt() {
-
         // Zt = Zf + 1/3*(Zd_11 - a*Zd_12 + Zd_22 -a²*Zd_21 + Zo_11 - Zo_21 + Zo_22 - Zo_12 + Zi_22 - a²*Zi_12 + Zi_11 - a*Zi_21) // Fixme: same formula as the other ...
-        Complex ztmp = zdf.subtract(zd12.multiply(geta()))
+        Complex ztmp = zdf.subtract(zd12.multiply(FORTESCUE_A))
                 .add(zd22)
-                .subtract(zd21.multiply(geta2()))
+                .subtract(zd21.multiply(FORTESCUE_A2))
                 .add(zof)
                 .subtract(zo21)
                 .add(zo22)
                 .subtract(zo12)
                 .add(zi22)
-                .subtract(zi12.multiply(geta2()))
+                .subtract(zi12.multiply(FORTESCUE_A2))
                 .add(zif)
-                .subtract(zi21.multiply(geta()));
+                .subtract(zi21.multiply(FORTESCUE_A));
 
-        zt = zfault.getZg().add(ztmp.divide(3.));
+        zt = zfault.zg().add(ztmp.divide(3.));
     }
 
     @Override
@@ -124,8 +126,8 @@ public class BiphasedC1B2Calculator extends BiphasedCommonSupportShortCircuitCal
         // [ I2i ]               [ a²]
 
         io = ic.divide(3.);
-        id = io.multiply(geta2());
-        ii = io.multiply(geta());
+        id = io.multiply(FORTESCUE_A2);
+        ii = io.multiply(FORTESCUE_A);
 
         i2o = io.multiply(-1.);
         i2d = ii.multiply(-1.);
