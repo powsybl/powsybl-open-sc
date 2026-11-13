@@ -653,6 +653,35 @@ public final class Networks {
         return network;
     }
 
+    public static Network create2nPstRtc(NetworkFactory networkFactory) {
+        Objects.requireNonNull(networkFactory);
+        Network network = create2nPst(networkFactory);
+
+        double[] rho = {0.90, 1.0, 1.10};
+        double[] r = {-20.0, 0.0, 30.0}; // % deviation from transformer R
+        double[] x = {-10.0, 0.0, 25.0}; // % deviation from transformer X
+
+        TwoWindingsTransformer twt = network.getTwoWindingsTransformer("B1_B2");
+        RatioTapChangerAdder rtcAdder = twt.newRatioTapChanger()
+                .setLowTapPosition(0)
+                .setTapPosition(2)
+                .setLoadTapChangingCapabilities(true)
+                .setRegulating(false);
+
+        for (int i = 0; i < rho.length; i++) {
+            rtcAdder.beginStep()
+                    .setRho(rho[i])
+                    .setR(r[i])
+                    .setX(x[i])
+                    .setG(0.0)
+                    .setB(0.0)
+                    .endStep();
+        }
+        rtcAdder.add();
+
+        return network;
+    }
+
     public static Network create4nShunts(NetworkFactory networkFactory) {
         Objects.requireNonNull(networkFactory);
         //      2                               3
