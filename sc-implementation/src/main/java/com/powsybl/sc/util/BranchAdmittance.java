@@ -110,9 +110,9 @@ public final class BranchAdmittance {
             Complex oldY2y21sum = new Complex(r * zInvSquare + gPi2, -x * zInvSquare + bPi2); */
 
             Complex y12 = d1.multiply(rho).divide(zd);
-            Complex y1y12sum = d1.pow(2).multiply(yPi1.add(Complex.ONE.divide(zd))).multiply(rho * rho);
+            Complex y1y12sum = (yPi1.add(Complex.ONE.divide(zd))).multiply(rho * rho);
             Complex y21 = d2.multiply(rho).divide(zd);
-            Complex y2y21sum = d2.pow(2).multiply(yPi2.add(Complex.ONE.divide(zd)));
+            Complex y2y21sum = yPi2.add(Complex.ONE.divide(zd));
             return new BranchAdmittance(
                     y12,
                     y1y12sum,
