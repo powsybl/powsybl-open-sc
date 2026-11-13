@@ -9,6 +9,9 @@ package com.powsybl.sc.implementation;
 
 import org.apache.commons.math3.complex.Complex;
 
+import static com.powsybl.sc.extensions.FortescueConstants.FORTESCUE_A;
+import static com.powsybl.sc.extensions.FortescueConstants.FORTESCUE_A2;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -58,13 +61,13 @@ public class BiphasedShortCircuitCalculator extends AbstractShortCircuitCalculat
         // From computed Ic1 we get complex values : I1o, I1d, I1i, I2o, I2d, I2i using step 1 formulas expressed with Ic1
         // Then compute the voltages from current values
 
-        Complex zt = zdf.multiply(2).add(zfault.getZb());
+        Complex zt = zdf.multiply(2).add(zfault.zb());
 
         Complex ib = initV.multiply(-Math.sqrt(3.)).divide(zt).multiply(new Complex(0., 1.));
 
         // Compute the currents from step 1 formula :
         io = new Complex(0.);
-        id = ib.divide(3.).multiply(geta().subtract(geta2()));
+        id = ib.divide(3.).multiply(FORTESCUE_A.subtract(FORTESCUE_A2));
         ii = id.multiply(-1.);
 
     }

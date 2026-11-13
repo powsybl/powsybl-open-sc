@@ -21,9 +21,9 @@ public class FeedersAtBusResult {
 
     private Complex iFeedersSum; //sum of currents coming from branches, which is also the sum of currents from injector feeders at the same LfBus
 
-    private List<FeederResult> busFeedersResult; // output data of feeders at bus
+    private final List<FeederResult> busFeedersResult; // output data of feeders at bus
 
-    private FeedersAtBus feedersAtBus;
+    private final FeedersAtBus feedersAtBus;
 
     public FeedersAtBusResult(FeedersAtBus feedersAtBus) {
         this.iFeedersSum = new Complex(0.);
