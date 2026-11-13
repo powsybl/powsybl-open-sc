@@ -9,6 +9,7 @@ package com.powsybl.sc.implementation;
 
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.*;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.sc.extensions.*;
 import com.powsybl.sc.util.extensions.GeneratorNorm;
@@ -147,9 +148,12 @@ public class ShortCircuitNormTest {
                 .setMinP(0.0)
                 .setMaxP(100.)
                 .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(100.)
-                .setVoltageRegulatorOn(false)
+                .setLocalTargetQ(0.)
+                .setLocalTargetV(100.)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(false)
+                    .add()
                 .setRatedS(150.)
                 .add();
 
@@ -252,9 +256,12 @@ public class ShortCircuitNormTest {
                 .setMinP(0.0)
                 .setMaxP(100.)
                 .setTargetP(0.)
-                .setTargetQ(0.)
-                .setTargetV(vHv)
-                .setVoltageRegulatorOn(false)
+                .setLocalTargetQ(0.)
+                .setLocalTargetV(vHv)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(false)
+                    .add()
                 .setRatedS(150.)
                 .add();
 

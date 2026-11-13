@@ -13,6 +13,7 @@ import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.LineFortescueAdder;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.sc.extensions.*;
 
 /**
@@ -968,9 +969,12 @@ public final class ReferenceNetwork {
                 .setMinP(minP)
                 .setMaxP(maxP)
                 .setTargetP(targetP)
-                .setTargetQ(targetQ)
-                .setTargetV(targetV)
-                .setVoltageRegulatorOn(isRegulatorOn)
+                .setLocalTargetQ(targetQ)
+                .setLocalTargetV(targetV)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(isRegulatorOn)
+                    .add()
                 .add();
     }
 }

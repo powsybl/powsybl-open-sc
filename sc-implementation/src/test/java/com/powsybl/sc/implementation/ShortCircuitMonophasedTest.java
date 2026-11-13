@@ -13,6 +13,7 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.GeneratorFortescueAdder;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
 import com.powsybl.iidm.network.extensions.LineFortescueAdder;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.sc.extensions.GeneratorFortescueTypeAdder;
@@ -237,8 +238,11 @@ public class ShortCircuitMonophasedTest {
                 .setMinP(-10.0)
                 .setMaxP(150)
                 .setTargetP(pgen)
-                .setTargetV(uac)
-                .setVoltageRegulatorOn(true)
+                .setLocalTargetV(uac)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(true)
+                    .add()
                 .add();
 
         genA.newExtension(GeneratorShortCircuitAdder.class)
@@ -284,8 +288,11 @@ public class ShortCircuitMonophasedTest {
                 .setMinP(-10.0)
                 .setMaxP(150)
                 .setTargetP(pgen)
-                .setTargetV(ubc)
-                .setVoltageRegulatorOn(true)
+                .setLocalTargetV(ubc)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(true)
+                    .add()
                 .add();
 
         genB.newExtension(GeneratorShortCircuitAdder.class)
