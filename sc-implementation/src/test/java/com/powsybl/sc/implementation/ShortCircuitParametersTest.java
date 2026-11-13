@@ -14,6 +14,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.NetworkFactory;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.iidm.network.extensions.GeneratorShortCircuitAdder;
+import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.loadflow.LoadFlow;
 import com.powsybl.loadflow.LoadFlowParameters;
 import com.powsybl.sc.extensions.GeneratorSelectionMode;
@@ -446,8 +447,11 @@ class ShortCircuitParametersTest {
                 .setMinP(0.0)
                 .setMaxP(150.0)
                 .setTargetP(targetP)
-                .setTargetV(targetV)
-                .setVoltageRegulatorOn(true)
+                .setLocalTargetV(targetV)
+                .newVoltageRegulation()
+                    .withMode(RegulationMode.VOLTAGE)
+                    .withRegulating(true)
+                    .add()
                 .add();
         generator.newExtension(GeneratorShortCircuitAdder.class)
                 .withDirectSubtransX(20.)
