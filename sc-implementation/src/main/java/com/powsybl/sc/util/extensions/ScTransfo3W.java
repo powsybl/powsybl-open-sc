@@ -25,7 +25,7 @@ public class ScTransfo3W {
 
         private final boolean freeFluxes; // only used for now for 3 windings transformers
 
-        private final Complex zGround = new Complex(0.);
+        private final Complex zGround = Complex.ZERO;
 
         /*public Leg(LegConnectionType legConnectionType) {
             this(legConnectionType, 0, 0, 1., 1., 1., 1., false);

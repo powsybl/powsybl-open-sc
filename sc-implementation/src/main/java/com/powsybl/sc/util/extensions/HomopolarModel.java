@@ -39,10 +39,10 @@ public class HomopolarModel {
     private final LfBranch branch;
 
     // values here are expressed in pu (Vnom_B, Sbase = 100.)
-    private Complex zo = new Complex(0.); // zo = zoa + zob
-    private Complex yom = new Complex(0.); // Zom = 1 / Yom with Yom = gom + j*bom
-    private Complex zga = new Complex(0.);
-    private Complex zgb = new Complex(0.);
+    private Complex zo = Complex.ZERO; // zo = zoa + zob
+    private Complex yom = Complex.ZERO; // Zom = 1 / Yom with Yom = gom + j*bom
+    private Complex zga = Complex.ZERO;
+    private Complex zgb = Complex.ZERO;
 
     // if the branch is not a transfo, then it is the correct default behaviour
     private WindingConnectionType leg1ConnectionType = WindingConnectionType.Y_GROUNDED;
@@ -185,7 +185,7 @@ public class HomopolarModel {
 
         // if the free fluxes option is false, we suppose that if Yom given in input is zero, then Zom = is zero  : TODO : see if there is a more robust way to handle this
         // if the free fluxes option is true, Zom is infinite and Yom is then considered as zero
-        Complex zm = new Complex(0.);
+        Complex zm = Complex.ZERO;
         if (yom.abs() != 0.) {
             zm = yom.reciprocal();
         }

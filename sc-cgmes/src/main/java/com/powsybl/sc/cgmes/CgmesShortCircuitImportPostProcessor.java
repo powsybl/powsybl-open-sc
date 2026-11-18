@@ -42,8 +42,6 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
 
     private final QueryCatalog queryCatalog = new QueryCatalog("short-circuit.sparql");
 
-    public static final double EPSILON = 0.000001;
-
     private void processExternalNetworkInjection(Network network, TripleStore tripleStore) {
         for (PropertyBag propertyBag : tripleStore.query(queryCatalog.get("externalNetworkInjectionShortCircuit"))) {
             String id = propertyBag.getId("ID");
@@ -64,12 +62,12 @@ public class CgmesShortCircuitImportPostProcessor implements CgmesImportPostProc
 
             double xoOverX = zoOverZ * Math.sqrt((rOverX * rOverX + 1.) / (roOverXo * roOverXo + 1.));
             double roOverR = 0.;
-            if (Math.abs(rOverX) > EPSILON) {
+            if (Math.abs(rOverX) > ShortCircuitConstants.RATIO_EPSILON) {
                 roOverR = roOverXo * xoOverX / rOverX;
             }
 
             boolean grounded = false;
-            if (Math.abs(xoOverX) > EPSILON || Math.abs(roOverR) > EPSILON) {
+            if (Math.abs(xoOverX) > ShortCircuitConstants.RATIO_EPSILON || Math.abs(roOverR) > ShortCircuitConstants.RATIO_EPSILON) {
                 grounded = true;
             }
 

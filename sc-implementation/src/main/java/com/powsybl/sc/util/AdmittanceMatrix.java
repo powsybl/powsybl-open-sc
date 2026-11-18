@@ -26,11 +26,6 @@ public class AdmittanceMatrix implements AutoCloseable {
 
     public class AdmittanceSystem {
 
-        //created to extract a subset of the equationSystem to easily create admittance subMatrices for the reduction problem while keeping consistency on the global equation system
-        private Set<Integer> numRowBuses;
-
-        private Set<Integer> numColBuses;
-
         public Map<Equation<VariableType, EquationType>, Integer> eqToRowNum;
 
         public Map<Variable<VariableType>, Integer> varToColNum;
@@ -39,8 +34,9 @@ public class AdmittanceMatrix implements AutoCloseable {
 
         AdmittanceSystem() {
 
-            numRowBuses = new HashSet<>();
-            numColBuses = new HashSet<>();
+            //created to extract a subset of the equationSystem to easily create admittance subMatrices for the reduction problem while keeping consistency on the global equation system
+            Set<Integer> numRowBuses = new HashSet<>();
+            Set<Integer> numColBuses = new HashSet<>();
 
             eqToRowNum = new HashMap<>();
             varToColNum = new HashMap<>();
@@ -94,7 +90,7 @@ public class AdmittanceMatrix implements AutoCloseable {
 
     private Set<LfBus> columnBuses;
 
-    private AdmittanceSystem admSys;
+    private final AdmittanceSystem admSys;
 
     private List<Integer> busNumToRowR; //given a number of bus, provides the Row and Column to the matrix
     private List<Integer> busNumToColR;
@@ -289,7 +285,7 @@ public class AdmittanceMatrix implements AutoCloseable {
 
             // m result is [ r -x ] ---> BUS_VR
             //             [ x  r ] ---> BUS_VI
-            Complex defaultV = new Complex(0.);
+            Complex defaultV = Complex.ZERO;
             if (!tmpV.containsKey(v.getElementNum())) {
                 tmpV.put(v.getElementNum(), defaultV);
             }

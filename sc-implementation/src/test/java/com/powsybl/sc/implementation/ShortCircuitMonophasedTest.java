@@ -157,7 +157,7 @@ public class ShortCircuitMonophasedTest {
         network.getGenerator("GB").newExtension(GeneratorFortescueTypeAdder.class)
                 .add();
 
-        ShortCircuitFault sc1 = new ShortCircuitFault("BP", "sc1", "BP", new ShortCircuitFaultImpedance(new Complex(0.)), ShortCircuitFault.ShortCircuitType.MONOPHASED);
+        ShortCircuitFault sc1 = new ShortCircuitFault("BP", "sc1", "BP", new ShortCircuitFaultImpedance(Complex.ZERO), ShortCircuitFault.ShortCircuitType.MONOPHASED);
         List<ShortCircuitFault> faultList = List.of(sc1);
 
         scp.setInitialVoltageProfileMode(InitialVoltageProfileMode.PREVIOUS_VALUE);

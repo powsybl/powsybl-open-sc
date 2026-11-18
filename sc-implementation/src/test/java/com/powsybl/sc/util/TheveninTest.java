@@ -57,7 +57,7 @@ public class TheveninTest {
         TheveninEquivalent thEq = new TheveninEquivalent(network, locationList, shortCircuitParameters);
 
         thEq.run();
-        Map<String, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> resultByBusId =
+        Map<String, ImpedanceLinearResolutionResult> resultByBusId =
                 thEq.getImpedanceLinearResolution().results.entrySet().stream()
                         .collect(Collectors.toMap(
                                 entry -> entry.getKey().getId(),
@@ -84,7 +84,7 @@ public class TheveninTest {
         TheveninEquivalent thEq = new TheveninEquivalent(network, locationList, shortCircuitParameters);
 
         thEq.run();
-        Map<String, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> resultByBusId =
+        Map<String, ImpedanceLinearResolutionResult> resultByBusId =
                 thEq.getImpedanceLinearResolution().results.entrySet().stream()
                         .collect(Collectors.toMap(
                                 entry -> entry.getKey().getId(),
@@ -113,7 +113,7 @@ public class TheveninTest {
         TheveninEquivalent thEq = new TheveninEquivalent(network, locationList, shortCircuitParameters);
 
         thEq.run();
-        Map<String, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> resultByBusId =
+        Map<String, ImpedanceLinearResolutionResult> resultByBusId =
                 thEq.getImpedanceLinearResolution().results.entrySet().stream()
                         .collect(Collectors.toMap(
                                 entry -> entry.getKey().getId(),

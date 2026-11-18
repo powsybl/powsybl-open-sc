@@ -20,6 +20,7 @@ public final class ShortCircuitConstants {
     public static final double CURRENT_EPSILON_PU = 1e-6;
     public static final double IMPEDANCE_EPSILON_PU = 1e-6;
     public static final double ADMITTANCE_EPSILON_PU = 1e-8;
+    public static final double RATIO_EPSILON = 1e-6;
 
     public static final double IMPEDANCE_CONSISTENCY_TOLERANCE_PU = 1e-5;
 
