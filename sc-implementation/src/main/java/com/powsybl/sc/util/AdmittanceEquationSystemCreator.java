@@ -16,23 +16,17 @@ import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.extensions.FrequencyType;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
-import com.powsybl.sc.util.extensions.ScGenerator;
 import com.powsybl.sc.util.extensions.ScLoad;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
-import com.powsybl.shortcircuit.StudyType;
 import net.jafama.FastMath;
 import org.apache.commons.math3.complex.Complex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
-import static com.powsybl.openloadflow.util.PerUnit.SB;
 import static com.powsybl.sc.extensions.ShortCircuitConstants.ADMITTANCE_EPSILON_PU;
-import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_EPSILON_PU;
 import static com.powsybl.sc.util.ShortCircuitHelper.*;
 
 /**
@@ -48,6 +42,7 @@ public final class AdmittanceEquationSystemCreator {
     private final AdmittanceType admittanceType;
     private final ShortCircuitParameters shortCircuitParameters;
     private final OpenShortCircuitParameters openScParameters;
+    private final FeedersCreator feedersCreator;
 
     public AdmittanceEquationSystemCreator(Network network,
                                            LfNetwork lfNetwork,
@@ -61,9 +56,10 @@ public final class AdmittanceEquationSystemCreator {
         this.admittanceType = admittanceType;
         this.shortCircuitParameters = shortCircuitParameters;
         this.openScParameters = openScParameters;
+        this.feedersCreator = new FeedersCreator(network, lfNetwork, initialVoltages, admittanceType, shortCircuitParameters, openScParameters);
     }
 
-    public EquationSystem<VariableType, EquationType> create(FeedersAtNetwork feeders, FrequencyType frequencyType) {
+    public EquationSystem<VariableType, EquationType> create(FrequencyType frequencyType) {
         VariableSet<VariableType> variableSet = new VariableSet<>();
         EquationSystem<VariableType, EquationType> equationSystem = new EquationSystem<>(EquationType.class, lfNetwork, variableSet);
 
@@ -77,7 +73,7 @@ public final class AdmittanceEquationSystemCreator {
 
         createBranches(variableSet, equationSystem, frequencyType);
         if (admittanceType != AdmittanceType.ADM_INJ) { //shunts created in the admittance matrix are only those that really exist in the network
-            createShunts(variableSet, equationSystem, feeders, frequencyType);
+            createShunts(variableSet, equationSystem, frequencyType);
         }
 
         return equationSystem;
@@ -122,10 +118,7 @@ public final class AdmittanceEquationSystemCreator {
 
     private void createShunts(VariableSet<VariableType> variableSet,
                               EquationSystem<VariableType, EquationType> equationSystem,
-                              FeedersAtNetwork feeders,
                               FrequencyType frequencyType) {
-        Predicate<LfBus> innerZone = createInnerZonePredicate(network, openScParameters.getInnerZoneBusIds());
-
         for (LfBus bus : lfNetwork.getBuses()) {
             Complex v = initialVoltages.get(bus.getNum());
             boolean isBusPv = bus.isVoltageControlled();
@@ -138,8 +131,7 @@ public final class AdmittanceEquationSystemCreator {
             Complex y = switch (admittanceType) {
                 case ADM_SHUNT -> computeAdmForAdmShunt(shortCircuitParameters, bus);
                 case ADM_ADMIT -> computeAdmForAdmAdmit(v, shortCircuitParameters, isBusPv, bus);
-                case ADM_THEVENIN -> computeAdmForAdmThevenin(v, innerZone, bus, feeders);
-                case ADM_THEVENIN_HOMOPOLAR -> computeAdmForAdmTheveninHomopolar(bus, innerZone, feeders);
+                case ADM_THEVENIN, ADM_THEVENIN_HOMOPOLAR -> computeAdmFromFeeders(bus);
                 default -> Complex.ZERO;
             };
 
@@ -197,104 +189,18 @@ public final class AdmittanceEquationSystemCreator {
         return y.add(yLoadEq).add(yGenEq);
     }
 
-    private Complex computeAdmForAdmThevenin(Complex v, Predicate<LfBus> innerZone, LfBus bus, FeedersAtNetwork feeders) {
+    private Complex computeAdmFromFeeders(LfBus bus) {
         Complex y = Complex.ZERO;
-        Complex yLoadEq = Complex.ZERO;
-
-        List<Feeder> feederList = new ArrayList<>();
-
-        if (shortCircuitParameters.isWithShuntCompensators()) {
-            // Handling shunts that physically exist
-            y = new Complex(0., getBfromShuntAndUpdateFeederList(bus, feederList)); // ! updates feederList
+        for (Feeder feeder : feedersCreator.createBusFeeders(bus)) {
+            y = y.add(feeder.getZ()); // getZ() returns the admittance of the feeder
         }
-
-        if (shortCircuitParameters.isWithLoads()) {
-            ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-            yLoadEq = scLoad.ydEquivalent().divide(v.abs() * v.abs());
-
-            if (yLoadEq.abs() > ADMITTANCE_EPSILON_PU) {
-                Feeder loadFeeder = new LoadFeeder(yLoadEq, bus); // Currently only one feeder aggregating all the loads of the bus!
-                feederList.add(loadFeeder);
-            }
-        }
-
-        Complex yGenEq = getYtransfromRdXdAndUpdateFeederList(bus, innerZone, feederList); // ! updates feederList
-        // TODO : check how to verify that the generators are operating
-
-        FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
-        feeders.busToFeeders.put(bus, shortCircuitEquationSystemBusFeeders);
-
-        return y.add(yLoadEq).add(yGenEq);
-    }
-
-    private Complex computeAdmForAdmTheveninHomopolar(LfBus bus, Predicate<LfBus> innerZone, FeedersAtNetwork feeders) {
-        List<Feeder> feederList = new ArrayList<>(); // not used yet in homopolar
-
-        Complex y = getYtransfromRdXdAndUpdateFeederList(bus, innerZone, feederList); // ! updates feederList
-        //TODO : check how to verify that the generators are operating
-
-        FeedersAtBus shortCircuitEquationSystemBusFeeders = new FeedersAtBus(feederList, bus);
-        feeders.busToFeeders.put(bus, shortCircuitEquationSystemBusFeeders);
-
         return y;
     }
 
-    private Complex getYtransfromRdXdAndUpdateFeederList(LfBus bus, Predicate<LfBus> innerZone, List<Feeder> feederList) {
-        double vnomVl = bus.getNominalV();
-        Complex tmpY = Complex.ZERO;
-        for (LfGenerator lfgen : bus.getGenerators()) { //compute R'd or R"d from generators at bus
-            if (!isGeneratorSelected(lfgen, openScParameters, network, innerZone)) {
-                continue;
-            }
-            ScGenerator scGen = (ScGenerator) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-            double kG = (Double) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
-            Complex z = scGen.getTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
-            if (shortCircuitParameters.getStudyType() == StudyType.SUB_TRANSIENT) {
-                z = scGen.getSubTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
-            }
-
-            if (admittanceType == AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
-                // For now, xo and ro are fixed independently of x'd and x"d:
-                // further improvement might be needed if xo and ro are different for transient and subTransient short circuit analysis
-                z = Complex.ZERO;
-                if (scGen.isGrounded()) {
-                    z = scGen.getZo();
-                }
-            }
-
-            if (z.abs() > IMPEDANCE_EPSILON_PU) {
-                Complex yGen = z.reciprocal().multiply(vnomVl * vnomVl / SB);
-                tmpY = tmpY.add(yGen);
-                Feeder genFeeder = new GeneratorFeeder(yGen, lfgen);
-                feederList.add(genFeeder);
-            }
-        }
-
-        return tmpY;
-    }
-
     private static double getBfromShunt(LfBus bus) {
-        List<Feeder> feederList = new ArrayList<>();
-        return getBfromShuntAndUpdateFeederList(bus, feederList);
-    }
-
-    private static double getBfromShuntAndUpdateFeederList(LfBus bus, List<Feeder> feederList) {
-        LfShunt shunt = bus.getShunt().orElse(null);
-        double tmpB = 0.;
-        if (shunt != null) {
-            tmpB += shunt.getB();
-            Feeder shuntFeeder = new ShuntFeeder(new Complex(0., shunt.getB()), shunt.getId(), bus, Feeder.FeederType.SHUNT);
-            feederList.add(shuntFeeder);
-            //check if g will be implemented
-        }
-        LfShunt controllerShunt = bus.getControllerShunt().orElse(null);
-        if (controllerShunt != null) {
-            tmpB += controllerShunt.getB();
-            Feeder shuntFeeder = new ShuntFeeder(new Complex(0., controllerShunt.getB()), controllerShunt.getId(), bus, Feeder.FeederType.CONTROLLER_SHUNT);
-            feederList.add(shuntFeeder);
-            //check if g will be implemented
-        }
-
-        return tmpB;
+        double b = 0.;
+        b += bus.getShunt().map(LfShunt::getB).orElse(0.);
+        b += bus.getControllerShunt().map(LfShunt::getB).orElse(0.);
+        return b;
     }
 }

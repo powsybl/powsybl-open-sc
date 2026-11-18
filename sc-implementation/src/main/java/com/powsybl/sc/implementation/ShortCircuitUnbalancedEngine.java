@@ -26,6 +26,10 @@ import static com.powsybl.sc.util.ShortCircuitHelper.fillInitialVoltages;
  */
 public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
+    private FeedersAtNetwork directFeeders;
+
+    private FeedersAtNetwork homopolarFeeders;
+
     public ShortCircuitUnbalancedEngine(Network network, ShortCircuitParameters shortCircuitParameters,
                                         List<ShortCircuitFault> shortCircuitFaults, ShortCircuitNorm shortCircuitNorm) {
         super(network, shortCircuitParameters, shortCircuitFaults, shortCircuitNorm);
@@ -63,6 +67,9 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
         directResolution.run();
         homopolarResolution.run();
+
+        directFeeders = createFeeders(AdmittanceType.ADM_THEVENIN);
+        homopolarFeeders = createFeeders(AdmittanceType.ADM_THEVENIN_HOMOPOLAR);
 
         //Build the ShortCircuit results using the linear resolution computation results
         resultsPerFault.clear();
@@ -213,14 +220,11 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         Complex vi = zdf.multiply(ii).multiply(-1.);
 
         //record the results
-        FeedersAtNetwork equationSystemFeedersDirect = directResult.getEqSysFeeders();
-        FeedersAtNetwork equationSystemFeedersHomopolar = homopolarResult.getEqSysFeeders();
-
         ShortCircuitResult res = new ShortCircuitResult(scf, lfBus1,
                 id, io, ii,
                 zdf, zof, zdf,
                 v1dInit, vd, vo, vi,
-                equationSystemFeedersDirect, equationSystemFeedersHomopolar, shortCircuitNorm,
+                directFeeders, homopolarFeeders, shortCircuitNorm,
                 directResult.getZthEq20Hz(), homopolarResult.getZthEq20Hz());
 
         if (shortCircuitParameters.isWithVoltageResult()) {
@@ -269,15 +273,12 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                                                                   TwoBusImpedanceLinearResolutionResult biphasedHomopolarResult) {
 
         //record the results
-        FeedersAtNetwork equationSystemFeedersDirect = directResult.getEqSysFeeders();
-        FeedersAtNetwork equationSystemFeedersHomopolar = homopolarResult.getEqSysFeeders();
-
         ShortCircuitResult res = new ShortCircuitResult(scf, lfBus1,
                 id, io, ii,
                 zdf, zof, zdf,
                 v1dInit,
                 dvd, dvo, dvi,
-                equationSystemFeedersDirect, equationSystemFeedersHomopolar, shortCircuitNorm,
+                directFeeders, homopolarFeeders, shortCircuitNorm,
                 i2d, i2o, i2i,
                 v2dInit,
                 dv2d, dv2o, dv2i,

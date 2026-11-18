@@ -69,13 +69,8 @@ public class ImpedanceLinearResolution {
         AdmittanceEquationSystemCreator equationSystemCreator = new AdmittanceEquationSystemCreator(network, lfNetwork, initialVoltages,
                 admittanceType, parameters, openScParameters);
 
-        FeedersAtNetwork equationsSystemFeeders = new FeedersAtNetwork();
-        EquationSystem<VariableType, EquationType> equationSystem
-                = equationSystemCreator.create(equationsSystemFeeders, FrequencyType.FREQ_50_HZ);
-
-        // feeders at 20Hz are not used, but required by the equation system creation
-        EquationSystem<VariableType, EquationType> equationSystem20hz
-                = equationSystemCreator.create(new FeedersAtNetwork(), FrequencyType.FREQ_20_HZ);
+        EquationSystem<VariableType, EquationType> equationSystem = equationSystemCreator.create(FrequencyType.FREQ_50_HZ);
+        EquationSystem<VariableType, EquationType> equationSystem20hz = equationSystemCreator.create(FrequencyType.FREQ_20_HZ);
 
         List<LfBus> inputBuses = new ArrayList<>();
         List<Pair<LfBus, LfBus>> busPairList = new ArrayList<>();
@@ -132,7 +127,7 @@ public class ImpedanceLinearResolution {
                 //if required, do the same for all buses from the grid
                 if (parameters.isWithVoltageResult()) {
                     // This equivalent to store  inv(Y)*[En]
-                    res.updateWithVoltagesdelta(yd, zfromLu, numBusFault, equationsSystemFeeders);
+                    res.updateWithVoltagesdelta(yd, zfromLu, numBusFault);
                     if (res.getTwoBusResults() != null) {
                         // update for each biphased common support fault
                         for (TwoBusImpedanceLinearResolutionResult twoBusResultPart : res.getTwoBusResults()) {
