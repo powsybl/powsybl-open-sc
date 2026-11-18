@@ -200,8 +200,8 @@ public final class ShortCircuitExtensions {
         WindingConnectionType leg1ConnectionType = FortescueConstants.DEFAULT_LEG1_CONNECTION_TYPE;
         WindingConnectionType leg2ConnectionType = FortescueConstants.DEFAULT_LEG2_CONNECTION_TYPE;
         double kT = DEFAULT_COEFF_K;
-        Complex z1Ground = new Complex(0.);
-        Complex z2Ground = new Complex(0.);
+        Complex z1Ground = Complex.ZERO;
+        Complex z2Ground = Complex.ZERO;
         var extensions = twt.getExtension(TwoWindingsTransformerFortescue.class);
         if (extensions != null) {
             zo = new Complex(extensions.getRz(), extensions.getXz()).divide(zBase);
@@ -261,18 +261,18 @@ public final class ShortCircuitExtensions {
 
         lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT, new ScGenerator(new Complex(transRd, transX),
                 new Complex(0., stepUpTfoX), ScGenerator.MachineType.SYNCHRONOUS_GEN,
-                new Complex(subTransRd, subtransX), toGround, new Complex(0.), zo));
+                new Complex(subTransRd, subtransX), toGround, Complex.ZERO, zo));
         lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT_NORM, kG); // set in a separate extension because it does not depend only on iidm in input but also on the type of norm
     }
 
     private static void addLoadExtension(Network network, LfBus lfBus) {
-        Complex yLoads = new Complex(0.);
+        Complex yLoads = Complex.ZERO;
         for (LfLoad lfLoad : lfBus.getLoads()) {
             for (String loadId : lfLoad.getOriginalIds()) {
                 Load load = network.getLoad(loadId);
                 double uNom = load.getTerminal().getVoltageLevel().getNominalV();
                 LoadShortCircuit extension = load.getExtension(LoadShortCircuit.class);
-                Complex zd = new Complex(0.);
+                Complex zd = Complex.ZERO;
                 if (extension != null) {
                     zd = extension.getZeqLoad();
                 } else {

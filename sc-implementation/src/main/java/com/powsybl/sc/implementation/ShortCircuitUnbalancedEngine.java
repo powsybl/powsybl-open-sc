@@ -75,13 +75,13 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
     public void processAdmittanceLinearResolutionResults(LfNetwork lfNetwork, ImpedanceLinearResolution directResolution,
                                                          ImpedanceLinearResolution homopolarResolution, ShortCircuitFault.ShortCircuitType shortCircuitType) {
 
-        for (Map.Entry<LfBus, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> entry
+        for (Map.Entry<LfBus, ImpedanceLinearResolutionResult> entry
                 : directResolution.results.entrySet()) {
 
             LfBus lfBus = entry.getKey();
-            ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult = entry.getValue();
+            ImpedanceLinearResolutionResult directResult = entry.getValue();
 
-            ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult =
+            ImpedanceLinearResolutionResult homopolarResult =
                     homopolarResolution.results.get(lfBus);
             LfBus lfBus1 = directResult.getBus();
 
@@ -199,8 +199,8 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
     }
 
     public ShortCircuitResult buildUnbalancedResult(Complex id, Complex io, Complex ii, Complex zdf, Complex zof,
-                                                    ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult,
-                                                    ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult,
+                                                    ImpedanceLinearResolutionResult directResult,
+                                                    ImpedanceLinearResolutionResult homopolarResult,
                                                     ShortCircuitFault scf, LfBus lfBus1, Complex v1dInit,
                                                     LfNetwork lfNetwork) {
         //get the voltage vectors
@@ -261,8 +261,8 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
     public ShortCircuitResult buildUnbalancedCommunSuppportResult(Complex id, Complex io, Complex ii, Complex i2d, Complex i2o, Complex i2i,
                                                                   Complex dvd, Complex dvo, Complex dvi, Complex dv2d, Complex dv2o, Complex dv2i, Complex zdf, Complex zof,
-                                                                  ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult,
-                                                                  ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult, ShortCircuitFault scf,
+                                                                  ImpedanceLinearResolutionResult directResult,
+                                                                  ImpedanceLinearResolutionResult homopolarResult, ShortCircuitFault scf,
                                                                   LfBus lfBus1, Complex v1dInit, LfNetwork lfNetwork,
                                                                   LfBus lfBus2, Complex v2dInit,
                                                                   TwoBusImpedanceLinearResolutionResult biphasedDirectResult,

@@ -40,13 +40,13 @@ class ShortCircuitBiphasedTest {
 
         ShortCircuitFault sc1 = createBiphasedFault("sc1", "B3", new ShortCircuitFaultImpedance(Complex.ZERO));
 
-        ShortCircuitFaultImpedance scZ2 = new ShortCircuitFaultImpedance(new Complex(0.), new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
+        ShortCircuitFaultImpedance scZ2 = new ShortCircuitFaultImpedance(Complex.ZERO, new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
         ShortCircuitFault sc2 = createBiphasedFault("sc2", "B3", scZ2);
 
-        ShortCircuitFaultImpedance scZ3 = new ShortCircuitFaultImpedance(new Complex(0.), new Complex(0.0001, 0.0002), new Complex(0., 0.));
+        ShortCircuitFaultImpedance scZ3 = new ShortCircuitFaultImpedance(Complex.ZERO, new Complex(0.0001, 0.0002), Complex.ZERO);
         ShortCircuitFault sc3 = createBiphasedFault("sc3", "B3", scZ3);
 
-        ShortCircuitFaultImpedance scZ4 = new ShortCircuitFaultImpedance(new Complex(0.0003, 0.0004), new Complex(0.0001, 0.0002), new Complex(0., 0.));
+        ShortCircuitFaultImpedance scZ4 = new ShortCircuitFaultImpedance(new Complex(0.0003, 0.0004), new Complex(0.0001, 0.0002), Complex.ZERO);
         ShortCircuitFault sc4 = createBiphasedFault("sc4", "B3", scZ4);
 
         List<ShortCircuitFault> faultList = List.of(sc1, sc2, sc3, sc4);

@@ -66,7 +66,7 @@ public class BiphasedShortCircuitCalculator extends AbstractShortCircuitCalculat
         Complex ib = initV.multiply(-Math.sqrt(3.)).divide(zt).multiply(new Complex(0., 1.));
 
         // Compute the currents from step 1 formula :
-        io = new Complex(0.);
+        io = Complex.ZERO;
         id = ib.divide(3.).multiply(FORTESCUE_A.subtract(FORTESCUE_A2));
         ii = id.multiply(-1.);
 
