@@ -34,8 +34,6 @@ public class ImpedanceLinearResolutionResult {
     // with n of vector [En] corresponding to the studied short circuit fault and values at lines of [Res] corresponding real and imaginary parts at bus in key
     private Map<Integer, Complex> busToZknf;
 
-    private FeedersAtNetwork eqSysFeeders;
-
     private List<TwoBusImpedanceLinearResolutionResult> twoBusResults; // we store here all necessary information for all two-bus faults with first bus equal to LfBus = bus
 
     ImpedanceLinearResolutionResult(LfBus bus, Complex eth, Complex zth, Complex zthEq20Hz) {
@@ -69,10 +67,6 @@ public class ImpedanceLinearResolutionResult {
         return zknf;
     }
 
-    public FeedersAtNetwork getEqSysFeeders() {
-        return eqSysFeeders;
-    }
-
     public List<TwoBusImpedanceLinearResolutionResult> getTwoBusResults() {
         return twoBusResults;
     }
@@ -81,9 +75,8 @@ public class ImpedanceLinearResolutionResult {
         this.zknf = enBus;
     }
 
-    public void updateWithVoltagesdelta(AdmittanceMatrix y, DenseMatrix dEn, int numDef, FeedersAtNetwork feeders) {
+    public void updateWithVoltagesdelta(AdmittanceMatrix y, DenseMatrix dEn, int numDef) {
         busToZknf = y.getDeltaV(dEn, numDef);
-        eqSysFeeders = feeders; // contains necessary data to update the contribution of feeders for each short circuit
     }
 
     public void addTwoBusResult(LfBus bus2, Complex initV2, ImpedanceUpperTriangle zT, ImpedanceUpperTriangle zTAt20Hz, int numBus2Fault) {

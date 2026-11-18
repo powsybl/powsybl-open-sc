@@ -17,7 +17,10 @@ import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
+import com.powsybl.sc.util.AdmittanceType;
 import com.powsybl.sc.util.CalculationLocation;
+import com.powsybl.sc.util.FeedersAtNetwork;
+import com.powsybl.sc.util.FeedersCreator;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.apache.commons.math3.complex.Complex;
@@ -208,6 +211,14 @@ public abstract class AbstractShortCircuitEngine {
 
     public ShortCircuitParameters getShortCircuitParameters() {
         return shortCircuitParameters;
+    }
+
+    /**
+     * Creates the injection feeders
+     */
+    protected FeedersAtNetwork createFeeders(AdmittanceType admittanceType) {
+        return new FeedersCreator(network, lfNetwork, initialVoltages, admittanceType,
+                shortCircuitParameters, openShortCircuitParameters).create();
     }
 
     public abstract void run();

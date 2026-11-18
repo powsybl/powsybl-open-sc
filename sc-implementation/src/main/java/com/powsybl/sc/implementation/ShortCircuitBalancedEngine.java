@@ -27,6 +27,8 @@ import static com.powsybl.sc.util.ShortCircuitHelper.fillInitialVoltages;
  */
 public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
+    private FeedersAtNetwork directFeeders;
+
     public ShortCircuitBalancedEngine(Network network, ShortCircuitParameters parameters, List<ShortCircuitFault> shortCircuitFaults, ShortCircuitNorm shortCircuitNorm) {
         super(network, parameters, shortCircuitFaults, shortCircuitNorm);
     }
@@ -52,6 +54,8 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                 shortCircuitParameters);
 
         directResolution.run();
+
+        directFeeders = createFeeders(AdmittanceType.ADM_THEVENIN);
 
         //Build the ShortCircuit results using the Thevenin computation results
         resultsPerFault.clear();
@@ -124,7 +128,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         Complex zth20hz = linearResolutionResult.getZthEq20Hz();
 
         ShortCircuitResult res = new ShortCircuitResult(shortCircuitFault, lfBus, id, zth, vInit, dv,
-                linearResolutionResult.getEqSysFeeders(), shortCircuitNorm, zth20hz);
+                directFeeders, shortCircuitNorm, zth20hz);
 
         updateVoltageProfileIfNeeded(res, lfNetwork, id, linearResolutionResult.getBusToZknf());
 
@@ -199,7 +203,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                 .add(zLine20hz.multiply(r * s));
 
         ShortCircuitResult res = new ShortCircuitResult(shortCircuitFault, lfBus1, id, zth, vInit, dv,
-                linearResolutionResult1.getEqSysFeeders(), shortCircuitNorm, zth20hz);
+                directFeeders, shortCircuitNorm, zth20hz);
 
         Map<Integer, Complex> combinedBusToZknf = null;
         if (shortCircuitParameters.isWithVoltageResult()) {
