@@ -226,6 +226,8 @@ public class ShortCircuitBalancedTest {
                 new double[]{3547.165283203125, 3747.61083984375, 3592.37939453125, 3411.642578125}
         );
         assertFeederCurrents(frs, new double[]{2700.28195, 2886.75122, 2725.79395, 2586.51782}, "G2");
+        assertFeederCurrents(frs, new double[]{173.205109, 171.172287, 168.313507, 162.471405}, "SHUNT_1");
+        assertFeederCurrents(frs, new double[]{556.746521, 571.552307, 580.229797, 542.883301}, "LOAD_3");
         assertBusVoltages(frs, new double[]{6.46059465, 0.0, 5.57589579, 10.400857}, 1);
     }
 
@@ -270,6 +272,8 @@ public class ShortCircuitBalancedTest {
                 new double[]{3523.270263671875, 3767.30078125, 3557.220458984375, 3374.391845703125}
         );
         assertFeederCurrents(frs, new double[]{3547.77686, 3767.2981, 3564.29761, 3424.16235}, "G2");
+        assertFeederCurrents(frs, new double[]{0.0, 0.0, 5.41030645, 11.3324947}, "SHUNT_1");
+        assertFeederCurrents(frs, new double[]{22.1418457, 0.0, 0.0, 38.6293488}, "LOAD_3");
         assertBusVoltages(frs, new double[]{7.60443974, 0.0, 7.03214169, 11.8865681}, 1);
     }
 
@@ -286,6 +290,8 @@ public class ShortCircuitBalancedTest {
                 new double[]{3516.67236328125, 3792.351318359375, 3649.132568359375, 2368.190673828125}
         );
         assertFeederCurrents(frs, new double[]{3592.53687, 3791.98267, 3601.34424, 3570.32666}, "G2");
+        assertFeederCurrents(frs, new double[]{0.0, 0.00993929151, 3.55666661, 3.44401217}, "SHUNT_1");
+        assertFeederCurrents(frs, new double[]{14.1394701, 0.0330433808, 0.0, 13.0272112}, "LOAD_3");
         assertBusVoltages(frs, new double[]{6.90904474, 0.0, 6.60392666, 7.67868948}, 1);
     }
 
@@ -320,6 +326,7 @@ public class ShortCircuitBalancedTest {
 
         assertMagnitudeCurrents(frs, new double[]{2945.155029296875, 1879.8883056640625});
         assertFeederCurrents(frs, new double[]{2945.07812, 2819.75586}, "G1");
+        assertFeederCurrents(frs, new double[]{0.0, 0.0}, "LOAD_2");
         assertBusVoltages(frs, new double[]{0.0, 4.34129143}, 0);
         assertBusVoltages(frs, new double[]{0.000213178486, 0.0}, 1);
 
@@ -606,6 +613,8 @@ public class ShortCircuitBalancedTest {
                 new double[]{3222.086181640625, 3486.87646484375, 3462.0830078125, 2701.750732421875}
         );
         assertFeederCurrents(frs, new double[]{2407.81299, 2598.07642, 2500.03687, 2972.69214}, "G2");
+        assertFeederCurrents(frs, new double[]{155.884583, 156.341187, 157.943634, 190.169724}, "SHUNT_1");
+        assertFeederCurrents(frs, new double[]{607.933777, 624.814636, 644.699768, 758.434265}, "LOAD_3");
         assertBusVoltages(frs, new double[]{6.59124184, 0.0, 3.39618897, 12.9770918}, 1);
     }
 
@@ -638,9 +647,9 @@ public class ShortCircuitBalancedTest {
         }
     }
 
-    private static void assertFeederCurrents(List<FaultResult> faultResults, double[] expected, String genId) {
+    private static void assertFeederCurrents(List<FaultResult> faultResults, double[] expected, String feederId) {
         for (int i = 0; i < expected.length; i++) {
-            double result = faultResults.get(i).getFeederCurrent(genId);
+            double result = faultResults.get(i).getFeederCurrent(feederId);
             assertEquals(expected[i], result, ShortCircuitBalancedTest.DELTA_I_A);
         }
     }
