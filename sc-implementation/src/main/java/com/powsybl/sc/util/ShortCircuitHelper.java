@@ -38,12 +38,21 @@ public final class ShortCircuitHelper {
     private ShortCircuitHelper() {
     }
 
-    public static Predicate<LfBus> createInnerZonePredicate(Network network, Set<String> innerZoneBusIds) {
+    public static Predicate<LfBus> createInnerLfZonePredicate(Network network, Set<String> innerZoneBusIds) {
         if (innerZoneBusIds.isEmpty()) {
             return lfBus -> true;
         }
         Set<String> innerZoneLfBusIds = getLfBusIdsFromIidmBusId(network, innerZoneBusIds);
         return lfBus -> innerZoneLfBusIds.contains(lfBus.getId());
+    }
+
+    public static Predicate<Bus> createInnerIidmZonePredicate(Network network, Set<String> innerZoneBusIds) {
+        if (innerZoneBusIds.isEmpty()) {
+            return iidmBus -> true;
+        }
+        // inner zone bus ids are bus-breaker view ids, converted to bus view ids to be compared with the IIDM bus ids
+        Set<String> innerZoneBusViewIds = getLfBusIdsFromIidmBusId(network, innerZoneBusIds);
+        return iidmBus -> innerZoneBusViewIds.contains(iidmBus.getId());
     }
 
     public static Set<String> getLfBusIdsFromIidmBusId(Network network, Set<String> innerZoneBusIds) {
@@ -75,35 +84,38 @@ public final class ShortCircuitHelper {
 
     public static boolean isGeneratorSelected(LfGenerator generator, OpenShortCircuitParameters parameters, Network network,
                                               Predicate<LfBus> innerZone, InitialVoltageProfileMode voltageProfileMode) {
-        GeneratorSelectionMode innerZoneMode = parameters.getInnerZoneGeneratorSelectionMode();
-        GeneratorSelectionMode outerZoneMode = parameters.getOuterZoneGeneratorSelectionMode();
-        boolean inInnerZone = innerZone.test(generator.getBus());
+        return isGeneratorSelected(innerZone.test(generator.getBus()), network.getGenerator(generator.getOriginalId()),
+                parameters, voltageProfileMode);
+    }
 
-        GeneratorSelectionMode mode = inInnerZone ? innerZoneMode : outerZoneMode;
+    public static boolean isGeneratorSelected(Bus iidmBus, Generator generator, OpenShortCircuitParameters parameters,
+                                              Predicate<Bus> innerZone, InitialVoltageProfileMode voltageProfileMode) {
+        return isGeneratorSelected(innerZone.test(iidmBus), Objects.requireNonNull(generator), parameters, voltageProfileMode);
+    }
+
+    private static boolean isGeneratorSelected(boolean inInnerZone, Generator iidmGenerator, OpenShortCircuitParameters parameters,
+                                               InitialVoltageProfileMode voltageProfileMode) {
+        GeneratorSelectionMode mode = inInnerZone ? parameters.getInnerZoneGeneratorSelectionMode() : parameters.getOuterZoneGeneratorSelectionMode();
         if (mode == GeneratorSelectionMode.ALL) {
             return true;
         }
 
-        // Synchronous condensers always contribute to the fault current, whatever their active power
-        Generator iidmGenerator = network.getGenerator(generator.getOriginalId());
         if (iidmGenerator == null) {
             return false;
         }
+        // Synchronous condensers always contribute to the fault current, whatever their active power
         if (iidmGenerator.isCondenser()) {
             return true;
         }
 
-        double innerZoneThreshold = parameters.getInnerZoneGeneratorPowerThreshold();
-        double outerZoneThreshold = parameters.getOuterZoneGeneratorPowerThreshold();
-
-        double threshold = inInnerZone ? innerZoneThreshold : outerZoneThreshold;
+        double threshold = inInnerZone ? parameters.getInnerZoneGeneratorPowerThreshold() : parameters.getOuterZoneGeneratorPowerThreshold();
 
         double absGeneratorPMw = voltageProfileMode.equals(InitialVoltageProfileMode.PREVIOUS_VALUE) ?
                 Math.abs(iidmGenerator.getTerminal().getP()) : Math.abs(iidmGenerator.getTargetP());
         boolean running = absGeneratorPMw > threshold;
         if (!running) {
             LOGGER.info("Generator {} is not running (|P| = {} MW <= threshold {} MW) and is not taken into account",
-                    generator.getOriginalId(), absGeneratorPMw, threshold);
+                    iidmGenerator.getId(), absGeneratorPMw, threshold);
         }
         return running;
     }

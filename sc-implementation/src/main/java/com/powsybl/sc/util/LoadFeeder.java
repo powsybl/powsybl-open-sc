@@ -7,20 +7,25 @@
  */
 package com.powsybl.sc.util;
 
+import com.powsybl.iidm.network.Load;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openloadflow.network.LfBus;
 import org.apache.commons.math3.complex.Complex;
+
+import static com.powsybl.openloadflow.util.PerUnit.SB;
 
 /**
  * @author Hadrien Godard <hadrien.godard at artelys.com>
  */
 public class LoadFeeder extends AbstractFeeder {
 
-    private final LfBus bus;
+    private final Load load;
+    private final LfBus lfBus;
 
-    public LoadFeeder(Complex zFeeder, LfBus bus) {
-        super(zFeeder, bus.getId());
-        this.bus = bus;
+    public LoadFeeder(Complex yFeeder, Load load, LfBus lfBus) {
+        super(yFeeder, load.getId());
+        this.load = load;
+        this.lfBus = lfBus;
     }
 
     @Override
@@ -30,11 +35,11 @@ public class LoadFeeder extends AbstractFeeder {
 
     @Override
     public Complex getInitialCurrentContribution(Network network) {
-        double v = bus.getV(); // pu
-        double phi = bus.getAngle(); // Rad
+        double v = lfBus.getV(); // pu
+        double phi = lfBus.getAngle(); // Rad
 
-        double p = bus.getLoadTargetP();
-        double q = bus.getLoadTargetQ();
+        double p = load.getP0() / SB; // pu
+        double q = load.getQ0() / SB; // pu
 
         return computeCurrent(v, phi, p, q);
     }

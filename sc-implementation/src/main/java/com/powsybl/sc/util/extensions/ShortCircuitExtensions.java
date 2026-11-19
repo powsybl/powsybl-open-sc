@@ -224,7 +224,12 @@ public final class ShortCircuitExtensions {
 
     private static void addGeneratorExtension(Network network, LfGenerator lfGenerator, ShortCircuitNormExtensions shortCircuitNormExtensions) {
         Generator generator = network.getGenerator(lfGenerator.getOriginalId());
+        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT, createScGenerator(generator));
+        // set in a separate extension because it does not depend only on iidm in input but also on the type of norm
+        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT_NORM, getGeneratorKg(generator, shortCircuitNormExtensions));
+    }
 
+    public static ScGenerator createScGenerator(Generator generator) {
         double transX = DEFAULT_TRANS_XD;
         double subtransX = DEFAULT_SUB_TRANS_XD;
         double stepUpTfoX = DEFAULT_STEP_UP_XD;
@@ -240,7 +245,6 @@ public final class ShortCircuitExtensions {
         double subTransRd = DEFAULT_SUB_TRANS_RD;
         boolean toGround = FortescueConstants.DEFAULT_GROUNDED;
         Complex zo = new Complex(subTransRd, subtransX);
-        double kG = 1.0;
 
         GeneratorShortCircuit2 extensions2 = generator.getExtension(GeneratorShortCircuit2.class);
         if (extensions2 != null) {
@@ -254,37 +258,21 @@ public final class ShortCircuitExtensions {
             zo = new Complex(extensionFortescue.getRz(), extensionFortescue.getXz());
         }
 
-        GeneratorNorm extensionGenNorm = shortCircuitNormExtensions.getNormExtension(generator);
-        if (extensionGenNorm != null) {
-            kG = extensionGenNorm.getkG();
-        }
-
-        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT, new ScGenerator(new Complex(transRd, transX),
+        return new ScGenerator(new Complex(transRd, transX),
                 new Complex(0., stepUpTfoX), ScGenerator.MachineType.SYNCHRONOUS_GEN,
-                new Complex(subTransRd, subtransX), toGround, Complex.ZERO, zo));
-        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT_NORM, kG); // set in a separate extension because it does not depend only on iidm in input but also on the type of norm
+                new Complex(subTransRd, subtransX), toGround, Complex.ZERO, zo);
+    }
+
+    public static double getGeneratorKg(Generator generator, ShortCircuitNormExtensions shortCircuitNormExtensions) {
+        GeneratorNorm extensionGenNorm = shortCircuitNormExtensions.getNormExtension(generator);
+        return extensionGenNorm != null ? extensionGenNorm.getkG() : 1.0;
     }
 
     private static void addLoadExtension(Network network, LfBus lfBus) {
         Complex yLoads = Complex.ZERO;
         for (LfLoad lfLoad : lfBus.getLoads()) {
             for (String loadId : lfLoad.getOriginalIds()) {
-                Load load = network.getLoad(loadId);
-                double uNom = load.getTerminal().getVoltageLevel().getNominalV();
-                LoadShortCircuit extension = load.getExtension(LoadShortCircuit.class);
-                Complex zd = Complex.ZERO;
-                if (extension != null) {
-                    zd = extension.getZeqLoad();
-                } else {
-                    // No info available in extension we use the default formula with P and Q
-                    Complex s = new Complex(load.getP0(), load.getQ0());
-                    double s2 = s.abs() * s.abs();
-
-                    if (s.abs() > POWER_EPSILON_MVA) {
-                        zd = s.multiply(uNom * uNom / s2);
-                    }
-                }
-                Complex zdPu = zd.multiply(SB / (uNom * uNom));
+                Complex zdPu = computeLoadZdPu(network.getLoad(loadId));
                 if (zdPu.abs() > IMPEDANCE_EPSILON_PU) {
                     yLoads = yLoads.add(zdPu.reciprocal());
                 }
@@ -292,5 +280,23 @@ public final class ShortCircuitExtensions {
         }
         // TODO : create load only if it is not zero
         lfBus.setProperty(PROPERTY_SHORT_CIRCUIT, new ScLoad(yLoads)); // for now load extension is attached to the bus
+    }
+
+    public static Complex computeLoadZdPu(Load load) {
+        double uNom = load.getTerminal().getVoltageLevel().getNominalV();
+        LoadShortCircuit extension = load.getExtension(LoadShortCircuit.class);
+        Complex zd = Complex.ZERO;
+        if (extension != null) {
+            zd = extension.getZeqLoad();
+        } else {
+            // No info available in extension we use the default formula with P and Q
+            Complex s = new Complex(load.getP0(), load.getQ0());
+            double s2 = s.abs() * s.abs();
+
+            if (s.abs() > POWER_EPSILON_MVA) {
+                zd = s.multiply(uNom * uNom / s2);
+            }
+        }
+        return zd.multiply(SB / (uNom * uNom));
     }
 }

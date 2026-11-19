@@ -79,7 +79,7 @@ public abstract class AbstractShortCircuitEngine {
      * (generators whose |P| is not above the zone power threshold are ignored in ABOVE_POWER_THRESHOLD mode).
      */
     private void checkAtLeastOneContributingGenerator(LfNetwork lfNetwork) {
-        Predicate<LfBus> innerZone = createInnerZonePredicate(network, openShortCircuitParameters.getInnerZoneBusIds());
+        Predicate<LfBus> innerZone = createInnerLfZonePredicate(network, openShortCircuitParameters.getInnerZoneBusIds());
         boolean found = lfNetwork.getBuses().stream()
                 .flatMap(bus -> bus.getGenerators().stream())
                 .filter(lfGenerator -> network.getGenerator(lfGenerator.getOriginalId()) != null)
@@ -218,7 +218,7 @@ public abstract class AbstractShortCircuitEngine {
      */
     protected FeedersAtNetwork createFeeders(AdmittanceType admittanceType) {
         return new FeedersCreator(network, lfNetwork, initialVoltages, admittanceType,
-                shortCircuitParameters, openShortCircuitParameters).create();
+                shortCircuitParameters, openShortCircuitParameters, shortCircuitNorm.getNormExtensions()).create();
     }
 
     public abstract void run();
