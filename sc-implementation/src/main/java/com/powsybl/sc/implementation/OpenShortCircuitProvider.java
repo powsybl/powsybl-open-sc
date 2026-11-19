@@ -36,7 +36,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
-import static com.powsybl.sc.util.ShortCircuitHelper.createInnerZonePredicate;
+import static com.powsybl.sc.util.ShortCircuitHelper.createInnerLfZonePredicate;
 import static com.powsybl.sc.util.ShortCircuitHelper.getOrDefaultOpenScParameters;
 import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
 
@@ -118,7 +118,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         engine.run();
         ShortCircuitParameters shortCircuitParameters = engine.getShortCircuitParameters();
         OpenShortCircuitParameters openScParameters = shortCircuitParameters.getExtension(OpenShortCircuitParameters.class);
-        Predicate<LfBus> innerZone = createInnerZonePredicate(network, openScParameters.getInnerZoneBusIds());
+        Predicate<LfBus> innerZone = createInnerLfZonePredicate(network, openScParameters.getInnerZoneBusIds());
 
         // the results per faults might be inconsistent if many buses per voltage level
         // TODO : see how this could be improved by allowing results per electrical bus on the short circuit provider

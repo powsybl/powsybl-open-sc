@@ -16,8 +16,6 @@ import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.extensions.FrequencyType;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
-import com.powsybl.sc.util.extensions.ScLoad;
-import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import net.jafama.FastMath;
 import org.apache.commons.math3.complex.Complex;
@@ -25,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 import static com.powsybl.sc.extensions.ShortCircuitConstants.ADMITTANCE_EPSILON_PU;
 import static com.powsybl.sc.util.ShortCircuitHelper.*;
@@ -42,7 +41,7 @@ public final class AdmittanceEquationSystemCreator {
     private final AdmittanceType admittanceType;
     private final ShortCircuitParameters shortCircuitParameters;
     private final OpenShortCircuitParameters openScParameters;
-    private final FeedersCreator feedersCreator;
+    private final Predicate<LfBus> innerZone;
 
     public AdmittanceEquationSystemCreator(Network network,
                                            LfNetwork lfNetwork,
@@ -56,7 +55,7 @@ public final class AdmittanceEquationSystemCreator {
         this.admittanceType = admittanceType;
         this.shortCircuitParameters = shortCircuitParameters;
         this.openScParameters = openScParameters;
-        this.feedersCreator = new FeedersCreator(network, lfNetwork, initialVoltages, admittanceType, shortCircuitParameters, openScParameters);
+        this.innerZone = createInnerLfZonePredicate(network, openScParameters.getInnerZoneBusIds());
     }
 
     public EquationSystem<VariableType, EquationType> create(FrequencyType frequencyType) {
@@ -131,7 +130,8 @@ public final class AdmittanceEquationSystemCreator {
             Complex y = switch (admittanceType) {
                 case ADM_SHUNT -> computeAdmForAdmShunt(shortCircuitParameters, bus);
                 case ADM_ADMIT -> computeAdmForAdmAdmit(v, shortCircuitParameters, isBusPv, bus);
-                case ADM_THEVENIN, ADM_THEVENIN_HOMOPOLAR -> computeAdmFromFeeders(bus);
+                case ADM_THEVENIN -> computeAdmForAdmThevenin(v, bus);
+                case ADM_THEVENIN_HOMOPOLAR -> computeAdmForGenerators(bus);
                 default -> Complex.ZERO;
             };
 
@@ -171,8 +171,7 @@ public final class AdmittanceEquationSystemCreator {
             y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
         }
 
-        ScLoad scLoad = (ScLoad) bus.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-        Complex yLoadEq = scLoad.ydEquivalent().divide(v.abs() * v.abs());
+        Complex yLoadEq = InjectionAdmittances.getLoadsAdmittance(bus, v);
 
         // Handling transformation of generators into equivalent shunts
         // Warning !!! : evaluation of power injections mandatory
@@ -189,18 +188,31 @@ public final class AdmittanceEquationSystemCreator {
         return y.add(yLoadEq).add(yGenEq);
     }
 
-    private Complex computeAdmFromFeeders(LfBus bus) {
+    private Complex computeAdmForAdmThevenin(Complex v, LfBus bus) {
         Complex y = Complex.ZERO;
-        for (Feeder feeder : feedersCreator.createBusFeeders(bus)) {
-            y = y.add(feeder.getZ()); // getZ() returns the admittance of the feeder
+
+        if (shortCircuitParameters.isWithShuntCompensators()) {
+            y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
+        }
+
+        if (shortCircuitParameters.isWithLoads()) {
+            y = y.add(InjectionAdmittances.getLoadsAdmittance(bus, v));
+        }
+
+        return y.add(computeAdmForGenerators(bus));
+    }
+
+    private Complex computeAdmForGenerators(LfBus bus) {
+        Complex y = Complex.ZERO;
+        for (LfGenerator lfgen : bus.getGenerators()) {
+            if (isGeneratorSelected(lfgen, openScParameters, network, innerZone)) {
+                y = y.add(InjectionAdmittances.getGeneratorAdmittance(lfgen, admittanceType, shortCircuitParameters.getStudyType()));
+            }
         }
         return y;
     }
 
     private static double getBfromShunt(LfBus bus) {
-        double b = 0.;
-        b += bus.getShunt().map(LfShunt::getB).orElse(0.);
-        b += bus.getControllerShunt().map(LfShunt::getB).orElse(0.);
-        return b;
+        return InjectionAdmittances.getShuntsB(bus);
     }
 }
