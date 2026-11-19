@@ -6,27 +6,6 @@ The short-circuit analysis is configured with the generic `ShortCircuitParameter
 
 If the extension is not set, it is created with its default values when the analysis starts.
 
-## Generic parameters
-
-| Parameter | Default | Used | Effect in OpenSC |
-|---|---|---|---|
-| `studyType` | `TRANSIENT` | yes | `SUB_TRANSIENT` uses the subtransient impedance of the generators, other values use the transient impedance. |
-| `withVoltageResult` | `true` | yes | Computes the post-fault voltage of every bus, and returns the bus results. |
-| `minVoltageDropProportionalThreshold` | `0` | yes | Bus results are only returned for buses whose voltage drop, relative to the initial voltage, is at least this value. |
-| `withLoads` | `true` | yes | If `false`, loads are not modelled in the admittance matrix. |
-| `withShuntCompensators` | `true` | yes | If `false`, shunt compensators are not modelled in the admittance matrix. |
-| `withNeutralPosition` | `false` | yes | If `true`, the ratio and impedance of transformers are taken at the neutral tap position. |
-| `initialVoltageProfileMode` | `NOMINAL` | yes | `NOMINAL`: 1 pu on every bus. `CONFIGURED`: voltage given by `voltageRanges`. `PREVIOUS_VALUE`: voltage of the network state. |
-| `voltageRanges` | none | yes | Used with `initialVoltageProfileMode = CONFIGURED`. A bus outside every range is initialized at 1 pu. |
-| `withFeederResult` | `true` | yes | If `false`, no feeder results are returned. Feeder results are only computed for three-phase faults, and require `withVoltageResult = true`, because the feeder currents are computed from the bus voltages. |
-| `withLimitViolations` | `true` | no | Limit violations are never computed. |
-| `withFortescueResult` | `true` | no | Results are always given as magnitudes. |
-| `withVSCConverterStations` | `true` | no | Ignored. |
-| `subTransientCoefficient` | `0.7` | no | Ignored: the subtransient reactance comes from the generator extensions, it is never derived from the transient one. |
-| `detailedReport` | `true` | no | Ignored. |
-
-The default values are those of PowSyBl Core.
-
 ## OpenShortCircuitParameters
 
 | Parameter | Default | Effect |
@@ -35,9 +14,9 @@ The default values are those of PowSyBl Core.
 | `withCapacities` | `true` | If `false`, the shunt admittances at both ends of every branch (G1, B1, G2, B2) are ignored. |
 | `innerZoneBusIds` | empty | Ids of the bus-breaker view buses that form the inner zone. If empty, the whole network is the inner zone. |
 | `innerZoneGeneratorSelectionMode` | `ALL` | Selection of the generators of the inner zone: `ALL` or `ABOVE_POWER_THRESHOLD`. |
-| `outerZoneGeneratorSelectionMode` | `ABOVE_POWER_THRESHOLD` | Selection of the generators outside the inner zone. |
+| `outerZoneGeneratorSelectionMode` | `ABOVE_POWER_THRESHOLD` | Selection of the generators outside the inner zone: `ALL` or `ABOVE_POWER_THRESHOLD`. |
 | `innerZoneGeneratorPowerThreshold` | `0` (MW) | With `ABOVE_POWER_THRESHOLD`, a generator of the inner zone contributes only if its \|P\| is strictly above this value. |
-| `outerZoneGeneratorPowerThreshold` | `0` (MW) | Same threshold, for the generators outside the inner zone. |
+| `outerZoneGeneratorPowerThreshold` | `0` (MW) | With `ABOVE_POWER_THRESHOLD`, a generator outside of the inner zone contributes only if its \|P\| is strictly above this value. |
 | `matrixFactory` | `SparseMatrixFactory` | Matrix implementation used to build and factorize the admittance matrix. `DenseMatrixFactory` avoids the native solver, but should only be used on small networks. |
 | `shortCircuitAnalysisType` | `SELECTIVE` | `SELECTIVE` computes the faults given in input, `SYSTEMATIC` computes a fault on every bus of the network. |
 | `loadFlowParameters` | `new LoadFlowParameters()` | Load flow parameters used to build the network model, and to run the load flow when one is needed. |

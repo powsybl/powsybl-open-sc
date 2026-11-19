@@ -127,8 +127,6 @@ html_css_files = ['styles/styles.css']
 todo_include_todos = True
 
 # Links to external documentations
-# "powsyblcore" follows the powsybl-core version of the pom.xml. Open Load Flow stays on "latest", because its key doesn't
-# match a pom.xml property: its versioned documentations are not all published
 intersphinx_mapping = {
     "powsyblcore": ("https://powsybl.readthedocs.io/projects/powsybl-core/en/latest/", None),
     "openloadflow": ("https://powsybl.readthedocs.io/projects/powsybl-open-loadflow/en/latest/", None)

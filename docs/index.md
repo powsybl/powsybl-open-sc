@@ -12,10 +12,14 @@ sparse LU decomposition based on [KLU](http://faculty.cse.tamu.edu/davis/suitesp
 
 ### Features
 
-- Balanced faults (three-phase) and unbalanced faults (single-phase to ground) on buses and on branches,
-  with a fault impedance to ground.
-- Phase-to-phase faults, phase-to-phase to ground faults and systematic analysis on all the buses of the network,
-  available through the [engines](advanced_programming/using_the_engines.md).
+- Fault types handled through PowSyBl API, available on buses and on branches,
+  with or without a fault impedance to ground:
+  - Balanced faults (three-phase),
+  - Unbalanced faults (single-phase to ground).
+- Fault types handled through the [engines](advanced_programming/using_the_engines.md):
+  - Phase-to-phase faults,
+  - Phase-to-phase to ground faults.
+- Systematic analysis on all the buses of the network, available through the [engines](advanced_programming/using_the_engines.md),
 - Subtransient and transient studies.
 - Direct, inverse and homopolar (zero-sequence) network models, using the Fortescue transformation for unbalanced faults.
 - Fault current and voltage, feeder contributions and post-fault bus voltages.

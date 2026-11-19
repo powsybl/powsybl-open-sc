@@ -65,8 +65,10 @@ direct-sequence impedance and the default connection types of the `FortescueCons
 
 ## 20 Hz equivalents
 
-A second admittance matrix is built with the reactances scaled to 20 Hz ($X_{20Hz} = \frac{20}{50} X$). It gives the
-Thevenin impedance at 20 Hz of each faulted bus. It is used to compute the peak current factor $\kappa$ with the
+A second admittance matrix is built with the reactances scaled to 20 Hz:
+$$X_{20Hz} = \frac{20}{50} X.
+$$
+It gives the Thevenin impedance at 20 Hz of each faulted bus. It is used to compute the peak current factor $\kappa$ with the
 equivalent frequency method (method C) of IEC 60909. The peak current is available in the engine results
 (`ShortCircuitResult.getIpeakc()`), but is not returned by the `ShortCircuitAnalysis` API yet.
 
