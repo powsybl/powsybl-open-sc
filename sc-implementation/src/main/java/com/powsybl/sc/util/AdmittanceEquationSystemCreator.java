@@ -158,7 +158,7 @@ public final class AdmittanceEquationSystemCreator {
         Complex y = Complex.ZERO;
 
         if (parameters.isWithShuntCompensators()) {
-            y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
+            y = getAdmittanceFromShunts(bus); // Handling shunts that physically exist
         }
 
         return y;
@@ -168,7 +168,7 @@ public final class AdmittanceEquationSystemCreator {
         Complex y = Complex.ZERO;
 
         if (parameters.isWithShuntCompensators()) {
-            y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
+            y = getAdmittanceFromShunts(bus); // Handling shunts that physically exist
         }
 
         Complex yLoadEq = InjectionAdmittances.getLoadsAdmittance(bus, v);
@@ -192,7 +192,7 @@ public final class AdmittanceEquationSystemCreator {
         Complex y = Complex.ZERO;
 
         if (shortCircuitParameters.isWithShuntCompensators()) {
-            y = new Complex(0., getBfromShunt(bus)); // Handling shunts that physically exist
+            y = getAdmittanceFromShunts(bus); // Handling shunts that physically exist
         }
 
         if (shortCircuitParameters.isWithLoads()) {
@@ -212,7 +212,7 @@ public final class AdmittanceEquationSystemCreator {
         return y;
     }
 
-    private static double getBfromShunt(LfBus bus) {
-        return InjectionAdmittances.getShuntsB(bus);
+    private static Complex getAdmittanceFromShunts(LfBus bus) {
+        return InjectionAdmittances.getShuntsAdmittance(bus);
     }
 }

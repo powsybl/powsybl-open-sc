@@ -24,7 +24,7 @@ public interface Feeder {
         BRANCH
     }
 
-    Complex getZ();
+    Complex getAdmittance();
 
     String getId();
 

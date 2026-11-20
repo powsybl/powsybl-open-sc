@@ -24,8 +24,8 @@ public class BranchFeeder extends AbstractFeeder {
     private final LfBranch lfBranch;
     private final ThreeSides side;
 
-    public BranchFeeder(Complex zFeeder, LfBranch branch, ThreeSides side) {
-        super(zFeeder, branch.getId());
+    public BranchFeeder(Complex yFeeder, LfBranch branch, ThreeSides side) {
+        super(yFeeder, branch.getId());
         this.lfBranch = branch;
         this.side = side;
     }

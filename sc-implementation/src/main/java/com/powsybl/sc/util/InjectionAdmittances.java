@@ -31,16 +31,18 @@ final class InjectionAdmittances {
     private InjectionAdmittances() {
     }
 
-    static double getShuntsB(LfBus bus) {
+    static Complex getShuntsAdmittance(LfBus bus) {
         //check if g will be implemented
-        return bus.getShunt().map(LfShunt::getB).orElse(0.)
+        double susceptance = bus.getShunt().map(LfShunt::getB).orElse(0.)
                 + bus.getControllerShunt().map(LfShunt::getB).orElse(0.);
+        double conductance = bus.getShunt().map(LfShunt::getG).orElse(0.)
+                + bus.getControllerShunt().map(LfShunt::getG).orElse(0.);
+        return new Complex(conductance, susceptance);
     }
 
-    static double getShuntB(ShuntCompensator shunt) {
-        //check if g will be implemented
+    static Complex getShuntAdmittance(ShuntCompensator shunt) {
         double vNom = shunt.getTerminal().getVoltageLevel().getNominalV();
-        return shunt.getB() * vNom * vNom / SB;
+        return new Complex(shunt.getG(), shunt.getB()).multiply(vNom * vNom / SB);
     }
 
     static Complex getLoadsAdmittance(LfBus bus, Complex v) {
