@@ -7,10 +7,9 @@
  */
 package com.powsybl.sc.util;
 
+import com.powsybl.iidm.network.Generator;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.Terminal;
 import com.powsybl.openloadflow.network.LfBus;
-import com.powsybl.openloadflow.network.LfGenerator;
 import org.apache.commons.math3.complex.Complex;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
@@ -20,11 +19,13 @@ import static com.powsybl.openloadflow.util.PerUnit.SB;
  */
 public class GeneratorFeeder extends AbstractFeeder {
 
-    private final LfGenerator generator;
+    private final Generator generator;
+    private final LfBus lfBus;
 
-    public GeneratorFeeder(Complex zFeeder, LfGenerator generator) {
-        super(zFeeder, generator.getId());
+    public GeneratorFeeder(Complex yFeeder, Generator generator, LfBus lfBus) {
+        super(yFeeder, generator.getId());
         this.generator = generator;
+        this.lfBus = lfBus;
     }
 
     @Override
@@ -34,19 +35,11 @@ public class GeneratorFeeder extends AbstractFeeder {
 
     @Override
     public Complex getInitialCurrentContribution(Network network) {
-        LfBus bus = generator.getBus();
-        double v = bus.getV(); // pu
-        double phi = bus.getAngle(); // Rad
+        double v = lfBus.getV(); // pu
+        double phi = lfBus.getAngle(); // Rad
 
-        // TODO: Two current limitations:
-        //  1. We use the LfNetwork to build the feeders
-        //  2. LfGenerator is not holding P and Q load flow results
-        //  We should use the Network to create the feeders
-        //  Reaching Generator through Feeder Id's is ugly and dangerous
-        Terminal terminal = network.getGenerator(id).getTerminal();
-
-        double p = terminal.getP() / SB; // pu
-        double q = terminal.getQ() / SB; // pu
+        double p = generator.getTerminal().getP() / SB; // pu
+        double q = generator.getTerminal().getQ() / SB; // pu
 
         return computeCurrent(v, phi, p, q);
     }

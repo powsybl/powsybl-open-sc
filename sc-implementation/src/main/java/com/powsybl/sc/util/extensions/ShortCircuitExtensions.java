@@ -16,10 +16,8 @@ import com.powsybl.iidm.network.extensions.LineFortescue;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.openloadflow.network.*;
 import com.powsybl.sc.extensions.*;
-import com.powsybl.sc.util.AdmittanceEquationSystem;
 import org.apache.commons.math3.complex.Complex;
 
-import java.util.List;
 import java.util.Objects;
 
 import static com.powsybl.openloadflow.util.PerUnit.SB;
@@ -36,56 +34,52 @@ public final class ShortCircuitExtensions {
     public static final String PROPERTY_HOMOPOLAR_MODEL_20HZ = "HomopolarModel20hz";
     public static final String PROPERTY_SHORT_CIRCUIT_NORM = "ShortCircuitNorm";
 
-    private static final double EPSILON = 0.00000001;
-
     private ShortCircuitExtensions() {
     }
 
-    public static void add(Network network, List<LfNetwork> lfNetworks) {
-        add(network, lfNetworks, new ShortCircuitNormExtensions());
+    public static void add(Network network, LfNetwork lfNetwork) {
+        add(network, lfNetwork, new ShortCircuitNormExtensions());
     }
 
-    public static void add(Network network, List<LfNetwork> lfNetworks, ShortCircuitNormExtensions shortCircuitNormExtensions) {
+    public static void add(Network network, LfNetwork lfNetwork, ShortCircuitNormExtensions shortCircuitNormExtensions) {
         Objects.requireNonNull(network);
-        Objects.requireNonNull(lfNetworks);
-        for (LfNetwork lfNetwork : lfNetworks) {
-            for (LfBus lfBus : lfNetwork.getBuses()) {
-                for (LfGenerator lfGenerator : lfBus.getGenerators()) {
-                    addGeneratorExtension(network, lfGenerator, shortCircuitNormExtensions);
-                }
-                addLoadExtension(network, lfBus);
+        Objects.requireNonNull(lfNetwork);
+        for (LfBus lfBus : lfNetwork.getBuses()) {
+            for (LfGenerator lfGenerator : lfBus.getGenerators()) {
+                addGeneratorExtension(network, lfGenerator, shortCircuitNormExtensions);
+            }
+            addLoadExtension(network, lfBus);
+        }
+
+        for (LfBranch lfBranch : lfNetwork.getBranches()) {
+            switch (lfBranch.getBranchType()) {
+                case LINE:
+                    addLineExtension(network, lfBranch);
+                    break;
+
+                case TRANSFO_2:
+                    addTransfo2Extension(network, lfBranch, shortCircuitNormExtensions);
+                    break;
+
+                case TRANSFO_3_LEG_1:
+                case TRANSFO_3_LEG_2:
+                case TRANSFO_3_LEG_3:
+                    addTransfo3Extension(network, lfBranch, shortCircuitNormExtensions);
+                    break;
+
+                case BOUNDARY_LINE:
+                    // FIXME something to do?
+                    break;
+
+                default:
+                    break;
             }
 
-            for (LfBranch lfBranch : lfNetwork.getBranches()) {
-                switch (lfBranch.getBranchType()) {
-                    case LINE:
-                        addLineExtension(network, lfBranch);
-                        break;
-
-                    case TRANSFO_2:
-                        addTransfo2Extension(network, lfBranch, shortCircuitNormExtensions);
-                        break;
-
-                    case TRANSFO_3_LEG_1:
-                    case TRANSFO_3_LEG_2:
-                    case TRANSFO_3_LEG_3:
-                        addTransfo3Extension(network, lfBranch, shortCircuitNormExtensions);
-                        break;
-
-                    case BOUNDARY_LINE:
-                        // FIXME something to do?
-                        break;
-
-                    default:
-                        break;
-                }
-
-                // build homopolar model
-                HomopolarModel homopolarModel = HomopolarModel.build(lfBranch, AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ);
-                HomopolarModel homopolarModel20hz = HomopolarModel.build(lfBranch, AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ);
-                lfBranch.setProperty(PROPERTY_HOMOPOLAR_MODEL, homopolarModel);
-                lfBranch.setProperty(PROPERTY_HOMOPOLAR_MODEL_20HZ, homopolarModel20hz);
-            }
+            // build homopolar model
+            HomopolarModel homopolarModel = HomopolarModel.build(lfBranch, FrequencyType.FREQ_50_HZ);
+            HomopolarModel homopolarModel20hz = HomopolarModel.build(lfBranch, FrequencyType.FREQ_20_HZ);
+            lfBranch.setProperty(PROPERTY_HOMOPOLAR_MODEL, homopolarModel);
+            lfBranch.setProperty(PROPERTY_HOMOPOLAR_MODEL_20HZ, homopolarModel20hz);
         }
     }
 
@@ -206,8 +200,8 @@ public final class ShortCircuitExtensions {
         WindingConnectionType leg1ConnectionType = FortescueConstants.DEFAULT_LEG1_CONNECTION_TYPE;
         WindingConnectionType leg2ConnectionType = FortescueConstants.DEFAULT_LEG2_CONNECTION_TYPE;
         double kT = DEFAULT_COEFF_K;
-        Complex z1Ground = new Complex(0.);
-        Complex z2Ground = new Complex(0.);
+        Complex z1Ground = Complex.ZERO;
+        Complex z2Ground = Complex.ZERO;
         var extensions = twt.getExtension(TwoWindingsTransformerFortescue.class);
         if (extensions != null) {
             zo = new Complex(extensions.getRz(), extensions.getXz()).divide(zBase);
@@ -230,7 +224,12 @@ public final class ShortCircuitExtensions {
 
     private static void addGeneratorExtension(Network network, LfGenerator lfGenerator, ShortCircuitNormExtensions shortCircuitNormExtensions) {
         Generator generator = network.getGenerator(lfGenerator.getOriginalId());
+        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT, createScGenerator(generator));
+        // set in a separate extension because it does not depend only on iidm in input but also on the type of norm
+        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT_NORM, getGeneratorKg(generator, shortCircuitNormExtensions));
+    }
 
+    public static ScGenerator createScGenerator(Generator generator) {
         double transX = DEFAULT_TRANS_XD;
         double subtransX = DEFAULT_SUB_TRANS_XD;
         double stepUpTfoX = DEFAULT_STEP_UP_XD;
@@ -246,7 +245,6 @@ public final class ShortCircuitExtensions {
         double subTransRd = DEFAULT_SUB_TRANS_RD;
         boolean toGround = FortescueConstants.DEFAULT_GROUNDED;
         Complex zo = new Complex(subTransRd, subtransX);
-        double kG = 1.0;
 
         GeneratorShortCircuit2 extensions2 = generator.getExtension(GeneratorShortCircuit2.class);
         if (extensions2 != null) {
@@ -260,43 +258,45 @@ public final class ShortCircuitExtensions {
             zo = new Complex(extensionFortescue.getRz(), extensionFortescue.getXz());
         }
 
-        GeneratorNorm extensionGenNorm = shortCircuitNormExtensions.getNormExtension(generator);
-        if (extensionGenNorm != null) {
-            kG = extensionGenNorm.getkG();
-        }
-
-        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT, new ScGenerator(new Complex(transRd, transX),
+        return new ScGenerator(new Complex(transRd, transX),
                 new Complex(0., stepUpTfoX), ScGenerator.MachineType.SYNCHRONOUS_GEN,
-                new Complex(subTransRd, subtransX), toGround, new Complex(0.), zo));
-        lfGenerator.setProperty(PROPERTY_SHORT_CIRCUIT_NORM, kG); // set in a separate extension because it does not depend only on iidm in input but also on the type of norm
+                new Complex(subTransRd, subtransX), toGround, Complex.ZERO, zo);
+    }
+
+    public static double getGeneratorKg(Generator generator, ShortCircuitNormExtensions shortCircuitNormExtensions) {
+        GeneratorNorm extensionGenNorm = shortCircuitNormExtensions.getNormExtension(generator);
+        return extensionGenNorm != null ? extensionGenNorm.getkG() : 1.0;
     }
 
     private static void addLoadExtension(Network network, LfBus lfBus) {
-        Complex yLoads = new Complex(0.);
+        Complex yLoads = Complex.ZERO;
         for (LfLoad lfLoad : lfBus.getLoads()) {
             for (String loadId : lfLoad.getOriginalIds()) {
-                Load load = network.getLoad(loadId);
-                double uNom = load.getTerminal().getVoltageLevel().getNominalV();
-                LoadShortCircuit extension = load.getExtension(LoadShortCircuit.class);
-                Complex zd = new Complex(0.);
-                if (extension != null) {
-                    zd = extension.getZeqLoad();
-                } else {
-                    // No info available in extension we use the default formula with P and Q
-                    Complex s = new Complex(load.getP0(), load.getQ0());
-                    double s2 = s.abs() * s.abs();
-
-                    if (s2 > EPSILON) {
-                        zd = s.multiply(uNom * uNom / s2);
-                    }
-                }
-                if (zd.abs() > EPSILON) {
-                    Complex tmpY = zd.reciprocal().multiply(uNom * uNom / SB);
-                    yLoads = yLoads.add(tmpY);
+                Complex zdPu = computeLoadZdPu(network.getLoad(loadId));
+                if (zdPu.abs() > IMPEDANCE_EPSILON_PU) {
+                    yLoads = yLoads.add(zdPu.reciprocal());
                 }
             }
         }
         // TODO : create load only if it is not zero
         lfBus.setProperty(PROPERTY_SHORT_CIRCUIT, new ScLoad(yLoads)); // for now load extension is attached to the bus
+    }
+
+    public static Complex computeLoadZdPu(Load load) {
+        double uNom = load.getTerminal().getVoltageLevel().getNominalV();
+        LoadShortCircuit extension = load.getExtension(LoadShortCircuit.class);
+        Complex zd = Complex.ZERO;
+        if (extension != null) {
+            zd = extension.getZeqLoad();
+        } else {
+            // No info available in extension we use the default formula with P and Q
+            Complex s = new Complex(load.getP0(), load.getQ0());
+            double s2 = s.abs() * s.abs();
+
+            if (s.abs() > POWER_EPSILON_MVA) {
+                zd = s.multiply(uNom * uNom / s2);
+            }
+        }
+        return zd.multiply(SB / (uNom * uNom));
     }
 }

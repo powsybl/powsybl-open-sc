@@ -24,8 +24,6 @@ public class ShortCircuitNormNone implements ShortCircuitNorm {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShortCircuitNormNone.class);
 
-    public static final double EPSILON = 0.000001;
-
     public Network network;
 
     private ShortCircuitNormExtensions normExtensions;

@@ -5,16 +5,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * SPDX-License-Identifier: MPL-2.0
  */
+package com.powsybl.sc.extensions;
+
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.util.FastMath;
 
 /**
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at gmail.com>
  */
-package com.powsybl.sc.extensions;
-
 public final class FortescueConstants {
 
     private FortescueConstants() {
     }
+
+    public static final Complex FORTESCUE_A = new Complex(-0.5, FastMath.sqrt(3.) / 2); // e^(j·2π/3)
+    public static final Complex FORTESCUE_A2 = FORTESCUE_A.conjugate(); // a² = e^(j·4π/3) = conj(a)
 
     public static final double DEFAULT_COEFF_RO = 1;
     public static final double DEFAULT_COEFF_XO = 1;

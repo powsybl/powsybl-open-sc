@@ -11,8 +11,6 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.iidm.network.regulation.RegulationMode;
 import com.powsybl.loadflow.LoadFlowParameters;
-import com.powsybl.math.matrix.DenseMatrixFactory;
-import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.sc.extensions.*;
 import com.powsybl.sc.util.extensions.GeneratorNorm;
 import com.powsybl.sc.util.extensions.ThreeWindingsTransformerNorm;
@@ -33,8 +31,6 @@ public class ShortCircuitNormTest {
         loadFlowParameters.setTwtSplitShuntAdmittance(true);
 
         Network network = createNormNetwork();
-
-        MatrixFactory matrixFactory = new DenseMatrixFactory();
 
         ShortCircuitNormIec shortCircuitNormIec = new ShortCircuitNormIec();
 
@@ -69,8 +65,6 @@ public class ShortCircuitNormTest {
         kg = extensionGenNorm.getkG();
         assertEquals(1.0, kg, 0.000001);
 
-        double roOverR = 0.15;
-        double xoOverX = 3.;
         double rOverX = 0.1;
         double voltageFactor = 1.1;
         double ikQmax = 38.;
@@ -99,8 +93,6 @@ public class ShortCircuitNormTest {
                 .add();
 
         shortCircuitNormNone.applyNormToNetwork(network);
-        GeneratorShortCircuit extension1Gen = g1.getExtension(GeneratorShortCircuit.class);
-        double subtransX = extension1Gen.getDirectSubtransX();
         //assertEquals(332.59657293872044, subtransX, 0.000001);
 
         double rhoB2 = 1. / (120. * 120.);
