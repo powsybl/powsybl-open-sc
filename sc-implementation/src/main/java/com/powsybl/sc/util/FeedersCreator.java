@@ -89,7 +89,7 @@ public final class FeedersCreator {
     private static void addShuntFeeders(Bus iidmBus, LfBus lfBus, List<Feeder> feederList) {
         // Handling shunts that physically exist
         for (ShuntCompensator shunt : iidmBus.getShuntCompensators()) {
-            Complex yShunt = new Complex(0., InjectionAdmittances.getShuntB(shunt));
+            Complex yShunt = InjectionAdmittances.getShuntAdmittance(shunt);
             feederList.add(new ShuntFeeder(yShunt, shunt, lfBus));
         }
     }

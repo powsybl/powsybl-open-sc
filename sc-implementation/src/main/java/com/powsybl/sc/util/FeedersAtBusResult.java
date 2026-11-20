@@ -42,23 +42,23 @@ public class FeedersAtBusResult {
     }
 
     public void updateContributions() {
-        Complex zSum = Complex.ZERO;
+        Complex ySum = Complex.ZERO;
 
         for (FeederResult feederResult : busFeedersResult) {
             if (feederResult.getFeeder().getFeederType() == Feeder.FeederType.BRANCH) {
                 continue; // Skip branch feeders as their contributions have already been computed
             }
-            zSum = zSum.add(feederResult.getFeeder().getZ());
+            ySum = ySum.add(feederResult.getFeeder().getAdmittance());
         }
 
-        if (zSum.abs() > IMPEDANCE_EPSILON_PU) {
+        if (ySum.abs() > IMPEDANCE_EPSILON_PU) {
             for (FeederResult feederResult : busFeedersResult) {
                 if (feederResult.getFeeder().getFeederType() == Feeder.FeederType.BRANCH) {
                     continue; // Skip branch feeders as their contributions have already been computed
                 }
-                Complex zk = feederResult.getFeeder().getZ();
-                // ik = zk / zsum * iFeederSum
-                Complex ik = zk.multiply(iFeedersSum).divide(zSum);
+                Complex yk = feederResult.getFeeder().getAdmittance();
+                // ik = yk / ysum * iFeederSum
+                Complex ik = yk.multiply(iFeedersSum).divide(ySum);
                 feederResult.updateIcontribution(ik);
                 feederResult.printContributions(feedersAtBus.getFeedersBus());
             }
