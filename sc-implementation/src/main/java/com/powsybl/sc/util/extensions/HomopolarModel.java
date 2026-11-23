@@ -10,15 +10,16 @@ package com.powsybl.sc.util.extensions;
 import com.powsybl.iidm.network.extensions.WindingConnectionType;
 import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.network.LfBranch;
-import com.powsybl.sc.util.AdmittanceEquationSystem;
+import com.powsybl.sc.extensions.FrequencyType;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
 
 import java.util.Objects;
 
+import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_EPSILON_PU;
+
 /**
  * zero sequence additional attributes
- *
  * Proposed Transformer model :
  *      Ia       Yg    A'  rho                 B'     Yg        Ib        Zga : grounding impedance on A side (in ohms expressed on A side)
  *   A-->--3*Zga--+    +--(())--+--Zoa--+--Zob--+     +--3*ZGb--<--B      Zoa : leakage impedance of A-winding (in ohms expressed on B side)
@@ -34,8 +35,6 @@ import java.util.Objects;
  * @author Geoffroy Jamgotchian <geoffroy.jamgotchian at gmail.com>
  */
 public class HomopolarModel {
-
-    private static final double EPSILON = 0.000001;
 
     private final LfBranch branch;
 
@@ -73,11 +72,11 @@ public class HomopolarModel {
         return zo.abs() != 0 ? 1 / (zo.abs() * zo.abs()) : 0;
     }
 
-    public static HomopolarModel build(LfBranch branch, AdmittanceEquationSystem.FrequencyType frequencyType) {
+    public static HomopolarModel build(LfBranch branch, FrequencyType frequencyType) {
         Objects.requireNonNull(branch);
 
         double freqCoef = 1.0;
-        if (frequencyType == AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ) {
+        if (frequencyType == FrequencyType.FREQ_20_HZ) {
             freqCoef = 20. / 50.;
         }
 
@@ -91,104 +90,11 @@ public class HomopolarModel {
         homopolarExtension.zo = z.divide(AdmittanceConstants.COEF_XO_XD);
         homopolarExtension.yom = yPi1.multiply(AdmittanceConstants.COEF_XO_XD); //TODO : adapt
 
-        if (branch.getBranchType() == LfBranch.BranchType.LINE) {
-            // branch is a line and homopolar data available
-            ScLine scLine = (ScLine) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-            if (scLine != null) {
-                Complex zo = scLine.getZo();
-
-                // We propose to scale b and g accordingly with x / x0 and r / r0
-                // this assumption could be changed if not relevant
-                double gCoeff = 1.;
-                double bCoeff = 1.;
-                if (Math.abs(zo.getImaginary()) > EPSILON) {
-                    bCoeff = z.getImaginary() / zo.getImaginary();
-                }
-                if (Math.abs(zo.getReal()) > EPSILON) {
-                    gCoeff = z.getReal() / zo.getReal();
-                }
-
-                homopolarExtension.zo = zo;
-                homopolarExtension.yom = new Complex(yPi1.getReal() * gCoeff, yPi1.getImaginary() * bCoeff);
-            }
-        } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_2) {
-            // branch is a 2 windings transformer and homopolar data available
-            ScTransfo2W scTransfo = (ScTransfo2W) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-            if (scTransfo != null) {
-
-                double kT = 1.0;
-                if (branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM) != null) {
-                    kT = (Double) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
-                }
-
-                Complex zo = scTransfo.getZo();
-                Complex zok = zo.multiply(kT);
-
-                // We propose to scale b and g accordingly with x / x0 and r / r0
-                // this assumption could be changed if not relevant
-                double gCoeff = 1.;
-                double bCoeff = 1.;
-                if (Math.abs(zo.getImaginary()) > EPSILON) {
-                    bCoeff = z.getImaginary() / zo.getImaginary();
-                }
-                if (Math.abs(zo.getReal()) > EPSILON) {
-                    gCoeff = z.getReal() / zo.getReal();
-                }
-
-                homopolarExtension.zo = zok.add(scTransfo.getZ1Ground().add(scTransfo.getZ2Ground()));
-                homopolarExtension.yom = new Complex(yPi1.getReal() * gCoeff / kT, yPi1.getImaginary() * bCoeff / kT);
-
-                homopolarExtension.leg1ConnectionType = scTransfo.getLeg1ConnectionType();
-                homopolarExtension.leg2ConnectionType = scTransfo.getLeg2ConnectionType();
-            }
-        } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_1
-                || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_2
-                || branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_3) {
-            // branch is leg1 of a 3 windings transformer and homopolar data available
-            ScTransfo3W scTransfo = (ScTransfo3W) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-            ScTransfo3wKt scTransfoKt = (ScTransfo3wKt) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
-            if (scTransfoKt != null && scTransfo != null) {
-                Complex zo;
-                double kTro;
-                double kTxo;
-                if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_1) {
-                    zo = scTransfo.getLeg1().getZo();
-                    kTro = scTransfoKt.getLeg1().getkTro();
-                    kTxo = scTransfoKt.getLeg1().getkTxo();
-                    homopolarExtension.leg1ConnectionType = scTransfo.getLeg1().getLegConnectionType();
-                    homopolarExtension.freeFluxes = scTransfo.getLeg1().isFreeFluxes();
-                } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_2) {
-                    zo = scTransfo.getLeg2().getZo();
-                    kTro = scTransfoKt.getLeg2().getkTro();
-                    kTxo = scTransfoKt.getLeg2().getkTxo();
-                    homopolarExtension.leg1ConnectionType = scTransfo.getLeg2().getLegConnectionType();
-                    homopolarExtension.freeFluxes = scTransfo.getLeg2().isFreeFluxes();
-                } else if (branch.getBranchType() == LfBranch.BranchType.TRANSFO_3_LEG_3) {
-                    zo = scTransfo.getLeg3().getZo();
-                    kTro = scTransfoKt.getLeg3().getkTro();
-                    kTxo = scTransfoKt.getLeg3().getkTxo();
-                    homopolarExtension.leg1ConnectionType = scTransfo.getLeg3().getLegConnectionType();
-                    homopolarExtension.freeFluxes = scTransfo.getLeg3().isFreeFluxes();
-                } else {
-                    throw new IllegalArgumentException("Branch " + branch.getId() + " has unknown 3-winding leg number");
-                }
-
-                // We propose to scale b and g accordingly with x / x0 and r / r0
-                // this assumption could be changed if not relevant
-                double gCoeff = 1.;
-                double bCoeff = 1.;
-                if (Math.abs(zo.getImaginary()) > EPSILON) {
-                    bCoeff = z.getImaginary() / zo.getImaginary();
-                }
-                if (Math.abs(zo.getReal()) > EPSILON) {
-                    gCoeff = z.getReal() / zo.getReal();
-                }
-
-                homopolarExtension.zo = new Complex(zo.getReal() * kTro, zo.getImaginary() * kTxo);
-                homopolarExtension.yom = new Complex(yPi1.getReal() * gCoeff, yPi1.getImaginary() * bCoeff);
-            }
-        } else {
-            throw new IllegalArgumentException("Branch '" + branch.getId() + "' has a not yet supported type");
+        switch (branch.getBranchType()) {
+            case LINE -> homopolarExtension.initLine(z, yPi1);
+            case TRANSFO_2 -> homopolarExtension.initTransfo2(z, yPi1);
+            case TRANSFO_3_LEG_1, TRANSFO_3_LEG_2, TRANSFO_3_LEG_3 -> homopolarExtension.initTransfo3Leg(z, yPi1);
+            default -> throw new IllegalArgumentException("Branch '" + branch.getId() + "' has a not yet supported type");
         }
 
         // update zo and yom if frequency is not 50Hz
@@ -199,6 +105,72 @@ public class HomopolarModel {
         homopolarExtension.computeHomopolarAdmittanceMatrix();
 
         return homopolarExtension;
+    }
+
+    private void initLine(Complex z, Complex yPi1) {
+        // branch is a line and homopolar data available
+        ScLine scLine = (ScLine) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
+        if (scLine != null) {
+            zo = scLine.getZo();
+            yom = scaleYom(z, scLine.getZo(), yPi1);
+        }
+    }
+
+    private void initTransfo2(Complex z, Complex yPi1) {
+        // branch is a 2 windings transformer and homopolar data available
+        ScTransfo2W scTransfo = (ScTransfo2W) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
+        if (scTransfo == null) {
+            return;
+        }
+        double kT = 1.0;
+        if (branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM) != null) {
+            kT = (Double) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
+        }
+
+        Complex scaledYom = scaleYom(z, scTransfo.getZo(), yPi1);
+        zo = scTransfo.getZo().multiply(kT).add(scTransfo.getZ1Ground().add(scTransfo.getZ2Ground()));
+        yom = new Complex(scaledYom.getReal() / kT, scaledYom.getImaginary() / kT);
+
+        leg1ConnectionType = scTransfo.getLeg1ConnectionType();
+        leg2ConnectionType = scTransfo.getLeg2ConnectionType();
+    }
+
+    private void initTransfo3Leg(Complex z, Complex yPi1) {
+        // branch is a leg of a 3 windings transformer and homopolar data available
+        ScTransfo3W scTransfo = (ScTransfo3W) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
+        ScTransfo3wKt scTransfoKt = (ScTransfo3wKt) branch.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
+        if (scTransfoKt == null || scTransfo == null) {
+            return;
+        }
+        ScTransfo3W.Leg leg = switch (branch.getBranchType()) {
+            case TRANSFO_3_LEG_1 -> scTransfo.getLeg1();
+            case TRANSFO_3_LEG_2 -> scTransfo.getLeg2();
+            case TRANSFO_3_LEG_3 -> scTransfo.getLeg3();
+            default -> throw new IllegalArgumentException("Branch " + branch.getId() + " has unknown 3-winding leg number");
+        };
+        ScTransfo3wKt.Leg legKt = switch (branch.getBranchType()) {
+            case TRANSFO_3_LEG_1 -> scTransfoKt.getLeg1();
+            case TRANSFO_3_LEG_2 -> scTransfoKt.getLeg2();
+            default -> scTransfoKt.getLeg3();
+        };
+
+        Complex legZo = leg.getZo();
+        leg1ConnectionType = leg.getLegConnectionType();
+        freeFluxes = leg.isFreeFluxes();
+        zo = new Complex(legZo.getReal() * legKt.getkTro(), legZo.getImaginary() * legKt.getkTxo());
+        yom = scaleYom(z, legZo, yPi1);
+    }
+
+    private static Complex scaleYom(Complex z, Complex zo, Complex yPi1) {
+        double gCoeff = 1.;
+        double bCoeff = 1.;
+        if (Math.abs(zo.getImaginary()) > IMPEDANCE_EPSILON_PU) {
+            bCoeff = z.getImaginary() / zo.getImaginary();
+        }
+        if (Math.abs(zo.getReal()) > IMPEDANCE_EPSILON_PU) {
+            gCoeff = z.getReal() / zo.getReal();
+        }
+        return new Complex(yPi1.getReal() * gCoeff, yPi1.getImaginary() * bCoeff);
     }
 
     public void computeHomopolarAdmittanceMatrix() {

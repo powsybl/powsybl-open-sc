@@ -10,14 +10,20 @@ package com.powsybl.sc.implementation;
 import com.powsybl.iidm.network.ThreeSides;
 import com.powsybl.math.matrix.ComplexMatrix;
 import com.powsybl.openloadflow.network.*;
+import com.powsybl.sc.extensions.FrequencyType;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
 import com.powsybl.sc.util.*;
-import com.powsybl.sc.util.extensions.AdmittanceConstants;
 import com.powsybl.shortcircuit.FortescueValue;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.FastMath;
 
 import java.util.*;
+
+import static com.powsybl.sc.extensions.ShortCircuitConstants.CURRENT_EPSILON_PU;
+import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_EPSILON_PU;
+import static com.powsybl.sc.implementation.ShortCircuitFault.ShortCircuitType.*;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -30,45 +36,22 @@ public class ShortCircuitResult {
         INVERSE
     }
 
-    public class CommonSupportResult {
-
-        private LfBus lfBus2; // FIXME : might be wrongly overwritten in the "resultsPerFault" presentation
-
-        private Complex eth2;
-
-        private FortescueValue i2Fortescue; //fortescue vector of currents
-        private FortescueValue v2Fortescue; //fortescue vector of voltages
-
-        CommonSupportResult(LfBus lfBus2, Complex eth2,
-                            Complex i2d, Complex i2o, Complex i2i,
-                            Complex dv2d, Complex dv2o, Complex dv2i) {
-            this.lfBus2 = lfBus2;
-            this.eth2 = eth2;
-
-            this.i2Fortescue = new FortescueValue(i2d.abs(), i2o.abs(), i2i.abs(), i2d.getArgument(), i2o.getArgument(), i2i.getArgument());
-
-            //construction of the fortescue vector vFortescue = t[Vh, Vd, Vi]
-            Complex vd = eth2.add(dv2d);
-            this.v2Fortescue = new FortescueValue(vd.abs(), dv2o.abs(), dv2i.abs(), vd.getArgument(), dv2o.getArgument(), dv2i.getArgument());
-        }
-    }
-
-    private LfBus lfBus; // FIXME : might be wrongly overwritten in the "resultsPerFault" presentation
+    private final LfBus lfBus; // FIXME : might be wrongly overwritten in the "resultsPerFault" presentation
 
     private LfNetwork lfNetwork;
 
-    private ShortCircuitNorm norm;
+    private final ShortCircuitNorm norm;
 
-    private Complex zd; // equivalent direct impedance
-    private Complex zi; // equivalent inverse impedance
-    private Complex zh; // equivalent homopolar impedance
-    private Complex zd20hz;
-    private Complex zh20hz;
+    private final Complex zd; // equivalent direct impedance
+    private final Complex zi; // equivalent inverse impedance
+    private final Complex zh; // equivalent homopolar impedance
+    private final Complex zd20hz;
+    private final Complex zh20hz;
 
-    private Complex eth;
+    private final Complex eth;
 
-    private FortescueValue iFortescue; //fortescue vector of currents
-    private FortescueValue vFortescue; //fortescue vector of voltages
+    private final FortescueValue iFortescue; //fortescue vector of currents
+    private final FortescueValue vFortescue; //fortescue vector of voltages
 
     private boolean isVoltageProfileUpdated;
     private List<FortescueValue> busNum2Dv;
@@ -84,9 +67,7 @@ public class ShortCircuitResult {
     private Map<LfBus, FeedersAtBusResult> feedersResultsHomopolar;
     private Map<LfBus, FeedersAtBusResult> feedersResultsInverse;
 
-    private ShortCircuitFault shortCircuitFault;
-
-    private CommonSupportResult commonSupportResult; // used only for biphased with common support faults
+    private final ShortCircuitFault shortCircuitFault;
 
     public ShortCircuitResult(ShortCircuitFault shortCircuitFault, LfBus lfBus,
                               Complex id, Complex zth, Complex eth, Complex dv,
@@ -159,10 +140,6 @@ public class ShortCircuitResult {
                 zd, zo, zi,
                 vdInit, dvd, dvo, dvi,
                 eqSysFeedersDirect, eqSysFeedersHomopolar, norm, zth20hz, zoth20hz);
-
-        this.commonSupportResult = new CommonSupportResult(lfBus2, v2dinit,
-                i2d, i2o, i2i, dv2d, dv2o, dv2i);
-
     }
 
     public Complex getZd() {
@@ -185,13 +162,18 @@ public class ShortCircuitResult {
         return zh20hz;
     }
 
-    public ComplexMatrix getDiFromDv(LfBranch branch, FortescueValue dv1Fort, FortescueValue dv2Fort, FortescueType fType) {
-        AdmittanceEquationSystem.AdmittanceType admType = AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN;
+    public ComplexMatrix getDiFromDv(LfBranch branch, FortescueValue dv1Fort, FortescueValue dv2Fort, FortescueType fType,
+                                     ShortCircuitParameters parameters,
+                                     OpenShortCircuitParameters openScParameters) {
+        AdmittanceType admType = AdmittanceType.ADM_THEVENIN;
         if (fType == FortescueType.HOMOPOLAR) {
-            admType = AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR;
+            admType = AdmittanceType.ADM_THEVENIN_HOMOPOLAR;
         }
 
-        ComplexMatrix yBranch = getAdmittanceMatrixBranch(branch, admType);
+        ComplexMatrix yBranch = BranchAdmittance.create(branch, admType, parameters.isWithNeutralPosition(),
+                        openScParameters.isWithResistances(), openScParameters.isWithCapacities(),
+                        FrequencyType.FREQ_50_HZ)
+                .toComplexMatrix();
         Complex y11 = yBranch.get(0, 0);
         Complex y12 = yBranch.get(0, 1);
         Complex y21 = yBranch.get(1, 0);
@@ -216,7 +198,7 @@ public class ShortCircuitResult {
         return di;
     }
 
-    public void calculateCurrentPerBus(boolean isWithNeutralPosition) {
+    public void calculateCurrentPerBus(ShortCircuitParameters parameters, OpenShortCircuitParameters openScParameters) {
 
         // For each branch, we build the sum of currents at buses from branches
         // 1- Input is the voltage delta at each end of the branch
@@ -242,7 +224,7 @@ public class ShortCircuitResult {
                 FortescueValue dv2Fort = busNum2Dv.get(busNum2);
 
                 // Direct
-                ComplexMatrix di = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.DIRECT);
+                ComplexMatrix di = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.DIRECT, parameters, openScParameters);
                 Complex di1 = di.get(0, 0);
                 Complex di2 = di.get(1, 0);
 
@@ -253,13 +235,13 @@ public class ShortCircuitResult {
                 resultDirectBus1Feeders.addItofeedersSum(di1);
                 resultDirectBus2Feeders.addItofeedersSum(di2);
 
-                if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+                if (shortCircuitFault.getType() == TRIPHASED_GROUND) {
                     branchDi1.put(branch, new FortescueValue(di1.abs(), di1.getArgument()));
                     branchDi2.put(branch, new FortescueValue(di2.abs(), di2.getArgument()));
 
                     PiModel piModel = branch.getPiModel();
                     Complex zBranch;
-                    if (isWithNeutralPosition
+                    if (parameters.isWithNeutralPosition()
                             && piModel instanceof PiModelArray piModelArray) {
                         zBranch = new Complex(piModelArray.getModel(0).getR(), piModelArray.getModel(0).getX());
                     } else {
@@ -272,7 +254,7 @@ public class ShortCircuitResult {
                 }
 
                 // Homopolar
-                ComplexMatrix dio = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.HOMOPOLAR);
+                ComplexMatrix dio = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.HOMOPOLAR, parameters, openScParameters);
                 Complex dio1 = dio.get(0, 0);
                 Complex dio2 = dio.get(1, 0);
 
@@ -284,7 +266,7 @@ public class ShortCircuitResult {
                 resultHomopolarBus2Feeders.addItofeedersSum(dio2);
 
                 // Inverse
-                ComplexMatrix dii = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.INVERSE);
+                ComplexMatrix dii = getDiFromDv(branch, dv1Fort, dv2Fort, FortescueType.INVERSE, parameters, openScParameters);
                 Complex dii1 = dii.get(0, 0);
                 Complex dii2 = dii.get(1, 0);
 
@@ -303,7 +285,7 @@ public class ShortCircuitResult {
         }
     }
 
-    public void updateFeedersResult(boolean isWithNeutralPosition) {
+    public void updateFeedersResult(ShortCircuitParameters parameters, OpenShortCircuitParameters openScParameters) {
         if (!isVoltageProfileUpdated) {
             return;
         }
@@ -317,7 +299,7 @@ public class ShortCircuitResult {
             FeedersAtBusResult feedersAtBusResultDirect = new FeedersAtBusResult(busFeedersDirect);
             feedersResultDirect.put(bus, feedersAtBusResultDirect);
 
-            if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+            if (shortCircuitFault.getType() == TRIPHASED_GROUND) {
                 continue;
             }
 
@@ -332,7 +314,7 @@ public class ShortCircuitResult {
             feedersResultsInverse.put(bus, feedersAtBusResultInverse);
         }
 
-        calculateCurrentPerBus(isWithNeutralPosition);
+        calculateCurrentPerBus(parameters, openScParameters);
 
         // Given the admittance of each feeder at bus, computed during building of AdmittanceEquationSystem,
         // we can then deduce the current contribution of each feeder, which is stored in feeder result
@@ -342,7 +324,7 @@ public class ShortCircuitResult {
             FeedersAtBusResult busFeedersDirect = feedersResultDirect.get(bus);
             busFeedersDirect.updateContributions();
 
-            if (shortCircuitFault.getType() == ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND) {
+            if (shortCircuitFault.getType() == TRIPHASED_GROUND) {
                 continue;
             }
 
@@ -478,29 +460,14 @@ public class ShortCircuitResult {
     }
 
     public Complex getIk() {
-
         ShortCircuitFault.ShortCircuitType faultType = shortCircuitFault.getType();
-        Complex ik;
-
-        switch (faultType) {
-
-            case ShortCircuitFault.ShortCircuitType.MONOPHASED:
-                ik = getIk1pp();
-                break;
-            case ShortCircuitFault.ShortCircuitType.TRIPHASED_GROUND:
-                ik = getIkpp();
-                break;
-            case ShortCircuitFault.ShortCircuitType.BIPHASED:
-                ik = getIk2pp();
-                break;
-            case ShortCircuitFault.ShortCircuitType.BIPHASED_GROUND:
-                ik = getIke2epp();
-                break;
-            default:
-                ik = getIk();
-        }
-
-        return ik;
+        return switch (faultType) {
+            case MONOPHASED -> getIk1pp();
+            case TRIPHASED_GROUND -> getIkpp();
+            case BIPHASED -> getIk2pp();
+            case BIPHASED_GROUND -> getIke2epp();
+            default -> throw new UnsupportedOperationException("Ik not available for fault type " + faultType);
+        };
     }
 
     public Complex getIkpp() {
@@ -561,8 +528,7 @@ public class ShortCircuitResult {
         // IccBase = sqrt(3) * Eth(pu) / Zth(pu) * SB(MVA) * 10e6 / (VB(kV) * 10e3)
         double magnitudeIccBase = Math.sqrt(3.) * iFortescue.getPositiveMagnitude() * 1000. * 100. / lfBus.getNominalV();
         double angleIcc = iFortescue.getPositiveAngle();
-        double magnitudeIcc = magnitudeIccBase;
-        Complex val = ComplexUtils.polar2Complex(magnitudeIcc, angleIcc);
+        Complex val = ComplexUtils.polar2Complex(magnitudeIccBase, angleIcc);
 
         // Ik = c * Un / (sqrt(3) * Zk) = c / sqrt(3) * Eth(pu) / Zth(pu) * Sb / Vb
         return val.multiply(norm.getCmaxVoltageFactor(lfBus.getNominalV()) / 1000.);
@@ -573,21 +539,20 @@ public class ShortCircuitResult {
         return getIk().multiply(Math.sqrt(3) * lfBus.getV() * lfBus.getNominalV());
     }
 
-    public double getMaxRoverX() {
-        double ratio = 0.0;
-        double epsilon = 0.000001;
+    public double getMaxROverX() {
+        double maxRatio = 0.0;
+        Map<LfBranch, FortescueValue> branchDeltaI1 = getBranchDi1();
+        Map<LfBranch, FortescueValue> branchDeltaI2 = getBranchDi2();
         for (LfBranch branch : getLfNetwork().getBranches()) {
-            Complex zBranch = new Complex(branch.getPiModel().getR(), branch.getPiModel().getX());
-            FortescueValue di1 = getBranchDi1().get(branch);
-            FortescueValue di2 = getBranchDi2().get(branch);
-            if (zBranch.getImaginary() < epsilon) {
-                continue;
-            } else if (di1.getPositiveMagnitude() > epsilon || di2.getPositiveMagnitude() > epsilon) {
-                // we only look at ratio for branches with significant short circuit currents
-                ratio = Math.max(ratio, zBranch.getReal() / zBranch.getImaginary());
+            PiModel piModel = branch.getPiModel();
+            // we only look at ratio for branches with significant short circuit currents
+            if (piModel.getX() >= IMPEDANCE_EPSILON_PU
+                    && (branchDeltaI1.get(branch).getPositiveMagnitude() > CURRENT_EPSILON_PU
+                    || branchDeltaI2.get(branch).getPositiveMagnitude() > CURRENT_EPSILON_PU)) {
+                maxRatio = Math.max(maxRatio, piModel.getR() / piModel.getX());
             }
         }
-        return ratio;
+        return maxRatio;
     }
 
     public void setTrueVoltageProfileUpdate() {
@@ -613,40 +578,5 @@ public class ShortCircuitResult {
 
     public void setLfNetwork(LfNetwork lfNetwork) {
         this.lfNetwork = lfNetwork;
-    }
-
-    static ComplexMatrix getAdmittanceMatrixBranch(LfBranch branch,
-                                                   AdmittanceEquationSystem.AdmittanceType admittanceType) {
-
-        // TODO : code duplicated with the admittance equation system, should be un-duplicated
-        PiModel piModel = branch.getPiModel();
-        if (piModel.getX() == 0) {
-            throw new IllegalArgumentException("Branch '" + branch.getId() + "' has reactance equal to zero");
-        }
-
-        if (piModel.getZ() == 0) {
-            throw new IllegalArgumentException("Branch '" + branch.getId() + "' has Z equal to zero");
-        }
-        Complex z = new Complex(piModel.getR(), piModel.getX());
-        Complex y1 = new Complex(piModel.getG1(), piModel.getB1());
-        Complex y2 = new Complex(piModel.getG2(), piModel.getB1());
-        Complex rho = ComplexUtils.polar2Complex(piModel.getR1(), piModel.getA1());
-
-        double admCoef = 1.;
-        if (admittanceType == AdmittanceEquationSystem.AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
-            admCoef = AdmittanceConstants.COEF_XO_XD; // Xo = 3 * Xd as a first approximation : TODO : improve when more data available
-            rho = new Complex(rho.getReal(), 0.); // In homopolar, the phase shift is canceled TODO : verify
-        }
-        Complex y11 = y1.add(z.reciprocal()).multiply(rho.abs() * rho.abs()).multiply(admCoef);
-        Complex y12 = rho.conjugate().multiply(z.reciprocal()).multiply(-1.).multiply(admCoef); // TODO : check if case of phase shift if it is the conjugate of direct y
-        Complex y21 = rho.multiply(z.reciprocal()).multiply(-1.).multiply(admCoef);
-        Complex y22 = y2.add(z.reciprocal()).multiply(admCoef);
-
-        ComplexMatrix admittance = new ComplexMatrix(2, 2);
-        admittance.set(0, 0, y11);
-        admittance.set(0, 1, y12);
-        admittance.set(1, 0, y21);
-        admittance.set(1, 1, y22);
-        return admittance;
     }
 }

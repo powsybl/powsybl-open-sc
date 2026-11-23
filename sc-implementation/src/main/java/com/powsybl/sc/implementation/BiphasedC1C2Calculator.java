@@ -9,6 +9,9 @@ package com.powsybl.sc.implementation;
 
 import org.apache.commons.math3.complex.Complex;
 
+import static com.powsybl.sc.extensions.FortescueConstants.FORTESCUE_A;
+import static com.powsybl.sc.extensions.FortescueConstants.FORTESCUE_A2;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
@@ -87,7 +90,7 @@ public class BiphasedC1C2Calculator extends BiphasedCommonSupportShortCircuitCal
         //        Zf + 1/3*(Zd_11 - Zd_12 + Zd_22 - Zd_21 + Zo_11 - Zo_21 + Zo_22 - Zo_12 + Zi_22 - Zi_12 + Zi_11 - Zi_21)
         //
 
-        Complex numerator = geta().multiply(initV.subtract(v2dInit));
+        Complex numerator = FORTESCUE_A.multiply(initV.subtract(v2dInit));
         ic = numerator.divide(zt);
     }
 
@@ -106,7 +109,7 @@ public class BiphasedC1C2Calculator extends BiphasedCommonSupportShortCircuitCal
                 .add(zif)
                 .subtract(zi21);
 
-        zt = zfault.getZg().add(ztmp.divide(3.));
+        zt = zfault.zg().add(ztmp.divide(3.));
     }
 
     @Override
@@ -122,8 +125,8 @@ public class BiphasedC1C2Calculator extends BiphasedCommonSupportShortCircuitCal
         // [ I2i ]               [ a ]
 
         io = ic.divide(3.);
-        id = io.multiply(geta2());
-        ii = io.multiply(geta());
+        id = io.multiply(FORTESCUE_A2);
+        ii = io.multiply(FORTESCUE_A);
 
         i2o = io.multiply(-1.);
         i2d = id.multiply(-1.);

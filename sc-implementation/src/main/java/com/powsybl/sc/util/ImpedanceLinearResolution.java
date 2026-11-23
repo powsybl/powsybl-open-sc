@@ -7,16 +7,22 @@
  */
 package com.powsybl.sc.util;
 
+import com.powsybl.iidm.network.Network;
 import com.powsybl.math.matrix.DenseMatrix;
 import com.powsybl.openloadflow.equations.EquationSystem;
-import com.powsybl.openloadflow.equations.VariableSet;
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
+import com.powsybl.sc.extensions.FrequencyType;
+import com.powsybl.sc.extensions.OpenShortCircuitParameters;
+import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
+
+import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_CONSISTENCY_TOLERANCE_PU;
+import static com.powsybl.sc.util.ShortCircuitHelper.getOrDefaultOpenScParameters;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -32,15 +38,29 @@ public class ImpedanceLinearResolution {
     // [ Vx ]                        [ Ix ]           [ Vx_init ]
     // [ Vy ] = -t[En]*inv(Y)*[En] * [ Iy ] + t[En] * [ Vy_init ]
     //
+    private final Network network;
 
-    private final LfNetwork network;
+    private final LfNetwork lfNetwork;
 
-    private final ImpedanceLinearResolutionParameters parameters;
+    private final List<CalculationLocation> calculationLocations; // calculation locations where only one bus is required in input
+
+    private final AdmittanceType admittanceType;
+
+    private final ShortCircuitParameters parameters;
+
+    private final List<Complex> initialVoltages;
 
     public final Map<LfBus, ImpedanceLinearResolutionResult> results = new HashMap<>();
 
-    public ImpedanceLinearResolution(LfNetwork network, ImpedanceLinearResolutionParameters parameters) {
+    public ImpedanceLinearResolution(Network network, LfNetwork lfNetwork, List<CalculationLocation> calculationLocations,
+                                     List<Complex> initialVoltages,
+                                     AdmittanceType admittanceType,
+                                     ShortCircuitParameters parameters) {
         this.network = Objects.requireNonNull(network);
+        this.lfNetwork = Objects.requireNonNull(lfNetwork);
+        this.calculationLocations = calculationLocations;
+        this.initialVoltages = initialVoltages;
+        this.admittanceType = admittanceType;
         this.parameters = Objects.requireNonNull(parameters);
     }
 
@@ -118,7 +138,7 @@ public class ImpedanceLinearResolution {
         public void printResult() {
             System.out.println(" Zth(" + bus.getId() + ") = " + zthEq);
 
-            if (parameters.isVoltageUpdate()) {
+            if (parameters.isWithVoltageResult()) {
                 /*for (Map.Entry<Integer, Double> b : dvr1.entrySet()) {
                     int busi = b.getKey();
                     double dv = b.getValue();
@@ -141,18 +161,17 @@ public class ImpedanceLinearResolution {
     }
 
     public static void checkMatrixExtractionConsistency(Complex z1, Complex z2, LfBus lfBus1, LfBus lfBus2) {
-        double epsilon = 0.00001;
 
         String bus1Id = lfBus1.getId();
         String bus2Id = lfBus2.getId();
 
-        if (Math.abs(z1.getReal() - z2.getReal()) > epsilon) {
+        if (Math.abs(z1.getReal() - z2.getReal()) > IMPEDANCE_CONSISTENCY_TOLERANCE_PU) {
             throw new IllegalArgumentException(
                     "Impedance block values rth : z11 and Z22 of nodes Bus1 = {" + bus1Id + "} and Bus2 = {" + bus2Id +
                             "} have inconsitant values z11= " + z1.getReal() + " y1i2i=" + z2.getReal());
         }
 
-        if (Math.abs(z2.getImaginary() - z1.getImaginary()) > epsilon) {
+        if (Math.abs(z2.getImaginary() - z1.getImaginary()) > IMPEDANCE_CONSISTENCY_TOLERANCE_PU) {
             throw new IllegalArgumentException(
                     "Impedance block values xth : z12 and Z21 of nodes Bus1 = {" + bus1Id + "} and Bus2 = {" + bus2Id +
                             "} have inconsitant values z12= " + z1.getImaginary() + " z21=" + z2.getImaginary());
@@ -210,22 +229,25 @@ public class ImpedanceLinearResolution {
     }
 
     public void run() {
+        OpenShortCircuitParameters openScParameters = getOrDefaultOpenScParameters(parameters);
         FeedersAtNetwork equationsSystemFeeders = new FeedersAtNetwork();
+        AdmittanceEquationSystemCreator equationSystemCreator = new AdmittanceEquationSystemCreator(network, lfNetwork, initialVoltages,
+                admittanceType, parameters, openScParameters);
         EquationSystem<VariableType, EquationType> equationSystem
-                = AdmittanceEquationSystem.create(network, new VariableSet<>(), parameters, equationsSystemFeeders, AdmittanceEquationSystem.FrequencyType.FREQ_50_HZ);
+                = equationSystemCreator.create(equationsSystemFeeders, FrequencyType.FREQ_50_HZ);
 
         FeedersAtNetwork equationsSystemFeeders20hz = new FeedersAtNetwork();
         EquationSystem<VariableType, EquationType> equationSystem20hz
-                = AdmittanceEquationSystem.create(network, new VariableSet<>(), parameters, equationsSystemFeeders20hz, AdmittanceEquationSystem.FrequencyType.FREQ_20_HZ);
+                = equationSystemCreator.create(equationsSystemFeeders20hz, FrequencyType.FREQ_20_HZ);
 
         List<LfBus> inputBuses = new ArrayList<>();
         List<Pair<LfBus, LfBus>> busPairList = new ArrayList<>();
 
-        for (CalculationLocation locationInfo : parameters.getCalculationLocations()) {
+        for (CalculationLocation locationInfo : calculationLocations) {
             String iidmBranchId = locationInfo.getIidmBusInfo().getKey();
             int branchSide = locationInfo.getIidmBusInfo().getValue();
 
-            LfBus bus1 = getLfBusFromIidmBranch(iidmBranchId, branchSide, network);
+            LfBus bus1 = getLfBusFromIidmBranch(iidmBranchId, branchSide, lfNetwork);
             if (bus1 != null) {
                 if (!inputBuses.contains(bus1)) {
                     inputBuses.add(bus1);
@@ -237,7 +259,7 @@ public class ImpedanceLinearResolution {
             if (needsSecondBus) {
                 String iidmBranchId2 = locationInfo.getIidmBus2Info().getKey();
                 int branchSide2 = locationInfo.getIidmBus2Info().getValue();
-                LfBus bus2 = getLfBusFromIidmBranch(iidmBranchId2, branchSide2, network);
+                LfBus bus2 = getLfBusFromIidmBranch(iidmBranchId2, branchSide2, lfNetwork);
                 if (bus2 != null) {
                     if (!inputBuses.contains(bus2)) {
                         inputBuses.add(bus2);
@@ -268,8 +290,8 @@ public class ImpedanceLinearResolution {
         //  - En_y_k is the vector t[ 0 0 ... 0 0 0 1 0 0 ... 0 0 ] where 1 corresponds to the line/column of the bus k where the imaginary part of Z matrix is modelled
 
         // Step 1 : build the extraction vectors
-        try (AdmittanceMatrix yd = new AdmittanceMatrix(equationSystem, parameters.getMatrixFactory(), network);
-             AdmittanceMatrix yd20hz = new AdmittanceMatrix(equationSystem20hz, parameters.getMatrixFactory(), network)) {
+        try (AdmittanceMatrix yd = new AdmittanceMatrix(equationSystem, openScParameters.getMatrixFactory(), lfNetwork);
+             AdmittanceMatrix yd20hz = new AdmittanceMatrix(equationSystem20hz, openScParameters.getMatrixFactory(), lfNetwork)) {
 
             DenseMatrix en = new DenseMatrix(yd.getRowCount(), 2 * inputBuses.size());
             DenseMatrix en20hz = new DenseMatrix(yd.getRowCount(), 2 * inputBuses.size());
@@ -322,7 +344,7 @@ public class ImpedanceLinearResolution {
                 int yRow1x = yd.getRowBus(lfBus.getNum(), EquationType.BUS_YR);
                 int yRow1y = yd.getRowBus(lfBus.getNum(), EquationType.BUS_YI);
 
-                Complex eth = parameters.getInitialVoltage(lfBus.getNum());
+                Complex eth = initialVoltages.get(lfBus.getNum());
 
                 // This is equivalent to get the diagonal blocks of tEn * inv(Y) * En but taking advantage of the sparsity of tEn
                 // The diagonal terms of the impedance matrix are the Thevenin impedance at each corresponding bus
@@ -409,14 +431,14 @@ public class ImpedanceLinearResolution {
                         checkMatrixExtractionConsistency(z21At20Hz, z21bis20Hz, lfBus, bus2);
                         checkMatrixExtractionConsistency(z12At20Hz, z12bis20Hz, lfBus, bus2);
 
-                        Complex eth2 = parameters.getInitialVoltage(bus2.getNum());
+                        Complex eth2 = initialVoltages.get(bus2.getNum());
 
                         res.addTwoBusResult(bus2, eth2, new ImpedanceUpperTriangle(z12, z21, z22), new ImpedanceUpperTriangle(z22At20Hz, z21At20Hz, z12At20Hz), numBus2Fault);
                     }
                 }
 
                 //if required, do the same for all buses from the grid
-                if (parameters.isVoltageUpdate()) {
+                if (parameters.isWithVoltageResult()) {
                     // This equivalent to store  inv(Y)*[En]
                     res.updateWithVoltagesdelta(yd, zfromLu, numBusFault, equationsSystemFeeders);
                     if (res.twoBusResults != null) {
