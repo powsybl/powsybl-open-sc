@@ -98,8 +98,7 @@ public final class ShortCircuitHelper {
 
         double threshold = inInnerZone ? innerZoneThreshold : outerZoneThreshold;
 
-        double absGeneratorPMw = voltageProfileMode.equals(InitialVoltageProfileMode.PREVIOUS_VALUE) ?
-                Math.abs(iidmGenerator.getTerminal().getP()) : Math.abs(iidmGenerator.getTargetP());
+        double absGeneratorPMw = Math.abs(iidmGenerator.getTargetP());
         boolean running = absGeneratorPMw > threshold;
         if (!running) {
             LOGGER.info("Generator {} is not running (|P| = {} MW <= threshold {} MW) and is not taken into account",
