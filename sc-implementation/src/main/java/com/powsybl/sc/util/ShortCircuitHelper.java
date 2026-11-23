@@ -18,7 +18,6 @@ import com.powsybl.openloadflow.network.LfGenerator;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.sc.extensions.GeneratorSelectionMode;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
-import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import com.powsybl.shortcircuit.VoltageRange;
 import org.apache.commons.math3.complex.Complex;
@@ -74,7 +73,7 @@ public final class ShortCircuitHelper {
     }
 
     public static boolean isGeneratorSelected(LfGenerator generator, OpenShortCircuitParameters parameters, Network network,
-                                              Predicate<LfBus> innerZone, InitialVoltageProfileMode voltageProfileMode) {
+                                              Predicate<LfBus> innerZone) {
         GeneratorSelectionMode innerZoneMode = parameters.getInnerZoneGeneratorSelectionMode();
         GeneratorSelectionMode outerZoneMode = parameters.getOuterZoneGeneratorSelectionMode();
         boolean inInnerZone = innerZone.test(generator.getBus());

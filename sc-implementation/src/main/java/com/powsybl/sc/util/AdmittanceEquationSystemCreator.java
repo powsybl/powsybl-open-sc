@@ -129,7 +129,7 @@ public final class AdmittanceEquationSystemCreator {
         double vnomVl = bus.getNominalV();
         Complex tmpY = new Complex(0.);
         for (LfGenerator lfgen : bus.getGenerators()) { //compute R'd or R"d from generators at bus
-            if (!isGeneratorSelected(lfgen, openScParameters, network, innerZone, shortCircuitParameters.getInitialVoltageProfileMode())) {
+            if (!isGeneratorSelected(lfgen, openScParameters, network, innerZone)) {
                 continue;
             }
             ScGenerator scGen = (ScGenerator) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
