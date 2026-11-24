@@ -61,7 +61,7 @@ public class ShortCircuitBalancedTest {
 
     @Disabled
     @Test
-    void computeIccTest() {
+    void computeIkTest() {
         Network nt2 = create2n(NetworkFactory.findDefault());
         loadFlowRunner.run(nt2, loadFlowParameters);
 
@@ -282,7 +282,7 @@ public class ShortCircuitBalancedTest {
         );
         assertFeederCurrents(frs, new double[]{2700.28195, 2886.75122, 2725.79395, 2586.51782}, "G2");
         assertBusVoltages(frs, new double[]{6.46059465, 0.0, 5.57589579, 10.400857}, 1);
-        assertPcc(frs, new double[]{614.3870106480267, 649.1052145921715, 622.2183485377906, 590.9138564884136});
+        assertShortCircuitPower(frs, new double[]{614.3870106480267, 649.1052145921715, 622.2183485377906, 590.9138564884136});
     }
 
     @Test
@@ -345,7 +345,7 @@ public class ShortCircuitBalancedTest {
         );
         assertFeederCurrents(frs, new double[]{3547.77686, 3767.2981, 3564.29761, 3424.16235}, "G2");
         assertBusVoltages(frs, new double[]{7.60443974, 0.0, 7.03214169, 11.8865681}, 1);
-        assertPcc(frs, new double[]{610.248347851385, 652.5156395706381, 616.1285813837848, 584.4619000884433});
+        assertShortCircuitPower(frs, new double[]{610.248347851385, 652.5156395706381, 616.1285813837848, 584.4619000884433});
     }
 
     @Test
@@ -370,7 +370,7 @@ public class ShortCircuitBalancedTest {
         );
         assertFeederCurrents(frs, new double[]{3592.53687, 3791.98267, 3601.34424, 3570.32666}, "G2");
         assertBusVoltages(frs, new double[]{6.90904474, 0.0, 6.60392666, 7.67868948}, 1);
-        assertPcc(frs, new double[]{609.1055217117461, 656.8544981100258, 632.0484843628512, 615.2739239648827});
+        assertShortCircuitPower(frs, new double[]{609.1055217117461, 656.8544981100258, 632.0484843628512, 615.2739239648827});
     }
 
     @Test
@@ -427,7 +427,7 @@ public class ShortCircuitBalancedTest {
         assertFeederCurrents(frs, new double[]{2945.07812, 2819.75586}, "G1");
         assertBusVoltages(frs, new double[]{0.0, 4.34129143}, 0);
         assertBusVoltages(frs, new double[]{0.000213178486, 0.0}, 1);
-        assertPcc(frs, new double[]{510.11581156201544, 488.4093352923095});
+        assertShortCircuitPower(frs, new double[]{510.11581156201544, 488.4093352923095});
     }
 
     @Test
@@ -458,7 +458,7 @@ public class ShortCircuitBalancedTest {
         );
         assertFeederCurrents(frs, new double[]{2598.07642, 3040.30176}, "G1");
         assertBusVoltages(frs, new double[]{30.09933, 0.0}, 1);
-        assertPcc(frs, new double[]{457.498298785992, 535.7637871835718});
+        assertShortCircuitPower(frs, new double[]{457.498298785992, 535.7637871835718});
     }
 
     @Test
@@ -639,7 +639,7 @@ public class ShortCircuitBalancedTest {
             coefPeakb.put(res.getKey(), res.getValue().getPeakCoefb());
         }
 
-        // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
+        // here Ik = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
         // and I"k = 1/sqrt(3) * cmax * Un /(Zeq) and expected I"k = 34.62 kA
         assertEquals(34.62398968800272, val.get(sc1), DELTA_I_KA); // F1 expected value in the document: 34.62 kA
         assertEquals(34.1162841954478, val.get(sc2), DELTA_I_KA); // F2 expected value in the document: 34.12 kA
@@ -680,8 +680,8 @@ public class ShortCircuitBalancedTest {
             val.put(res.getKey(), res.getValue().getIk().abs());
         }
 
-        // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
-        // and Idocumentation = Ib*Eth(pu)/Zth(pu15) then Idocumentation = Icc * Ib * sqrt(3) * Vb / (1000 * Sb15)  with Ib = 18.064
+        // here IK = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
+        // and Idocumentation = Ib*Eth(pu)/Zth(pu15) then Idocumentation = Ik * Ib * sqrt(3) * Vb / (1000 * Sb15)  with Ib = 18.064
         // in the documentation, expected Idocumentation ~ 35.656 kA
         assertEquals(35.69309945355154, val.get(sc1) * 18.064 * 0.277 * Math.sqrt(3) / 15., DELTA_I_KA);
         assertEquals(35.69084362105586, val.get(sc2) * 18.064 * 0.277 * Math.sqrt(3) / 15., DELTA_I_KA);
@@ -813,7 +813,7 @@ public class ShortCircuitBalancedTest {
         );
         assertFeederCurrents(frs, new double[]{2407.81299, 2598.07642, 2500.03687, 2972.69214}, "G2");
         assertBusVoltages(frs, new double[]{6.59124184, 0.0, 3.39618897, 12.9770918}, 1);
-        assertPcc(frs, new double[]{558.0817302766839, 603.9447405534914, 599.650419944793, 701.9355122548085});
+        assertShortCircuitPower(frs, new double[]{558.0817302766839, 603.9447405534914, 599.650419944793, 701.9355122548085});
     }
 
     public static @NonNull Network create2n(NetworkFactory networkFactory) {
@@ -1302,7 +1302,7 @@ public class ShortCircuitBalancedTest {
         }
     }
 
-    private static void assertPcc(List<FaultResult> faultResults, double[] expected) {
+    private static void assertShortCircuitPower(List<FaultResult> faultResults, double[] expected) {
         for (int i = 0; i < expected.length; i++) {
             MagnitudeFaultResult result = (MagnitudeFaultResult) faultResults.get(i);
             assertEquals(expected[i], result.getShortCircuitPower(), ShortCircuitBalancedTest.DELTA_P_MW);

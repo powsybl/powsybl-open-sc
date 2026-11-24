@@ -116,7 +116,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
         for (Map.Entry<ShortCircuitFault, ShortCircuitResult> scResult : scuEngine.resultsPerFault.entrySet()) {
             ShortCircuitFault scFault = scResult.getKey();
 
-            double iccMagnitude = scResult.getValue().getIk().abs() * 1000.; // kA to A conversion
+            double ikMagnitude = scResult.getValue().getIk().abs() * 1000.; // kA to A conversion
             double voltage = scResult.getValue().getVd().abs();
 
             Fault fault = scFaultToFault.get(scFault);
@@ -125,7 +125,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             List<LimitViolation> limitViolations = new ArrayList<>();
             List<ShortCircuitBusResults> busResults = new ArrayList<>();
             MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults,
-                    limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
+                    limitViolations, ikMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }
@@ -141,12 +141,12 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             ShortCircuitResult scResult = scFaultResult.getValue();
             Fault fault = scFaultToFault.get(scFault);
 
-            double iccKA = scResult.getIk().abs(); // kA
+            double ikKA = scResult.getIk().abs(); // kA
             double vNom = scResult.getLfBus().getNominalV(); // kV
 
-            double iccMagnitude = iccKA * 1000.; // kA to A conversion
+            double ikMagnitude = ikKA * 1000.; // kA to A conversion
             double voltage = scResult.getVd().abs() * vNom; // kV
-            double pcc = FastMath.sqrt(3.) * vNom * iccKA; // MVA
+            double pk = FastMath.sqrt(3.) * vNom * ikKA; // MVA
 
             List<FeederResult> feederResultsProvider = new ArrayList<>();
             fillFeederResults(network, scbParameters, feederResultsProvider, scResult);
@@ -158,8 +158,8 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                 fillBusResults(scbEngine.getFirstLfNetwork(), busResults, scResult, scbEngine.getInitialVoltages(),
                         scbParameters.getMinVoltageDropProportional());
             }
-            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, pcc, feederResultsProvider,
-                    limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
+            MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, pk, feederResultsProvider,
+                    limitViolations, ikMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }

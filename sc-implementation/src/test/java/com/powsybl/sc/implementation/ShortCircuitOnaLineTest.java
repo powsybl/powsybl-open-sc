@@ -82,7 +82,7 @@ public class ShortCircuitOnaLineTest {
             rOverX.add(res.getValue().getMaxRoverX());
         }
 
-        // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
+        // here Ik = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
         // and I"k = 1/sqrt(3) * cmax * Un /(Zeq) and expected I"k = 34.62 kA
         assertEquals(34.62398968800272, val.get(0), 0.00001);
         assertEquals(34.1162841954478, val.get(1), 0.00001);
