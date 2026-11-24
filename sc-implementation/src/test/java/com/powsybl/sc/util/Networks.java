@@ -646,7 +646,7 @@ public final class Networks {
 
         double[] rho = {0.85, 1.0, 1.20};
         double[] alpha = {-30.0, 0.0, 45.0}; // degrees
-        double[] r = {50.0, 0.0, 100.0};     // % deviation from transformer R
+        double[] r = {-50.0, 0.0, 100.0};     // % deviation from transformer R
         double[] x = {-50.0, 0.0, 100.0};    // % deviation from transformer X
 
         TwoWindingsTransformer twt = network.getTwoWindingsTransformer("B1_B2");
@@ -686,8 +686,7 @@ public final class Networks {
         RatioTapChangerAdder rtcAdder = twt.newRatioTapChanger()
                 .setLowTapPosition(0)
                 .setTapPosition(2)
-                .setLoadTapChangingCapabilities(true)
-                .setRegulating(false);
+                .setLoadTapChangingCapabilities(true);
 
         for (int i = 0; i < rho.length; i++) {
             rtcAdder.beginStep()

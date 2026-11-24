@@ -102,13 +102,6 @@ public final class BranchAdmittance {
         }
 
         if (admittanceType != AdmittanceType.ADM_THEVENIN_HOMOPOLAR) {
-            /*
-            double seriesConductance = rho * zInvSquare * (r * cosA + x * sinA);
-            Complex oldY12 = new Complex(seriesConductance, -rho * zInvSquare * (x * cosA + r * sinA));
-            Complex oldY1y12sum = new Complex(rho * rho * (gPi1 + r * zInvSquare), rho * rho * (bPi1 - x * zInvSquare));
-            Complex oldY21 = new Complex(seriesConductance, rho * zInvSquare * (r * sinA - x * cosA));
-            Complex oldY2y21sum = new Complex(r * zInvSquare + gPi2, -x * zInvSquare + bPi2); */
-
             Complex y12 = d1.multiply(rho).divide(zd);
             Complex y1y12sum = (yPi1.add(Complex.ONE.divide(zd))).multiply(rho * rho);
             Complex y21 = d2.multiply(rho).divide(zd);
