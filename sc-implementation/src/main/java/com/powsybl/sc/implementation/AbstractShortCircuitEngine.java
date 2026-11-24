@@ -13,7 +13,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.ThreeWindingsTransformer;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
-import com.powsybl.openloadflow.graph.EvenShiloachGraphDecrementalConnectivityFactory;
+import com.powsybl.openloadflow.graph.dtree.DTreeGraphConnectivityFactory;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
@@ -60,9 +60,8 @@ public abstract class AbstractShortCircuitEngine {
 
     protected AcLoadFlowParameters getAcLoadFlowParametersFromParam() {
         OpenLoadFlowParameters loadflowParametersExt = OpenLoadFlowParameters.get(parameters.getLoadFlowParameters());
-        // TODO: DTreeGraphConnectivityFactor instead of EvenShiloachGraphDecrementalConnectivityFactory to be more performant
         return OpenLoadFlowParameters.createAcParameters(parameters.getLoadFlowParameters(), loadflowParametersExt,
-                parameters.getMatrixFactory(), new EvenShiloachGraphDecrementalConnectivityFactory<>(), false, false);
+                parameters.getMatrixFactory(), new DTreeGraphConnectivityFactory<>(), false, false);
     }
 
     protected void buildSystematicList(ShortCircuitFault.ShortCircuitType type) {

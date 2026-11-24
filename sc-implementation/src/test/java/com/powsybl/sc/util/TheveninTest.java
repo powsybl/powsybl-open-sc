@@ -16,12 +16,10 @@ import com.powsybl.math.matrix.MatrixFactory;
 import com.powsybl.openloadflow.OpenLoadFlowParameters;
 import com.powsybl.openloadflow.OpenLoadFlowProvider;
 import com.powsybl.openloadflow.ac.AcLoadFlowParameters;
-import com.powsybl.openloadflow.graph.EvenShiloachGraphDecrementalConnectivityFactory;
+import com.powsybl.openloadflow.graph.dtree.DTreeGraphConnectivityFactory;
 import com.powsybl.shortcircuit.InitialVoltageProfileMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.usefultoys.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class TheveninTest {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TheveninTest.class);
 
     private LoadFlowParameters parameters;
 
@@ -64,7 +60,7 @@ public class TheveninTest {
         faultsList.add(f2);
 
         AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
-                parameters, OpenLoadFlowParameters.get(parameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
+                parameters, OpenLoadFlowParameters.get(parameters), matrixFactory, new DTreeGraphConnectivityFactory<>());
 
         InitialVoltageProfileMode avp = InitialVoltageProfileMode.PREVIOUS_VALUE;
         TheveninEquivalentParameters.TheveninPeriodType periodType = TheveninEquivalentParameters.TheveninPeriodType.THEVENIN_TRANSIENT;
@@ -101,7 +97,7 @@ public class TheveninTest {
         faultsList.add(f4);
 
         AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
-                parameters, OpenLoadFlowParameters.get(parameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
+                parameters, OpenLoadFlowParameters.get(parameters), matrixFactory, new DTreeGraphConnectivityFactory<>());
 
         InitialVoltageProfileMode avp = InitialVoltageProfileMode.NOMINAL;
         TheveninEquivalentParameters.TheveninPeriodType periodType = TheveninEquivalentParameters.TheveninPeriodType.THEVENIN_TRANSIENT;
@@ -138,7 +134,7 @@ public class TheveninTest {
         faultsList.add(f4);
 
         AcLoadFlowParameters acLoadFlowParameters = OpenLoadFlowParameters.createAcParameters(network,
-                parameters, OpenLoadFlowParameters.get(parameters), matrixFactory, new EvenShiloachGraphDecrementalConnectivityFactory<>());
+                parameters, OpenLoadFlowParameters.get(parameters), matrixFactory, new DTreeGraphConnectivityFactory<>());
 
         InitialVoltageProfileMode avp = InitialVoltageProfileMode.NOMINAL;
         TheveninEquivalentParameters.TheveninPeriodType periodType = TheveninEquivalentParameters.TheveninPeriodType.THEVENIN_SUB_TRANSIENT;
