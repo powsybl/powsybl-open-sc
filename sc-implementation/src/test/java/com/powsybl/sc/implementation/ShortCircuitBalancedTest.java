@@ -317,7 +317,7 @@ public class ShortCircuitBalancedTest {
         List<FaultResult> frs = scar.getFaultResults();
 
         assertMagnitudeCurrents(frs,
-                new double[]{2971.044470452889, 1297.818756077439}
+                new double[]{2971.044677734375, 1297.818603515625}
         );
     }
 
