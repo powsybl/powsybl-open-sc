@@ -146,7 +146,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
             double ikMagnitude = ikKA * 1000.; // kA to A conversion
             double voltage = scResult.getVd().abs() * vNom; // kV
-            double pk = FastMath.sqrt(3.) * vNom * ikKA; // MVA
+            double pk = FastMath.sqrt(3.) * scResult.getEth().abs() * vNom * ikKA; // MVA
 
             List<FeederResult> feederResultsProvider = new ArrayList<>();
             fillFeederResults(network, scbParameters, feederResultsProvider, scResult);

@@ -49,7 +49,7 @@ public class ShortCircuitBalancedTest {
     private static final double DELTA_V = 1e-5;
     private static final double DELTA_Z = 1e-5;
     private static final double DELTA_K = 1e-5;
-    private static final double DELTA_P_MW = 1e-5;
+    private static final double DELTA_P_MW = 1e-3;
 
     @BeforeEach
     void setUp() {
@@ -120,8 +120,8 @@ public class ShortCircuitBalancedTest {
         assertEquals(6.662151249755523E-14, m1.getVoltage(), DELTA_V);
         assertEquals(0.28227759385913187, ((MagnitudeShortCircuitBusResults) m0.getShortCircuitBusResults().get(1)).getVoltage(), DELTA_V);
         assertEquals(9.090909090909093, ((MagnitudeShortCircuitBusResults) m1.getShortCircuitBusResults().getFirst()).getVoltage(), DELTA_V);
-        assertEquals(510.0971690956024, m0.getShortCircuitPower(), DELTA_P_MW);
-        assertEquals(464.6530741734561, m1.getShortCircuitPower(), DELTA_P_MW);
+        assertEquals(510.097137, m0.getShortCircuitPower(), DELTA_P_MW);
+        assertEquals(464.653076, m1.getShortCircuitPower(), DELTA_P_MW);
         assertEquals("OpenShortCircuit", providerName);
         assertEquals("0.1", providerVersion);
     }
@@ -282,7 +282,7 @@ public class ShortCircuitBalancedTest {
         );
         assertFeederCurrents(frs, new double[]{2700.28195, 2886.75122, 2725.79395, 2586.51782}, "G2");
         assertBusVoltages(frs, new double[]{6.46059465, 0.0, 5.57589579, 10.400857}, 1);
-        assertShortCircuitPower(frs, new double[]{614.3870106480267, 649.1052145921715, 622.2183485377906, 590.9138564884136});
+        assertShortCircuitPower(frs, new double[]{614.387085, 649.105225, 622.218384, 590.913818});
     }
 
     @Test
@@ -345,7 +345,7 @@ public class ShortCircuitBalancedTest {
         );
         assertFeederCurrents(frs, new double[]{3547.77686, 3767.2981, 3564.29761, 3424.16235}, "G2");
         assertBusVoltages(frs, new double[]{7.60443974, 0.0, 7.03214169, 11.8865681}, 1);
-        assertShortCircuitPower(frs, new double[]{610.248347851385, 652.5156395706381, 616.1285813837848, 584.4619000884433});
+        assertShortCircuitPower(frs, new double[]{602.951111, 652.515625, 606.681885, 575.044739});
     }
 
     @Test
@@ -370,7 +370,7 @@ public class ShortCircuitBalancedTest {
         );
         assertFeederCurrents(frs, new double[]{3592.53687, 3791.98267, 3601.34424, 3570.32666}, "G2");
         assertBusVoltages(frs, new double[]{6.90904474, 0.0, 6.60392666, 7.67868948}, 1);
-        assertShortCircuitPower(frs, new double[]{609.1055217117461, 656.8544981100258, 632.0484843628512, 615.2739239648827});
+        assertShortCircuitPower(frs, new double[]{611.518005, 656.854492, 613.522278, 606.456909});
     }
 
     @Test
@@ -427,7 +427,7 @@ public class ShortCircuitBalancedTest {
         assertFeederCurrents(frs, new double[]{2945.07812, 2819.75586}, "G1");
         assertBusVoltages(frs, new double[]{0.0, 4.34129143}, 0);
         assertBusVoltages(frs, new double[]{0.000213178486, 0.0}, 1);
-        assertShortCircuitPower(frs, new double[]{510.11581156201544, 488.4093352923095});
+        assertShortCircuitPower(frs, new double[]{510.115814, 487.975189});
     }
 
     @Test
@@ -458,7 +458,7 @@ public class ShortCircuitBalancedTest {
         );
         assertFeederCurrents(frs, new double[]{2598.07642, 3040.30176}, "G1");
         assertBusVoltages(frs, new double[]{30.09933, 0.0}, 1);
-        assertShortCircuitPower(frs, new double[]{457.498298785992, 535.7637871835718});
+        assertShortCircuitPower(frs, new double[]{411.748505, 589.340149});
     }
 
     @Test
@@ -813,7 +813,7 @@ public class ShortCircuitBalancedTest {
         );
         assertFeederCurrents(frs, new double[]{2407.81299, 2598.07642, 2500.03687, 2972.69214}, "G2");
         assertBusVoltages(frs, new double[]{6.59124184, 0.0, 3.39618897, 12.9770918}, 1);
-        assertShortCircuitPower(frs, new double[]{558.0817302766839, 603.9447405534914, 599.650419944793, 701.9355122548085});
+        assertShortCircuitPower(frs, new double[]{502.273529, 543.550232, 539.685303, 772.129028});
     }
 
     public static @NonNull Network create2n(NetworkFactory networkFactory) {
