@@ -9,6 +9,7 @@ package com.powsybl.sc.implementation;
 
 import com.powsybl.openloadflow.network.LfBranch;
 import com.powsybl.openloadflow.network.LfBus;
+import com.powsybl.sc.extensions.ScFortescueValue;
 import com.powsybl.sc.util.FeederResult;
 import com.powsybl.sc.util.FeedersAtBusResult;
 import com.powsybl.shortcircuit.FortescueValue;
@@ -139,7 +140,8 @@ public class ShortCircuitResultPrinter {
         }
     }
 
-    public String getStringFortescueValue(FortescueValue fv) {
+    public String getStringFortescueValue(ScFortescueValue fvSc) {
+        FortescueValue fv = fvSc.toFortescueValue();
         return "[ " + fv.getZeroMagnitude() + " < " + fv.getZeroAngle() + " ; "
                         + fv.getPositiveMagnitude() + " < " + fv.getPositiveAngle() + " ; "
                         + fv.getNegativeMagnitude() + " < " + fv.getNegativeAngle() + " ] ";

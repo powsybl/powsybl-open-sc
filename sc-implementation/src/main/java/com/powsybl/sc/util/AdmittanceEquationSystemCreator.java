@@ -64,7 +64,7 @@ public final class AdmittanceEquationSystemCreator {
     }
 
     //Equations are created based on the branches connections
-    private void createImpedantBranch(VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
+    private void createImpedanceBranch(VariableSet<VariableType> variableSet, EquationSystem<VariableType, EquationType> equationSystem,
                                              LfBranch branch, FrequencyType frequencyType) {
         LfBus bus1 = branch.getBus1();
         LfBus bus2 = branch.getBus2();
@@ -91,11 +91,11 @@ public final class AdmittanceEquationSystemCreator {
             PiModel piModel = branch.getPiModel();
             if (FastMath.abs(piModel.getX()) < LfNetworkParameters.LOW_IMPEDANCE_THRESHOLD_DEFAULT_VALUE) {
                 if (bus1 != null && bus2 != null) {
-                    LOGGER.warn("Warning: Branch = {} : Non impedant lines not supported in the current version of the reduction method",
+                    LOGGER.warn("Warning: Branch = {} : Zero-impedance lines are not supported in the current version of the reduction method",
                             branch.getId());
                 }
             } else {
-                createImpedantBranch(variableSet, equationSystem, branch, frequencyType);
+                createImpedanceBranch(variableSet, equationSystem, branch, frequencyType);
             }
         }
     }
@@ -128,12 +128,12 @@ public final class AdmittanceEquationSystemCreator {
     private Complex getYtransfromRdXdAndUpdateFeederList(LfBus bus, Predicate<LfBus> innerZone, List<Feeder> feederList) {
         double vnomVl = bus.getNominalV();
         Complex tmpY = new Complex(0.);
-        for (LfGenerator lfgen : bus.getGenerators()) { //compute R'd or R"d from generators at bus
-            if (!isGeneratorSelected(lfgen, openScParameters, network, innerZone)) {
+        for (LfGenerator lfGen : bus.getGenerators()) { //compute R'd or R"d from generators at bus
+            if (!isGeneratorSelected(lfGen, openScParameters, network, innerZone)) {
                 continue;
             }
-            ScGenerator scGen = (ScGenerator) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
-            double kG = (Double) lfgen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
+            ScGenerator scGen = (ScGenerator) lfGen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT);
+            double kG = (Double) lfGen.getProperty(ShortCircuitExtensions.PROPERTY_SHORT_CIRCUIT_NORM);
             Complex z = scGen.getTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
             if (shortCircuitParameters.getStudyType() == StudyType.SUB_TRANSIENT) {
                 z = scGen.getSubTransZd().add(scGen.getStepUpTfoZ()).multiply(kG);
@@ -151,7 +151,7 @@ public final class AdmittanceEquationSystemCreator {
             if (z.abs() > IMPEDANCE_EPSILON_PU) {
                 Complex yGen = z.reciprocal().multiply(vnomVl * vnomVl / SB);
                 tmpY = tmpY.add(yGen);
-                Feeder genFeeder = new GeneratorFeeder(yGen, lfgen);
+                Feeder genFeeder = new GeneratorFeeder(yGen, lfGen);
                 feederList.add(genFeeder);
             }
         }
