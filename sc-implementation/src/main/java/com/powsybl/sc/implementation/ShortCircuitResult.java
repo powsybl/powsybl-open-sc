@@ -558,11 +558,10 @@ public class ShortCircuitResult {
 
     public Complex getDefaultIk() {
         // Ik is a default value used for testing
-        // IccBase = sqrt(3) * Eth(pu) / Zth(pu) * SB(MVA) * 10e6 / (VB(kV) * 10e3)
-        double magnitudeIccBase = Math.sqrt(3.) * iFortescue.getPositiveMagnitude() * 1000. * 100. / lfBus.getNominalV();
-        double angleIcc = iFortescue.getPositiveAngle();
-        double magnitudeIcc = magnitudeIccBase;
-        Complex val = ComplexUtils.polar2Complex(magnitudeIcc, angleIcc);
+        // IkBase = sqrt(3) * Eth(pu) / Zth(pu) * SB(MVA) * 10e6 / (VB(kV) * 10e3)
+        double magnitudeIk = Math.sqrt(3.) * iFortescue.getPositiveMagnitude() * 1000. * 100. / lfBus.getNominalV();
+        double angleIk = iFortescue.getPositiveAngle();
+        Complex val = ComplexUtils.polar2Complex(magnitudeIk, angleIk);
 
         // Ik = c * Un / (sqrt(3) * Zk) = c / sqrt(3) * Eth(pu) / Zth(pu) * Sb / Vb
         return val.multiply(norm.getCmaxVoltageFactor(lfBus.getNominalV()) / 1000.);

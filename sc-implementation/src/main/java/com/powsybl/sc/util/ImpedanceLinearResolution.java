@@ -54,12 +54,12 @@ public class ImpedanceLinearResolution {
         private final Complex eth; // Thevenin voltage
         private final Complex zthEq20Hz;
 
-        // zknf corresponds to extracted impedance term z(k,nf) from inv(Y) to be able to compute Vk = z(k,nf).icc.
+        // zknf corresponds to extracted impedance term z(k,nf) from inv(Y) to be able to compute Vk = z(k,nf).inf.
         // k is the bus index of the voltage Vk we want to compute and nf is the index of faulted bus
         private Complex zknf;
 
         // This is a map to easily access the impedance terms resulting from inv(Y), extracting only useful z(i,j) terms
-        // the key stores the number of the bus k at which we want to compute the voltage from formula Vk = z(k,nf).icc, the value stores the resolved value [Res] = inv(Y)*[En],
+        // the key stores the number of the bus k at which we want to compute the voltage from formula Vk = z(k,nf).inf, the value stores the resolved value [Res] = inv(Y)*[En],
         // with n of vector [En] corresponding to the studied short circuit fault and values at lines of [Res] corresponding real and imaginary parts at bus in key
         private Map<Integer, Complex> busToZknf;
 
@@ -339,11 +339,11 @@ public class ImpedanceLinearResolution {
                 //step 4 : add deltaVoltage vectors if required
                 //extract values at the faulting bus that will be used to compute the post-fault voltage delta at bus
 
-                // [ V ] = -inv(Y) * M * [ Icc ] + [ V(init) ]
-                // Where is the short circuit current vector [Icc] = [ 0 ; 0 .... 0 ; icc ; 0 .... 0 ; 0 ] with non zero term corresponds to faulted node nf
+                // [ V ] = -inv(Y) * M * [ Inf ] + [ V(init) ]
+                // Where is the short circuit current vector [Inf] = [ 0 ; 0 .... 0 ; Inf ; 0 .... 0 ; 0 ] with non zero term corresponds to faulted node nf
                 // Where [V] is the resulting voltage profile avec short circuit, [V] = [ V1 ; V2 ; ..... ; Vk ; .... ; Vm ]
-                // Vk = z(k,nf) . icc
-                // we need then to extract z(k,nf) if we want to compute updated Vk from computed icc value
+                // Vk = z(k,nf) . Inf
+                // we need then to extract z(k,nf) if we want to compute updated Vk from computed Inf value
 
                 Complex zknf = new Complex(zfromLu.get(yRow1x, 2 * numBusFault), zfromLu.get(yRow1y, 2 * numBusFault));
 

@@ -78,7 +78,7 @@ public class ShortCircuitMonophasedTest {
             val.add(res.getValue().getIk().abs());
         }
 
-        // here Icc = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
+        // here Ik = 1/sqrt(3)*Eth(pu)/Zth(pu100)*Sb100/Vb*1000
         // and I"k = sqrt(3) * cmax * Un /(Zeq) and expected I"k = 35.64 kA with some approximations on the impedance values
         assertEquals(35.70435548244156, val.getFirst(), 0.00001);
 
