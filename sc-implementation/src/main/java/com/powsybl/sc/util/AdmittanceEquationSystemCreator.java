@@ -259,14 +259,16 @@ public final class AdmittanceEquationSystemCreator {
                 default -> new Complex(0.);
             };
 
+            Complex z = y.reciprocal();
+
             // coef to adapt reactance if freq is not 50Hz
+            double x = z.getImaginary();
             double freqCoef = 1.0;
             if (frequencyType == FrequencyType.FREQ_20_HZ) {
-                freqCoef = 20. / 50.;
+                freqCoef = x >= 0 ? 2. / 5. : 5. / 2.;
             }
 
-            Complex z = y.reciprocal();
-            z = new Complex(z.getReal(), z.getImaginary() * freqCoef);
+            z = new Complex(z.getReal(), x * freqCoef);
             y = z.reciprocal();
 
             if (y.abs() > ADMITTANCE_EPSILON_PU) {

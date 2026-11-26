@@ -55,10 +55,9 @@ public final class BranchAdmittance {
     public static BranchAdmittance create(LfBranch branch, AdmittanceType admittanceType,
                                           boolean isWithNeutralPosition, boolean isWithResistances, boolean isWithCapacities,
                                           FrequencyType frequencyType) {
-        double freqCoef = 1.0;
-        if (frequencyType == FrequencyType.FREQ_20_HZ) {
-            freqCoef = 20. / 50.;
-        }
+        double rho;
+        double r;
+        double x;
 
         PiModel piModel = branch.getPiModel();
         if (piModel.getX() == 0) {
@@ -69,20 +68,24 @@ public final class BranchAdmittance {
         double kTr = ktCoeff.kTr();
         double kTx = ktCoeff.kTx();
 
-        double rho;
-        double r;
-        double x;
         // Take the rho of the neutral position (model(0)) of tapChanger if isWithNeutralPosition set to True
         if (isWithNeutralPosition
                 && piModel instanceof PiModelArray piModelArray) {
             rho = piModelArray.getModel(0).getR1();
             r = piModelArray.getModel(0).getR() * kTr;
-            x = piModelArray.getModel(0).getX() * kTx * freqCoef;
+            x = piModelArray.getModel(0).getX() * kTx;
         } else {
             rho = piModel.getR1();
             r = piModel.getR() * kTr;
-            x = piModel.getX() * kTx * freqCoef;
+            x = piModel.getX() * kTx;
         }
+
+        double freqCoef = 1.0;
+        if (frequencyType == FrequencyType.FREQ_20_HZ) {
+            freqCoef = x >= 0 ? 2. / 5. : 5. / 2.;
+        }
+        x *= freqCoef;
+
         if (!isWithResistances) {
             r = 0.0;
         }

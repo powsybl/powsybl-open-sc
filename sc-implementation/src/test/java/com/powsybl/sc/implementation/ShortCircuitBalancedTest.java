@@ -609,6 +609,32 @@ public class ShortCircuitBalancedTest {
         assertBusVoltages(frs, new double[]{6.59124184, 0.0, 3.39618897, 12.9770918}, 1);
     }
 
+    @Test
+    void openShortCircuitProvider2nWithCapacitiveLine() {
+        Network nt2 = create2n(NetworkFactory.findDefault());
+        nt2.getLine("B1_B2").setX(-1.);
+
+        List<Fault> faults = List.of(
+                new BusFault("F1", "B1"),
+                new BusFault("F2", "B2"));
+
+        ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
+
+        assertEquals(2, scar.getFaultResults().size());
+
+        MagnitudeFaultResult m0 = (MagnitudeFaultResult) scar.getFaultResult("F1");
+        MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F2");
+
+        assertEquals(2945.0545006839207, m0.getCurrent(), DELTA_I_A);
+        assertEquals(3096.958863351705, m1.getCurrent(), DELTA_I_A);
+        assertEquals(2886.7513459481406, m0.getFeederCurrent("G1"), DELTA_I_A);
+        assertEquals(3038.6856273138324, m1.getFeederCurrent("G1"), DELTA_I_A);
+        assertEquals(0., m0.getVoltage(), DELTA_V);
+        assertEquals(0., m1.getVoltage(), DELTA_V);
+        assertEquals(0.14156284823326398, ((MagnitudeShortCircuitBusResults) m0.getShortCircuitBusResults().get(1)).getVoltage(), DELTA_V);
+        assertEquals(5.2631578947368585, ((MagnitudeShortCircuitBusResults) m1.getShortCircuitBusResults().getFirst()).getVoltage(), DELTA_V);
+    }
+
     private static List<Fault> createBusFaultsFor4n() {
         return List.of(
                 new BusFault("F1", "B1"),
