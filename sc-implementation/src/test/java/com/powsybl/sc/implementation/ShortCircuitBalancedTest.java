@@ -609,6 +609,27 @@ public class ShortCircuitBalancedTest {
         assertBusVoltages(frs, new double[]{6.59124184, 0.0, 3.39618897, 12.9770918}, 1);
     }
 
+    @Test
+    void openShortCircuit2nWithCapacitiveLineAt20Hz() {
+        Network nt2 = create2n(NetworkFactory.findDefault());
+        nt2.getLine("B1_B2").setX(-1.);
+
+        ShortCircuitFault sc1 = createZeroImpedanceTriphasedGroundFault("sc1", "B1");
+        ShortCircuitFault sc2 = createZeroImpedanceTriphasedGroundFault("sc2", "B2");
+        List<ShortCircuitFault> faultList = List.of(sc1, sc2);
+
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(nt2, scp, faultList, new ShortCircuitNormNone());
+        scbEngine.run();
+
+        Map<ShortCircuitFault, Double> val = new HashMap<>();
+        for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
+            val.put(res.getKey(), res.getValue().getZd20hz().abs());
+        }
+
+        assertEquals(0.07955748023989781, val.get(sc1), DELTA_Z);
+        assertEquals(0.054789722856544376, val.get(sc2), DELTA_Z);
+    }
+
     private static List<Fault> createBusFaultsFor4n() {
         return List.of(
                 new BusFault("F1", "B1"),
