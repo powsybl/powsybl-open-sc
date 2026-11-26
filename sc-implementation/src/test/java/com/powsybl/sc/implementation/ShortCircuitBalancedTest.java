@@ -610,29 +610,24 @@ public class ShortCircuitBalancedTest {
     }
 
     @Test
-    void openShortCircuitProvider2nWithCapacitiveLine() {
+    void openShortCircuit2nWithCapacitiveLineAt20Hz() {
         Network nt2 = create2n(NetworkFactory.findDefault());
         nt2.getLine("B1_B2").setX(-1.);
 
-        List<Fault> faults = List.of(
-                new BusFault("F1", "B1"),
-                new BusFault("F2", "B2"));
+        ShortCircuitFault sc1 = createZeroImpedanceTriphasedGroundFault("sc1", "B1");
+        ShortCircuitFault sc2 = createZeroImpedanceTriphasedGroundFault("sc2", "B2");
+        List<ShortCircuitFault> faultList = List.of(sc1, sc2);
 
-        ShortCircuitAnalysisResult scar = provider.run(nt2, faults, scp, cm, Collections.emptyList()).join();
+        ShortCircuitBalancedEngine scbEngine = new ShortCircuitBalancedEngine(nt2, scp, faultList, new ShortCircuitNormNone());
+        scbEngine.run();
 
-        assertEquals(2, scar.getFaultResults().size());
+        Map<ShortCircuitFault, Double> val = new HashMap<>();
+        for (Map.Entry<ShortCircuitFault, ShortCircuitResult> res : scbEngine.resultsPerFault.entrySet()) {
+            val.put(res.getKey(), res.getValue().getZd20hz().abs());
+        }
 
-        MagnitudeFaultResult m0 = (MagnitudeFaultResult) scar.getFaultResult("F1");
-        MagnitudeFaultResult m1 = (MagnitudeFaultResult) scar.getFaultResult("F2");
-
-        assertEquals(2945.0545006839207, m0.getCurrent(), DELTA_I_A);
-        assertEquals(3096.958863351705, m1.getCurrent(), DELTA_I_A);
-        assertEquals(2886.7513459481406, m0.getFeederCurrent("G1"), DELTA_I_A);
-        assertEquals(3038.6856273138324, m1.getFeederCurrent("G1"), DELTA_I_A);
-        assertEquals(0., m0.getVoltage(), DELTA_V);
-        assertEquals(0., m1.getVoltage(), DELTA_V);
-        assertEquals(0.14156284823326398, ((MagnitudeShortCircuitBusResults) m0.getShortCircuitBusResults().get(1)).getVoltage(), DELTA_V);
-        assertEquals(5.2631578947368585, ((MagnitudeShortCircuitBusResults) m1.getShortCircuitBusResults().getFirst()).getVoltage(), DELTA_V);
+        assertEquals(0.07955748023989781, val.get(sc1), DELTA_Z);
+        assertEquals(0.054789722856544376, val.get(sc2), DELTA_Z);
     }
 
     private static List<Fault> createBusFaultsFor4n() {
