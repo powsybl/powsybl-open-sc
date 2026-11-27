@@ -141,29 +141,35 @@ public class ImpedanceLinearResolution {
     }
 
     private void collectInputBuses(List<LfBus> inputBuses, List<Pair<LfBus, LfBus>> busPairList) {
-        for (CalculationLocation locationInfo : calculationLocations) {
-            LfBus bus1 = getLfBusFromIidmBranch(locationInfo.getIidmBusInfo().getKey(), locationInfo.getIidmBusInfo().getValue(), lfNetwork);
+        for (CalculationLocation location : calculationLocations) {
+            LfBus bus1 = addInputBus(location.getIidmBusInfo(), inputBuses);
             if (bus1 != null) {
-                if (!inputBuses.contains(bus1)) {
-                    inputBuses.add(bus1);
-                }
-                locationInfo.setLfBusInfo(bus1.getId());
+                location.setLfBusInfo(bus1.getId());
             }
-            boolean needsSecondBus = locationInfo.getLocationType() == CalculationLocation.LocationType.LINE
-                    || locationInfo.getLocationType() == CalculationLocation.LocationType.BIPHASED_COMMON_SUPPORT;
-            if (needsSecondBus) {
-                LfBus bus2 = getLfBusFromIidmBranch(locationInfo.getIidmBus2Info().getKey(), locationInfo.getIidmBus2Info().getValue(), lfNetwork);
-                if (bus2 != null) {
-                    if (!inputBuses.contains(bus2)) {
-                        inputBuses.add(bus2);
-                    }
-                    locationInfo.setLfBus2Info(bus2.getId());
-                    if (bus1 != null) {
-                        busPairList.add(new Pair<>(bus1, bus2));
-                    }
-                }
+            if (!needsSecondBus(location)) {
+                continue;
+            }
+            LfBus bus2 = addInputBus(location.getIidmBus2Info(), inputBuses);
+            if (bus2 != null) {
+                location.setLfBus2Info(bus2.getId());
+            }
+            if (bus1 != null && bus2 != null) {
+                busPairList.add(new Pair<>(bus1, bus2));
             }
         }
+    }
+
+    private static boolean needsSecondBus(CalculationLocation location) {
+        return location.getLocationType() == CalculationLocation.LocationType.LINE
+                || location.getLocationType() == CalculationLocation.LocationType.BIPHASED_COMMON_SUPPORT;
+    }
+
+    private LfBus addInputBus(Pair<String, Integer> iidmBusInfo, List<LfBus> inputBuses) {
+        LfBus bus = getLfBusFromIidmBranch(iidmBusInfo.getKey(), iidmBusInfo.getValue(), lfNetwork);
+        if (bus != null && !inputBuses.contains(bus)) {
+            inputBuses.add(bus);
+        }
+        return bus;
     }
 
     private static DenseMatrix solveExtraction(AdmittanceMatrix y, List<LfBus> inputBuses) {
