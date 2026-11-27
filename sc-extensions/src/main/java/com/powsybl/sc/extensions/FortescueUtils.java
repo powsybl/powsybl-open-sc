@@ -36,9 +36,9 @@ public final class FortescueUtils {
 
     public static ScThreePhaseValue scFortescueToThreePhaseValue(ScFortescueValue fortescueValue) {
         Objects.requireNonNull(fortescueValue);
-        Complex pos = fortescueValue.getPositive();
-        Complex neg = fortescueValue.getNegative();
-        Complex zero = fortescueValue.getZero();
+        Complex pos = fortescueValue.positiveComponent();
+        Complex neg = fortescueValue.negativeComponent();
+        Complex zero = fortescueValue.zeroComponent();
         return new ScThreePhaseValue(
                 zero.add(pos).add(neg),
                 zero.add(FORTESCUE_A2.multiply(pos)).add(FORTESCUE_A.multiply(neg)),
@@ -47,9 +47,9 @@ public final class FortescueUtils {
 
     public static ScFortescueValue threePhaseToScFortescueValue(ScThreePhaseValue threePhaseValue) {
         Objects.requireNonNull(threePhaseValue);
-        Complex a = threePhaseValue.getPhaseA();
-        Complex b = threePhaseValue.getPhaseB();
-        Complex c = threePhaseValue.getPhaseC();
+        Complex a = threePhaseValue.phaseA();
+        Complex b = threePhaseValue.phaseB();
+        Complex c = threePhaseValue.phaseC();
         return new ScFortescueValue(
                 a.add(FORTESCUE_A.multiply(b)).add(FORTESCUE_A2.multiply(c)).divide(3),
                 a.add(FORTESCUE_A2.multiply(b)).add(FORTESCUE_A.multiply(c)).divide(3),

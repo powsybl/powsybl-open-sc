@@ -189,7 +189,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
             if (innerZone.test(lfBus)) {
                 int num = lfBus.getNum();
                 Complex initialVpu = initialVoltages.get(num);
-                Complex dVpu = dVoltages.get(num).getPositive();
+                Complex dVpu = dVoltages.get(num).positiveComponent();
                 double voltageDropProportional = dVpu.abs() / initialVpu.abs();
                 Complex finalVpu = initialVpu.add(dVpu);
 
