@@ -11,6 +11,16 @@ package com.powsybl.sc.extensions;
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public enum FrequencyType {
-    FREQ_20_HZ,
-    FREQ_50_HZ
+    FREQ_20_HZ(20.),
+    FREQ_50_HZ(50.);
+
+    private final double frequency; // in Hz
+
+    FrequencyType(double frequency) {
+        this.frequency = frequency;
+    }
+
+    public double getFrequency() {
+        return frequency;
+    }
 }
