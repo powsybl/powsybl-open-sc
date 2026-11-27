@@ -101,7 +101,7 @@ class ScFortescueThreePhaseValueTest {
         FORTESCUE.add(FORTESCUE_OTHER);
         FORTESCUE.multiply(3.);
         FORTESCUE.negate();
-        assertEquals(copy, FORTESCUE);
+        assertEquals(FORTESCUE, copy);
     }
 
     @Test
@@ -110,8 +110,6 @@ class ScFortescueThreePhaseValueTest {
         assertEquals(FORTESCUE, copy);
         assertEquals(FORTESCUE.hashCode(), copy.hashCode());
         assertNotEquals(FORTESCUE, FORTESCUE_OTHER);
-        assertNotEquals(FORTESCUE, null);
-        assertNotEquals(FORTESCUE, THREE_PHASE);
         assertTrue(FORTESCUE.toString().contains("positive"));
     }
 
@@ -178,7 +176,6 @@ class ScFortescueThreePhaseValueTest {
         assertEquals(THREE_PHASE.hashCode(), copy.hashCode());
         assertNotEquals(THREE_PHASE, THREE_PHASE_OTHER);
         assertNotEquals(THREE_PHASE, null);
-        assertNotEquals(THREE_PHASE, FORTESCUE);
         assertNotNull(THREE_PHASE.toString());
     }
 

@@ -9,11 +9,12 @@ package com.powsybl.sc.extensions;
 
 import com.powsybl.shortcircuit.FortescueValue;
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.complex.ComplexUtils;
 
 import java.util.Objects;
 import java.util.function.BinaryOperator;
 import java.util.function.UnaryOperator;
+
+import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
 
 /**
  * @author Thoi-Nay Vo <thoi-nay.vo at artelys.com>
@@ -44,9 +45,9 @@ public final class ScFortescueValue {
     public static ScFortescueValue fromFortescueValue(FortescueValue value) {
         Objects.requireNonNull(value);
         return new ScFortescueValue(
-                polarToComplex(value.getPositiveMagnitude(), value.getPositiveAngle()),
-                polarToComplex(value.getNegativeMagnitude(), value.getNegativeAngle()),
-                polarToComplex(value.getZeroMagnitude(), value.getZeroAngle()));
+                polar2Complex(value.getPositiveMagnitude(), value.getPositiveAngle()),
+                polar2Complex(value.getNegativeMagnitude(), value.getNegativeAngle()),
+                polar2Complex(value.getZeroMagnitude(), value.getZeroAngle()));
     }
 
     /**
@@ -121,10 +122,6 @@ public final class ScFortescueValue {
 
     private ScFortescueValue map(UnaryOperator<Complex> op) {
         return new ScFortescueValue(op.apply(positiveSequence), op.apply(negativeSequence), op.apply(zeroSequence));
-    }
-
-    private static Complex polarToComplex(double magnitude, double angle) {
-        return Double.isNaN(magnitude) ? Complex.NaN : ComplexUtils.polar2Complex(magnitude, Double.isNaN(angle) ? 0 : angle);
     }
 
     @Override
