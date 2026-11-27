@@ -296,7 +296,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
                 ScFortescueValue zBusFortescue = new ScFortescueValue(zd.getValue(), zd.getValue(), zoBus);
                 ScFortescueValue zBus2Fortescue = new ScFortescueValue(zdBus2, zdBus2, zoBus2);
-                ScFortescueValue deltaVFort = iFortescue.multiply(zFortescue).add(i2Fortescue.multiply(zBus2Fortescue)).multiply(-1);
+                ScFortescueValue deltaVFort = iFortescue.multiply(zBusFortescue).add(i2Fortescue.multiply(zBus2Fortescue)).multiply(-1);
 
                 res.fillVoltageInFortescueVector(busNum, deltaVFort);
             }
