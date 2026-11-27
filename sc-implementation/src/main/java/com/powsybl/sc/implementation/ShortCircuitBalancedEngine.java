@@ -55,7 +55,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
         directResolution.run();
 
-        directFeeders = createFeeders(AdmittanceType.ADM_THEVENIN);
+        directFeeders = createInjectionFeeders(AdmittanceType.ADM_THEVENIN);
 
         //Build the ShortCircuit results using the Thevenin computation results
         resultsPerFault.clear();

@@ -68,8 +68,8 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         directResolution.run();
         homopolarResolution.run();
 
-        directFeeders = createFeeders(AdmittanceType.ADM_THEVENIN);
-        homopolarFeeders = createFeeders(AdmittanceType.ADM_THEVENIN_HOMOPOLAR);
+        directFeeders = createInjectionFeeders(AdmittanceType.ADM_THEVENIN);
+        homopolarFeeders = createInjectionFeeders(AdmittanceType.ADM_THEVENIN_HOMOPOLAR);
 
         //Build the ShortCircuit results using the linear resolution computation results
         resultsPerFault.clear();

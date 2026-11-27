@@ -213,10 +213,7 @@ public abstract class AbstractShortCircuitEngine {
         return shortCircuitParameters;
     }
 
-    /**
-     * Creates the injection feeders
-     */
-    protected FeedersAtNetwork createFeeders(AdmittanceType admittanceType) {
+    protected FeedersAtNetwork createInjectionFeeders(AdmittanceType admittanceType) {
         return new FeedersCreator(network, lfNetwork, initialVoltages, admittanceType,
                 shortCircuitParameters, openShortCircuitParameters, shortCircuitNorm.getNormExtensions()).create();
     }
