@@ -38,34 +38,34 @@ class ScFortescueThreePhaseValueTest {
     }
 
     private static void assertFortescueEquals(ScFortescueValue expected, ScFortescueValue actual) {
-        assertComplexEquals(expected.getPositive(), actual.getPositive());
-        assertComplexEquals(expected.getNegative(), actual.getNegative());
-        assertComplexEquals(expected.getZero(), actual.getZero());
+        assertComplexEquals(expected.positiveComponent(), actual.positiveComponent());
+        assertComplexEquals(expected.negativeComponent(), actual.negativeComponent());
+        assertComplexEquals(expected.zeroComponent(), actual.zeroComponent());
     }
 
     private static void assertThreePhaseEquals(ScThreePhaseValue expected, ScThreePhaseValue actual) {
-        assertComplexEquals(expected.getPhaseA(), actual.getPhaseA());
-        assertComplexEquals(expected.getPhaseB(), actual.getPhaseB());
-        assertComplexEquals(expected.getPhaseC(), actual.getPhaseC());
+        assertComplexEquals(expected.phaseA(), actual.phaseA());
+        assertComplexEquals(expected.phaseB(), actual.phaseB());
+        assertComplexEquals(expected.phaseC(), actual.phaseC());
     }
 
     @Test
     void testFortescueGetters() {
-        assertEquals(new Complex(1.0, 0.5), FORTESCUE.getPositive());
-        assertEquals(new Complex(-0.2, 0.3), FORTESCUE.getNegative());
-        assertEquals(new Complex(0.1, -0.4), FORTESCUE.getZero());
+        assertEquals(new Complex(1.0, 0.5), FORTESCUE.positiveComponent());
+        assertEquals(new Complex(-0.2, 0.3), FORTESCUE.negativeComponent());
+        assertEquals(new Complex(0.1, -0.4), FORTESCUE.zeroComponent());
     }
 
     @Test
     void testFortescueOfPositiveAndZero() {
         ScFortescueValue balanced = ScFortescueValue.ofPositive(new Complex(1, 2));
-        assertEquals(new Complex(1, 2), balanced.getPositive());
-        assertEquals(Complex.ZERO, balanced.getNegative());
-        assertEquals(Complex.ZERO, balanced.getZero());
+        assertEquals(new Complex(1, 2), balanced.positiveComponent());
+        assertEquals(Complex.ZERO, balanced.negativeComponent());
+        assertEquals(Complex.ZERO, balanced.zeroComponent());
 
-        assertEquals(Complex.ZERO, ScFortescueValue.ZERO.getPositive());
-        assertEquals(Complex.ZERO, ScFortescueValue.ZERO.getNegative());
-        assertEquals(Complex.ZERO, ScFortescueValue.ZERO.getZero());
+        assertEquals(Complex.ZERO, ScFortescueValue.ZERO.positiveComponent());
+        assertEquals(Complex.ZERO, ScFortescueValue.ZERO.negativeComponent());
+        assertEquals(Complex.ZERO, ScFortescueValue.ZERO.zeroComponent());
     }
 
     @Test
@@ -97,7 +97,7 @@ class ScFortescueThreePhaseValueTest {
 
     @Test
     void testFortescueImmutability() {
-        ScFortescueValue copy = new ScFortescueValue(FORTESCUE.getPositive(), FORTESCUE.getNegative(), FORTESCUE.getZero());
+        ScFortescueValue copy = new ScFortescueValue(FORTESCUE.positiveComponent(), FORTESCUE.negativeComponent(), FORTESCUE.zeroComponent());
         FORTESCUE.add(FORTESCUE_OTHER);
         FORTESCUE.multiply(3.);
         FORTESCUE.negate();
@@ -126,21 +126,21 @@ class ScFortescueThreePhaseValueTest {
     @Test
     void testFortescueToPowsyblFortescueValue() {
         FortescueValue core = FORTESCUE.toFortescueValue();
-        assertEquals(FORTESCUE.getPositive().abs(), core.getPositiveMagnitude(), EPS);
-        assertEquals(FORTESCUE.getNegative().abs(), core.getNegativeMagnitude(), EPS);
-        assertEquals(FORTESCUE.getZero().abs(), core.getZeroMagnitude(), EPS);
-        assertEquals(FORTESCUE.getPositive().getArgument(), core.getPositiveAngle(), EPS);
-        assertEquals(FORTESCUE.getNegative().getArgument(), core.getNegativeAngle(), EPS);
-        assertEquals(FORTESCUE.getZero().getArgument(), core.getZeroAngle(), EPS);
+        assertEquals(FORTESCUE.positiveComponent().abs(), core.getPositiveMagnitude(), EPS);
+        assertEquals(FORTESCUE.negativeComponent().abs(), core.getNegativeMagnitude(), EPS);
+        assertEquals(FORTESCUE.zeroComponent().abs(), core.getZeroMagnitude(), EPS);
+        assertEquals(FORTESCUE.positiveComponent().getArgument(), core.getPositiveAngle(), EPS);
+        assertEquals(FORTESCUE.negativeComponent().getArgument(), core.getNegativeAngle(), EPS);
+        assertEquals(FORTESCUE.zeroComponent().getArgument(), core.getZeroAngle(), EPS);
 
         assertFortescueEquals(FORTESCUE, ScFortescueValue.fromFortescueValue(core));
     }
 
     @Test
     void testThreePhaseGetters() {
-        assertEquals(new Complex(1, 2), THREE_PHASE.getPhaseA());
-        assertEquals(new Complex(-3, 0.5), THREE_PHASE.getPhaseB());
-        assertEquals(new Complex(0.7, -1), THREE_PHASE.getPhaseC());
+        assertEquals(new Complex(1, 2), THREE_PHASE.phaseA());
+        assertEquals(new Complex(-3, 0.5), THREE_PHASE.phaseB());
+        assertEquals(new Complex(0.7, -1), THREE_PHASE.phaseC());
     }
 
     @Test
@@ -175,7 +175,6 @@ class ScFortescueThreePhaseValueTest {
         assertEquals(THREE_PHASE, copy);
         assertEquals(THREE_PHASE.hashCode(), copy.hashCode());
         assertNotEquals(THREE_PHASE, THREE_PHASE_OTHER);
-        assertNotEquals(THREE_PHASE, null);
         assertNotNull(THREE_PHASE.toString());
     }
 
@@ -192,9 +191,9 @@ class ScFortescueThreePhaseValueTest {
     void testBalancedPositiveSequenceToThreePhase() {
         // a balanced direct system: A = 1, B = a², C = a
         ScThreePhaseValue phases = ScFortescueValue.ofPositive(Complex.ONE).toThreePhaseValue();
-        assertComplexEquals(Complex.ONE, phases.getPhaseA());
-        assertComplexEquals(FORTESCUE_A2, phases.getPhaseB());
-        assertComplexEquals(FORTESCUE_A, phases.getPhaseC());
+        assertComplexEquals(Complex.ONE, phases.phaseA());
+        assertComplexEquals(FORTESCUE_A2, phases.phaseB());
+        assertComplexEquals(FORTESCUE_A, phases.phaseC());
     }
 
     @Test
@@ -243,11 +242,11 @@ class ScFortescueThreePhaseValueTest {
         FortescueValue.ThreePhaseValue core = FORTESCUE.toFortescueValue().toThreePhaseValue();
         ScThreePhaseValue phases = FORTESCUE.toThreePhaseValue();
         double sqrt3 = Math.sqrt(3);
-        assertEquals(phases.getPhaseA().abs(), core.getMagnitudeA() * sqrt3, 1e-9);
-        assertEquals(phases.getPhaseB().abs(), core.getMagnitudeB() * sqrt3, 1e-9);
-        assertEquals(phases.getPhaseC().abs(), core.getMagnitudeC() * sqrt3, 1e-9);
-        assertEquals(phases.getPhaseA().getArgument(), core.getAngleA(), 1e-9);
-        assertEquals(phases.getPhaseB().getArgument(), core.getAngleB(), 1e-9);
-        assertEquals(phases.getPhaseC().getArgument(), core.getAngleC(), 1e-9);
+        assertEquals(phases.phaseA().abs(), core.getMagnitudeA() * sqrt3, 1e-9);
+        assertEquals(phases.phaseB().abs(), core.getMagnitudeB() * sqrt3, 1e-9);
+        assertEquals(phases.phaseC().abs(), core.getMagnitudeC() * sqrt3, 1e-9);
+        assertEquals(phases.phaseA().getArgument(), core.getAngleA(), 1e-9);
+        assertEquals(phases.phaseB().getArgument(), core.getAngleB(), 1e-9);
+        assertEquals(phases.phaseC().getArgument(), core.getAngleC(), 1e-9);
     }
 }

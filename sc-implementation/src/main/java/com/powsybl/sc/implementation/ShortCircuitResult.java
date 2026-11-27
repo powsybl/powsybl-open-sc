@@ -110,9 +110,9 @@ public class ShortCircuitResult {
 
         this.iFortescue = iFortescue;
 
-        Complex vd = vdInit.add(dvFortescue.getPositive());
-        Complex vh = dvFortescue.getZero();
-        Complex vi = dvFortescue.getNegative();
+        Complex vd = vdInit.add(dvFortescue.positiveComponent());
+        Complex vh = dvFortescue.zeroComponent();
+        Complex vi = dvFortescue.negativeComponent();
 
         this.vFortescue = new ScFortescueValue(vd, vi, vh);
 
@@ -137,7 +137,7 @@ public class ShortCircuitResult {
     }
 
     public Complex getZd() {
-        return zFortescue.getPositive();
+        return zFortescue.positiveComponent();
     }
 
     public Complex getEth() {
@@ -145,7 +145,7 @@ public class ShortCircuitResult {
     }
 
     public Complex getZh() {
-        return zFortescue.getZero();
+        return zFortescue.zeroComponent();
     }
 
     public Complex getZd20hz() {
@@ -173,14 +173,14 @@ public class ShortCircuitResult {
         Complex y21 = yBranch.get(1, 0);
         Complex y22 = yBranch.get(1, 1);
 
-        Complex dv1 = dv1Fort.getPositive();
-        Complex dv2 = dv2Fort.getPositive();
+        Complex dv1 = dv1Fort.positiveComponent();
+        Complex dv2 = dv2Fort.positiveComponent();
         if (fType == FortescueType.HOMOPOLAR) {
-            dv1 = dv1Fort.getZero();
-            dv2 = dv2Fort.getZero();
+            dv1 = dv1Fort.zeroComponent();
+            dv2 = dv2Fort.zeroComponent();
         } else if (fType == FortescueType.INVERSE) {
-            dv1 = dv1Fort.getNegative();
-            dv2 = dv2Fort.getNegative();
+            dv1 = dv1Fort.negativeComponent();
+            dv2 = dv2Fort.negativeComponent();
         }
         Complex di1 = y11.multiply(dv1).add(y12.multiply(dv2));
         Complex di2 = y21.multiply(dv1).add(y22.multiply(dv2));
@@ -202,7 +202,7 @@ public class ShortCircuitResult {
         // which is equal to the current at bus injectors (Kirchhoff's law)
 
         // Start with the fault bus contribution
-        feedersResultDirect.get(lfBus).addItofeedersSum(iFortescue.getPositive());
+        feedersResultDirect.get(lfBus).addItofeedersSum(iFortescue.positiveComponent());
 
         branchDi1 = new HashMap<>();
         branchDi2 = new HashMap<>();
@@ -329,15 +329,15 @@ public class ShortCircuitResult {
     }
 
     public Complex getId() {
-        return iFortescue.getPositive();
+        return iFortescue.positiveComponent();
     }
 
     public Complex getIo() {
-        return iFortescue.getZero();
+        return iFortescue.zeroComponent();
     }
 
     public Complex getVd() {
-        return vFortescue.getPositive();
+        return vFortescue.positiveComponent();
     }
 
     public ScFortescueValue getiFortescue() {
@@ -465,7 +465,7 @@ public class ShortCircuitResult {
     public Complex getIkpp() {
         // for a Triphased fault, by definition Ik"(A) = c * Un / (sqrt(3) * Zk)
         double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
-        Complex id = iFortescue.getPositive(); // id(pu) = Eth(pu) / Zk(pu) // TODO: check if radians
+        Complex id = iFortescue.positiveComponent(); // id(pu) = Eth(pu) / Zk(pu) // TODO: check if radians
         // Ik"(kA) = c * id(pu) * I(base) / (sqrt(3) * 1000) : the 1000 factor is to move from A to kA
         return id.multiply(c).divide(Math.sqrt(3.) * 1000.).multiply(getIbase());
     }
@@ -473,7 +473,7 @@ public class ShortCircuitResult {
     public Complex getIk1pp() {
         // for a Monphased fault, by definition Ik"1(A) = c * Un * sqrt(3) / Zk
         double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
-        Complex id = iFortescue.getPositive(); // id(pu) = Eth(pu) / Zk(pu) // TODO: check if radians
+        Complex id = iFortescue.positiveComponent(); // id(pu) = Eth(pu) / Zk(pu) // TODO: check if radians
         // Ik"1(kA) = c * id(pu) * sqrt(3) * I(base) / 1000 : the 1000 factor is to move from A to kA
         return id.multiply(c).divide(1000.).multiply(Math.sqrt(3.) * getIbase());
     }
@@ -482,7 +482,7 @@ public class ShortCircuitResult {
         // for a biphased fault (no ground), by definition Ik2" = c * Un / abs(Zd + Zi + Zf)
         // given that Ib = j * sqrt(3) * tM * [Vinit] / (Zdf + Zif +Zf)  and that Id = Ib * j / sqrt(3) we have Ik2" = c * Id
         double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
-        Complex id = iFortescue.getPositive();
+        Complex id = iFortescue.positiveComponent();
         return id.multiply(c).divide(1000.).multiply(getIbase());
     }
 
@@ -490,7 +490,7 @@ public class ShortCircuitResult {
         // for a biphased ground fault , by definition Ik2EL2" = c * Ib / sqrt(3)
         // given that Ib = Io + a².Id + a.Ii
         double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
-        Complex ib = iFortescue.toThreePhaseValue().getPhaseB();
+        Complex ib = iFortescue.toThreePhaseValue().phaseB();
         return ib.multiply(c).divide(1000. * Math.sqrt(3.)).multiply(getIbase());
     }
 
@@ -498,7 +498,7 @@ public class ShortCircuitResult {
         // for a biphased ground fault , by definition Ik2EL3" = c * Ic / sqrt(3)
         // given that Ic = Io + a.Id + a².Ii
         double c = norm.getCmaxVoltageFactor(lfBus.getNominalV());
-        Complex ic = iFortescue.toThreePhaseValue().getPhaseC();
+        Complex ic = iFortescue.toThreePhaseValue().phaseC();
         return ic.multiply(c).divide(1000. * Math.sqrt(3.)).multiply(getIbase());
     }
 
@@ -510,8 +510,8 @@ public class ShortCircuitResult {
     public Complex getDefaultIk() {
         // Ik is a default value used for testing
         // IccBase = sqrt(3) * Eth(pu) / Zth(pu) * SB(MVA) * 10e6 / (VB(kV) * 10e3)
-        double magnitudeIccBase = Math.sqrt(3.) * iFortescue.getPositive().abs() * 1000. * SB / lfBus.getNominalV();
-        double angleIcc = iFortescue.getPositive().getArgument();
+        double magnitudeIccBase = Math.sqrt(3.) * iFortescue.positiveComponent().abs() * 1000. * SB / lfBus.getNominalV();
+        double angleIcc = iFortescue.positiveComponent().getArgument();
         Complex val = ComplexUtils.polar2Complex(magnitudeIccBase, angleIcc);
 
         // Ik = c * Un / (sqrt(3) * Zk) = c / sqrt(3) * Eth(pu) / Zth(pu) * Sb / Vb
@@ -531,8 +531,8 @@ public class ShortCircuitResult {
             PiModel piModel = branch.getPiModel();
             // we only look at ratio for branches with significant short circuit currents
             if (piModel.getX() >= IMPEDANCE_EPSILON_PU
-                    && (branchDeltaI1.get(branch).getPositive().abs() > CURRENT_EPSILON_PU
-                    || branchDeltaI2.get(branch).getPositive().abs() > CURRENT_EPSILON_PU)) {
+                    && (branchDeltaI1.get(branch).positiveComponent().abs() > CURRENT_EPSILON_PU
+                    || branchDeltaI2.get(branch).positiveComponent().abs() > CURRENT_EPSILON_PU)) {
                 maxRatio = Math.max(maxRatio, piModel.getR() / piModel.getX());
             }
         }

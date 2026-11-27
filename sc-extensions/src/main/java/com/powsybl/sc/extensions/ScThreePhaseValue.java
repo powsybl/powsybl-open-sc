@@ -16,16 +16,12 @@ import java.util.function.UnaryOperator;
 /**
  * @author Thoi-Nay Vo <thoi-nay.vo at artelys.com>
  */
-public final class ScThreePhaseValue {
+public record ScThreePhaseValue(Complex phaseA, Complex phaseB, Complex phaseC) {
 
-    private final Complex phaseA;
-    private final Complex phaseB;
-    private final Complex phaseC;
-
-    public ScThreePhaseValue(Complex phaseA, Complex phaseB, Complex phaseC) {
-        this.phaseA = Objects.requireNonNull(phaseA);
-        this.phaseB = Objects.requireNonNull(phaseB);
-        this.phaseC = Objects.requireNonNull(phaseC);
+    public ScThreePhaseValue {
+        Objects.requireNonNull(phaseA);
+        Objects.requireNonNull(phaseB);
+        Objects.requireNonNull(phaseC);
     }
 
     public ScFortescueValue toScFortescueValue() {
@@ -70,18 +66,6 @@ public final class ScThreePhaseValue {
         return map(Complex::negate);
     }
 
-    public Complex getPhaseA() {
-        return phaseA;
-    }
-
-    public Complex getPhaseB() {
-        return phaseB;
-    }
-
-    public Complex getPhaseC() {
-        return phaseC;
-    }
-
     private ScThreePhaseValue combine(ScThreePhaseValue other, BinaryOperator<Complex> op) {
         Objects.requireNonNull(other);
         return new ScThreePhaseValue(
@@ -92,26 +76,5 @@ public final class ScThreePhaseValue {
 
     private ScThreePhaseValue map(UnaryOperator<Complex> op) {
         return new ScThreePhaseValue(op.apply(phaseA), op.apply(phaseB), op.apply(phaseC));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof ScThreePhaseValue other)) {
-            return false;
-        }
-        return phaseA.equals(other.phaseA) && phaseB.equals(other.phaseB) && phaseC.equals(other.phaseC);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(phaseA, phaseB, phaseC);
-    }
-
-    @Override
-    public String toString() {
-        return "ScThreePhaseValue(A=" + phaseA + ", B=" + phaseB + ", C=" + phaseC + ")";
     }
 }

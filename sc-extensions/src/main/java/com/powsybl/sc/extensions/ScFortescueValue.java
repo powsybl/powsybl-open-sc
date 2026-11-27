@@ -19,23 +19,14 @@ import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
 /**
  * @author Thoi-Nay Vo <thoi-nay.vo at artelys.com>
  */
-public final class ScFortescueValue {
+public record ScFortescueValue(Complex positiveComponent, Complex negativeComponent, Complex zeroComponent) {
 
     public static final ScFortescueValue ZERO = new ScFortescueValue(Complex.ZERO, Complex.ZERO, Complex.ZERO);
 
-    private final Complex positiveSequence;
-    private final Complex negativeSequence;
-    private final Complex zeroSequence;
-
-    /**
-     * @param positiveSequence positive (direct) sequence component
-     * @param negativeSequence negative (inverse) sequence component
-     * @param zeroSequence     zero (homopolar) sequence component
-     */
-    public ScFortescueValue(Complex positiveSequence, Complex negativeSequence, Complex zeroSequence) {
-        this.positiveSequence = Objects.requireNonNull(positiveSequence);
-        this.negativeSequence = Objects.requireNonNull(negativeSequence);
-        this.zeroSequence = Objects.requireNonNull(zeroSequence);
+    public ScFortescueValue {
+        Objects.requireNonNull(positiveComponent);
+        Objects.requireNonNull(negativeComponent);
+        Objects.requireNonNull(zeroComponent);
     }
 
     public static ScFortescueValue ofPositive(Complex positive) {
@@ -54,8 +45,8 @@ public final class ScFortescueValue {
      * Converts to the PowSyBl Core representation.
      */
     public FortescueValue toFortescueValue() {
-        return new FortescueValue(positiveSequence.abs(), zeroSequence.abs(), negativeSequence.abs(),
-                positiveSequence.getArgument(), zeroSequence.getArgument(), negativeSequence.getArgument());
+        return new FortescueValue(positiveComponent.abs(), zeroComponent.abs(), negativeComponent.abs(),
+                positiveComponent.getArgument(), zeroComponent.getArgument(), negativeComponent.getArgument());
     }
 
     public ScThreePhaseValue toThreePhaseValue() {
@@ -100,48 +91,15 @@ public final class ScFortescueValue {
         return map(Complex::negate);
     }
 
-    public Complex getPositive() {
-        return positiveSequence;
-    }
-
-    public Complex getNegative() {
-        return negativeSequence;
-    }
-
-    public Complex getZero() {
-        return zeroSequence;
-    }
-
     private ScFortescueValue combine(ScFortescueValue other, BinaryOperator<Complex> op) {
         Objects.requireNonNull(other);
         return new ScFortescueValue(
-                op.apply(positiveSequence, other.positiveSequence),
-                op.apply(negativeSequence, other.negativeSequence),
-                op.apply(zeroSequence, other.zeroSequence));
+                op.apply(positiveComponent, other.positiveComponent),
+                op.apply(negativeComponent, other.negativeComponent),
+                op.apply(zeroComponent, other.zeroComponent));
     }
 
     private ScFortescueValue map(UnaryOperator<Complex> op) {
-        return new ScFortescueValue(op.apply(positiveSequence), op.apply(negativeSequence), op.apply(zeroSequence));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof ScFortescueValue other)) {
-            return false;
-        }
-        return positiveSequence.equals(other.positiveSequence) && negativeSequence.equals(other.negativeSequence) && zeroSequence.equals(other.zeroSequence);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(positiveSequence, negativeSequence, zeroSequence);
-    }
-
-    @Override
-    public String toString() {
-        return "ScFortescueValue(positive=" + positiveSequence + ", negative=" + negativeSequence + ", zero=" + zeroSequence + ")";
+        return new ScFortescueValue(op.apply(positiveComponent), op.apply(negativeComponent), op.apply(zeroComponent));
     }
 }
