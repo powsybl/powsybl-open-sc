@@ -22,19 +22,19 @@ public final class ScFortescueValue {
 
     public static final ScFortescueValue ZERO = new ScFortescueValue(Complex.ZERO, Complex.ZERO, Complex.ZERO);
 
-    private final Complex positive;
-    private final Complex negative;
-    private final Complex zero;
+    private final Complex positiveSequence;
+    private final Complex negativeSequence;
+    private final Complex zeroSequence;
 
     /**
-     * @param positive positive (direct) sequence component
-     * @param negative negative (inverse) sequence component
-     * @param zero     zero (homopolar) sequence component
+     * @param positiveSequence positive (direct) sequence component
+     * @param negativeSequence negative (inverse) sequence component
+     * @param zeroSequence     zero (homopolar) sequence component
      */
-    public ScFortescueValue(Complex positive, Complex negative, Complex zero) {
-        this.positive = Objects.requireNonNull(positive);
-        this.negative = Objects.requireNonNull(negative);
-        this.zero = Objects.requireNonNull(zero);
+    public ScFortescueValue(Complex positiveSequence, Complex negativeSequence, Complex zeroSequence) {
+        this.positiveSequence = Objects.requireNonNull(positiveSequence);
+        this.negativeSequence = Objects.requireNonNull(negativeSequence);
+        this.zeroSequence = Objects.requireNonNull(zeroSequence);
     }
 
     public static ScFortescueValue ofPositive(Complex positive) {
@@ -53,8 +53,8 @@ public final class ScFortescueValue {
      * Converts to the PowSyBl Core representation.
      */
     public FortescueValue toFortescueValue() {
-        return new FortescueValue(positive.abs(), zero.abs(), negative.abs(),
-                positive.getArgument(), zero.getArgument(), negative.getArgument());
+        return new FortescueValue(positiveSequence.abs(), zeroSequence.abs(), negativeSequence.abs(),
+                positiveSequence.getArgument(), zeroSequence.getArgument(), negativeSequence.getArgument());
     }
 
     public ScThreePhaseValue toThreePhaseValue() {
@@ -100,27 +100,27 @@ public final class ScFortescueValue {
     }
 
     public Complex getPositive() {
-        return positive;
+        return positiveSequence;
     }
 
     public Complex getNegative() {
-        return negative;
+        return negativeSequence;
     }
 
     public Complex getZero() {
-        return zero;
+        return zeroSequence;
     }
 
     private ScFortescueValue combine(ScFortescueValue other, BinaryOperator<Complex> op) {
         Objects.requireNonNull(other);
         return new ScFortescueValue(
-                op.apply(positive, other.positive),
-                op.apply(negative, other.negative),
-                op.apply(zero, other.zero));
+                op.apply(positiveSequence, other.positiveSequence),
+                op.apply(negativeSequence, other.negativeSequence),
+                op.apply(zeroSequence, other.zeroSequence));
     }
 
     private ScFortescueValue map(UnaryOperator<Complex> op) {
-        return new ScFortescueValue(op.apply(positive), op.apply(negative), op.apply(zero));
+        return new ScFortescueValue(op.apply(positiveSequence), op.apply(negativeSequence), op.apply(zeroSequence));
     }
 
     private static Complex polarToComplex(double magnitude, double angle) {
@@ -135,16 +135,16 @@ public final class ScFortescueValue {
         if (!(o instanceof ScFortescueValue other)) {
             return false;
         }
-        return positive.equals(other.positive) && negative.equals(other.negative) && zero.equals(other.zero);
+        return positiveSequence.equals(other.positiveSequence) && negativeSequence.equals(other.negativeSequence) && zeroSequence.equals(other.zeroSequence);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(positive, negative, zero);
+        return Objects.hash(positiveSequence, negativeSequence, zeroSequence);
     }
 
     @Override
     public String toString() {
-        return "ScFortescueValue(positive=" + positive + ", negative=" + negative + ", zero=" + zero + ")";
+        return "ScFortescueValue(positive=" + positiveSequence + ", negative=" + negativeSequence + ", zero=" + zeroSequence + ")";
     }
 }
