@@ -10,6 +10,7 @@ package com.powsybl.sc.implementation;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
+import com.powsybl.sc.extensions.ScFortescueValue;
 import com.powsybl.sc.extensions.ShortCircuitAnalysisType;
 import com.powsybl.sc.util.*;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
@@ -96,12 +97,11 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
             Complex v1dInit = directResult.getEth();
             Complex zdf = directResult.getZthEq();
             Complex zof = homopolarResult.getZthEq();
+            ScFortescueValue zFortescue = new ScFortescueValue(zdf, zdf, zof);
 
             for (ShortCircuitFault scf : matchingFaultsAtBus1) {
 
-                Complex io;
-                Complex id;
-                Complex ii;
+                ScFortescueValue iFortescue;
 
                 ShortCircuitResult res;
 
@@ -112,27 +112,21 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
                         MonophasedShortCircuitCalculator monophasedCalculator = new MonophasedShortCircuitCalculator(zdf, zof, scf.getZf(), v1dInit);
                         monophasedCalculator.computeCurrents();
 
-                        io = monophasedCalculator.getIo();
-                        id = monophasedCalculator.getId();
-                        ii = monophasedCalculator.getIi();
+                        iFortescue = monophasedCalculator.getIFortescue();
 
                     } else if (shortCircuitType == ShortCircuitFault.ShortCircuitType.BIPHASED) {
                         BiphasedShortCircuitCalculator biphasedCalculator = new BiphasedShortCircuitCalculator(zdf, zof, scf.getZf(), v1dInit);
                         biphasedCalculator.computeCurrents();
 
-                        io = biphasedCalculator.getIo();
-                        id = biphasedCalculator.getId();
-                        ii = biphasedCalculator.getIi();
+                        iFortescue = biphasedCalculator.getIFortescue();
                     } else {
                         BiphasedGroundShortCircuitCalculator biphasedGrCalculator = new BiphasedGroundShortCircuitCalculator(zdf, zof, scf.getZf(), v1dInit);
                         biphasedGrCalculator.computeCurrents();
 
-                        io = biphasedGrCalculator.getIo();
-                        id = biphasedGrCalculator.getId();
-                        ii = biphasedGrCalculator.getIi();
+                        iFortescue = biphasedGrCalculator.getIFortescue();
                     }
 
-                    res = buildUnbalancedResult(id, io, ii, zdf, zof,
+                    res = buildUnbalancedResult(iFortescue, zFortescue,
                             directResult, homopolarResult,
                             scf, lfBus1, v1dInit, lfNetwork);
                     // feeders are updated only if voltageUpdate is made. TODO : see if update of homopolar feeders are to be updated
@@ -177,11 +171,16 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
                             Complex v2dInit = biphasedDirectResult.getV2();
 
-                            res = buildUnbalancedCommunSuppportResult(biCsSc.getId(), biCsSc.getIo(), biCsSc.getIi(),
-                                    biCsSc.getI2d(), biCsSc.getI2o(), biCsSc.getI2i(),
-                                    biCsSc.getVd(), biCsSc.getVo(), biCsSc.getVi(),
-                                    biCsSc.getV2d(), biCsSc.getV2o(), biCsSc.getV2i(),
-                                    zdf, zof,
+                            iFortescue = new ScFortescueValue(biCsSc.getId(), biCsSc.getIi(), biCsSc.getIo());
+                            ScFortescueValue i2Fortescue = new ScFortescueValue(biCsSc.getI2d(), biCsSc.getI2i(), biCsSc.getI2o());
+                            ScFortescueValue dvFortescue = new ScFortescueValue(biCsSc.getVd(), biCsSc.getVi(), biCsSc.getVo());
+                            ScFortescueValue dv2Fortescue = new ScFortescueValue(biCsSc.getV2d(), biCsSc.getV2i(), biCsSc.getV2o());
+
+                            res = buildUnbalancedCommunSuppportResult(iFortescue,
+                                    i2Fortescue,
+                                    dvFortescue,
+                                    dv2Fortescue,
+                                    zFortescue,
                                     directResult, homopolarResult, scf,
                                     lfBus1, v1dInit, lfNetwork,
                                     lfBus2, v2dInit, biphasedDirectResult, biphasedHomopolarResult);
@@ -198,7 +197,7 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         }
     }
 
-    public ShortCircuitResult buildUnbalancedResult(Complex id, Complex io, Complex ii, Complex zdf, Complex zof,
+    public ShortCircuitResult buildUnbalancedResult(ScFortescueValue iFortescue, ScFortescueValue zFortescue,
                                                     ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult,
                                                     ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult,
                                                     ShortCircuitFault scf, LfBus lfBus1, Complex v1dInit,
@@ -208,18 +207,16 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         // [vox]      [ rof  -xof ]   [ iox ]
         // [voy] = -  [ xof   rof ] * [ ioy ]
 
-        Complex vo = zof.multiply(io).multiply(-1.);
-        Complex vd = zdf.multiply(id).multiply(-1.);
-        Complex vi = zdf.multiply(ii).multiply(-1.);
+        ScFortescueValue dvFortescue = zFortescue.multiply(iFortescue).multiply(-1.);
 
         //record the results
         FeedersAtNetwork equationSystemFeedersDirect = directResult.getEqSysFeeders();
         FeedersAtNetwork equationSystemFeedersHomopolar = homopolarResult.getEqSysFeeders();
 
         ShortCircuitResult res = new ShortCircuitResult(scf, lfBus1,
-                id, io, ii,
-                zdf, zof, zdf,
-                v1dInit, vd, vo, vi,
+                iFortescue,
+                zFortescue,
+                v1dInit, dvFortescue,
                 equationSystemFeedersDirect, equationSystemFeedersHomopolar, shortCircuitNorm,
                 directResult.getZthEq20Hz(), homopolarResult.getZthEq20Hz());
 
@@ -239,28 +236,21 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
             for (Map.Entry<Integer, Complex> zd : directResult.getBusToZknf().entrySet()) {
                 int busNum = zd.getKey();
 
-                //direct
                 Complex zdBus = zd.getValue();
-                Complex deltaVd = zdBus.multiply(id).multiply(-1);
-
-                //inverse
-                Complex deltaVi = zdBus.multiply(ii).multiply(-1);
-
-                //homopolar
                 Complex zo = homopolarResult.getBusToZknf().get(busNum);
-                Complex deltaVo = zo.multiply(io).multiply(-1);
-
                 //System.out.println(" dVth(" + vdr.getKey() + ") = " + edVr + " + j(" + edVi + ")");
+                ScFortescueValue zBusFortescue = new ScFortescueValue(zdBus, zdBus, zo);
+                ScFortescueValue deltaVFort = zBusFortescue.multiply(iFortescue).multiply(-1);
 
-                res.fillVoltageInFortescueVector(busNum, deltaVd, deltaVo, deltaVi);
+                res.fillVoltageInFortescueVector(busNum, deltaVFort);
             }
         }
 
         return res;
     }
 
-    public ShortCircuitResult buildUnbalancedCommunSuppportResult(Complex id, Complex io, Complex ii, Complex i2d, Complex i2o, Complex i2i,
-                                                                  Complex dvd, Complex dvo, Complex dvi, Complex dv2d, Complex dv2o, Complex dv2i, Complex zdf, Complex zof,
+    public ShortCircuitResult buildUnbalancedCommunSuppportResult(ScFortescueValue iFortescue, ScFortescueValue i2Fortescue,
+                                                                  ScFortescueValue dvFortescue, ScFortescueValue dv2Fortescue, ScFortescueValue zFortescue,
                                                                   ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult,
                                                                   ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult, ShortCircuitFault scf,
                                                                   LfBus lfBus1, Complex v1dInit, LfNetwork lfNetwork,
@@ -273,14 +263,14 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         FeedersAtNetwork equationSystemFeedersHomopolar = homopolarResult.getEqSysFeeders();
 
         ShortCircuitResult res = new ShortCircuitResult(scf, lfBus1,
-                id, io, ii,
-                zdf, zof, zdf,
+                iFortescue,
+                zFortescue,
                 v1dInit,
-                dvd, dvo, dvi,
+                dvFortescue,
                 equationSystemFeedersDirect, equationSystemFeedersHomopolar, shortCircuitNorm,
-                i2d, i2o, i2i,
+                i2Fortescue,
                 v2dInit,
-                dv2d, dv2o, dv2i,
+                dv2Fortescue,
                 lfBus2, directResult.getZthEq20Hz(), homopolarResult.getZthEq20Hz());
 
         if (shortCircuitParameters.isWithVoltageResult()) {
@@ -301,18 +291,14 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
                 //direct
                 Complex zdBus2 = biphasedDirectResult.getBus2ToZknf().get(busNum);
-                Complex deltaVd = id.multiply(zd.getValue()).add(i2d.multiply(zdBus2)).multiply(-1);
-
-                //inverse
-                Complex deltaVi = ii.multiply(zd.getValue()).add(i2i.multiply(zdBus2)).multiply(-1);
-
-                //homopolar
                 Complex zoBus = homopolarResult.getBusToZknf().get(busNum);
                 Complex zoBus2 = biphasedHomopolarResult.getBus2ToZknf().get(busNum);
 
-                Complex deltaVo = io.multiply(zoBus).add(i2o.multiply(zoBus2)).multiply(-1);
+                ScFortescueValue zBusFortescue = new ScFortescueValue(zd.getValue(), zd.getValue(), zoBus);
+                ScFortescueValue zBus2Fortescue = new ScFortescueValue(zdBus2, zdBus2, zoBus2);
+                ScFortescueValue deltaVFort = iFortescue.multiply(zBusFortescue).add(i2Fortescue.multiply(zBus2Fortescue)).multiply(-1);
 
-                res.fillVoltageInFortescueVector(busNum, deltaVd, deltaVo, deltaVi);
+                res.fillVoltageInFortescueVector(busNum, deltaVFort);
             }
         }
 

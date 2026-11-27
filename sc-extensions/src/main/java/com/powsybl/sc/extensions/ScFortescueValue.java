@@ -1,0 +1,105 @@
+/**
+ * Copyright (c) 2026, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * SPDX-License-Identifier: MPL-2.0
+ */
+package com.powsybl.sc.extensions;
+
+import com.powsybl.shortcircuit.FortescueValue;
+import org.apache.commons.math3.complex.Complex;
+
+import java.util.Objects;
+import java.util.function.BinaryOperator;
+import java.util.function.UnaryOperator;
+
+import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
+
+/**
+ * @author Thoi-Nay Vo <thoi-nay.vo at artelys.com>
+ */
+public record ScFortescueValue(Complex positiveComponent, Complex negativeComponent, Complex zeroComponent) {
+
+    public static final ScFortescueValue ZERO = new ScFortescueValue(Complex.ZERO, Complex.ZERO, Complex.ZERO);
+
+    public ScFortescueValue {
+        Objects.requireNonNull(positiveComponent);
+        Objects.requireNonNull(negativeComponent);
+        Objects.requireNonNull(zeroComponent);
+    }
+
+    public static ScFortescueValue ofPositive(Complex positive) {
+        return new ScFortescueValue(positive, Complex.ZERO, Complex.ZERO);
+    }
+
+    public static ScFortescueValue fromFortescueValue(FortescueValue value) {
+        Objects.requireNonNull(value);
+        return new ScFortescueValue(
+                polar2Complex(value.getPositiveMagnitude(), value.getPositiveAngle()),
+                polar2Complex(value.getNegativeMagnitude(), value.getNegativeAngle()),
+                polar2Complex(value.getZeroMagnitude(), value.getZeroAngle()));
+    }
+
+    /**
+     * Converts to the PowSyBl Core representation.
+     */
+    public FortescueValue toFortescueValue() {
+        return new FortescueValue(positiveComponent.abs(), zeroComponent.abs(), negativeComponent.abs(),
+                positiveComponent.getArgument(), zeroComponent.getArgument(), negativeComponent.getArgument());
+    }
+
+    public ScThreePhaseValue toThreePhaseValue() {
+        return FortescueUtils.scFortescueToThreePhaseValue(this);
+    }
+
+    public ScFortescueValue add(ScFortescueValue other) {
+        return combine(other, Complex::add);
+    }
+
+    public ScFortescueValue subtract(ScFortescueValue other) {
+        return combine(other, Complex::subtract);
+    }
+
+    public ScFortescueValue multiply(ScFortescueValue other) {
+        return combine(other, Complex::multiply);
+    }
+
+    public ScFortescueValue divide(ScFortescueValue other) {
+        return combine(other, Complex::divide);
+    }
+
+    public ScFortescueValue multiply(Complex factor) {
+        Objects.requireNonNull(factor);
+        return map(c -> c.multiply(factor));
+    }
+
+    public ScFortescueValue multiply(double factor) {
+        return map(c -> c.multiply(factor));
+    }
+
+    public ScFortescueValue divide(Complex divisor) {
+        Objects.requireNonNull(divisor);
+        return map(c -> c.divide(divisor));
+    }
+
+    public ScFortescueValue divide(double divisor) {
+        return map(c -> c.divide(divisor));
+    }
+
+    public ScFortescueValue negate() {
+        return map(Complex::negate);
+    }
+
+    private ScFortescueValue combine(ScFortescueValue other, BinaryOperator<Complex> op) {
+        Objects.requireNonNull(other);
+        return new ScFortescueValue(
+                op.apply(positiveComponent, other.positiveComponent),
+                op.apply(negativeComponent, other.negativeComponent),
+                op.apply(zeroComponent, other.zeroComponent));
+    }
+
+    private ScFortescueValue map(UnaryOperator<Complex> op) {
+        return new ScFortescueValue(op.apply(positiveComponent), op.apply(negativeComponent), op.apply(zeroComponent));
+    }
+}

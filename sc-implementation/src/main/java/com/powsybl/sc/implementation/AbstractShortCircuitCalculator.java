@@ -7,6 +7,7 @@
  */
 package com.powsybl.sc.implementation;
 
+import com.powsybl.sc.extensions.ScFortescueValue;
 import org.apache.commons.math3.complex.Complex;
 
 /**
@@ -42,6 +43,10 @@ public abstract class AbstractShortCircuitCalculator {
 
     public Complex getIi() {
         return ii;
+    }
+
+    public ScFortescueValue getIFortescue() {
+        return new ScFortescueValue(id, ii, io);
     }
 
     public abstract void computeCurrents();

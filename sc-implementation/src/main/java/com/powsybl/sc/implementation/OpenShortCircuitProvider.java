@@ -19,6 +19,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
+import com.powsybl.sc.extensions.ScFortescueValue;
 import com.powsybl.sc.util.CalculationLocation;
 import com.powsybl.sc.util.Feeder;
 import com.powsybl.sc.util.FeedersAtBusResult;
@@ -38,7 +39,6 @@ import java.util.stream.Collectors;
 import static com.powsybl.openloadflow.util.PerUnit.SB;
 import static com.powsybl.sc.util.ShortCircuitHelper.createInnerZonePredicate;
 import static com.powsybl.sc.util.ShortCircuitHelper.getOrDefaultOpenScParameters;
-import static org.apache.commons.math3.complex.ComplexUtils.polar2Complex;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -184,12 +184,12 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
     private void fillBusResults(LfNetwork lfNetwork, List<ShortCircuitBusResults> busResults, ShortCircuitResult scResult,
                                 List<Complex> initialVoltages, double minVoltDropProportional, Predicate<LfBus> innerZone) {
-        List<FortescueValue> dVoltages = scResult.getBusNum2Dv();
+        List<ScFortescueValue> dVoltages = scResult.getBusNum2Dv();
         for (LfBus lfBus : lfNetwork.getBuses()) {
             if (innerZone.test(lfBus)) {
                 int num = lfBus.getNum();
                 Complex initialVpu = initialVoltages.get(num);
-                Complex dVpu = polar2Complex(dVoltages.get(num).getPositiveMagnitude(), dVoltages.get(num).getPositiveAngle());
+                Complex dVpu = dVoltages.get(num).positiveComponent();
                 double voltageDropProportional = dVpu.abs() / initialVpu.abs();
                 Complex finalVpu = initialVpu.add(dVpu);
 
