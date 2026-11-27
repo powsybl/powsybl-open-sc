@@ -24,7 +24,7 @@ public class TwoBusImpedanceLinearResolutionResult {
 
     private Map<Integer, Complex> bus2ToZknf;
 
-    TwoBusImpedanceLinearResolutionResult(LfBus bus2, Complex v2, ImpedanceLinearResolution.ImpedanceUpperTriangle zT, ImpedanceLinearResolution.ImpedanceUpperTriangle zTAt20Hz, int numBus2Fault) {
+    TwoBusImpedanceLinearResolutionResult(LfBus bus2, Complex v2, ImpedanceUpperTriangle zT, ImpedanceUpperTriangle zTAt20Hz, int numBus2Fault) {
         this.bus2 = bus2;
 
         this.numBus2Fault = numBus2Fault;

@@ -19,29 +19,18 @@ import java.util.Objects;
  */
 public abstract class AbstractFeeder implements Feeder {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFeeder.class);
+    private final Complex yFeeder;
+    protected final String id;
+
     //Feeder class is used to post process the results of a short circuit computation to get the feeder contribution in short-circuit current
-    protected AbstractFeeder(Complex zFeeder, String id) {
+    protected AbstractFeeder(Complex yFeeder, String id) {
         Objects.requireNonNull(id, "id");
-        this.z = zFeeder;
+        this.yFeeder = yFeeder;
         this.id = id;
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFeeder.class);
-    private final Complex z;
-    protected final String id; // id in LfNetwork
-
-    public Complex getZ() {
-        return z;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public ThreeSides getSide() {
-        return null;
-    }
-
+    // vKv, p, q are in PU
     protected Complex computeCurrent(double vKv, double phiRad, double p, double q) {
         if (Double.isNaN(vKv) || Double.isNaN(phiRad) || Double.isNaN(p) || Double.isNaN(q)) {
             LOGGER.warn("No valid pre-fault state (disconnected or no load flow result) for feeder '{}', " +
@@ -60,5 +49,17 @@ public abstract class AbstractFeeder implements Feeder {
             return Complex.ZERO;
         }
         return current;
+    }
+
+    public Complex getAdmittance() {
+        return yFeeder;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public ThreeSides getSide() {
+        return null;
     }
 }

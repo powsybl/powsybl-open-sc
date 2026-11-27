@@ -12,12 +12,12 @@ import org.apache.commons.math3.complex.Complex;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_EPSILON_PU;
+
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
  */
 public class FeedersAtBusResult {
-
-    private static final double EPSILON = 0.000001;
 
     private Complex iFeedersSum; //sum of currents coming from branches, which is also the sum of currents from injector feeders at the same LfBus
 
@@ -26,13 +26,13 @@ public class FeedersAtBusResult {
     private final FeedersAtBus feedersAtBus;
 
     public FeedersAtBusResult(FeedersAtBus feedersAtBus) {
-        this.iFeedersSum = new Complex(0.);
+        this.iFeedersSum = Complex.ZERO;
         this.busFeedersResult = new ArrayList<>();
         this.feedersAtBus = feedersAtBus;
 
         // init on feeder results based on equation system feeders
         for (Feeder feeder : feedersAtBus.getFeeders()) {
-            FeederResult feederResult = new FeederResult(feeder, new Complex(0.));
+            FeederResult feederResult = new FeederResult(feeder, Complex.ZERO);
             busFeedersResult.add(feederResult);
         }
     }
@@ -42,23 +42,23 @@ public class FeedersAtBusResult {
     }
 
     public void updateContributions() {
-        Complex zSum = new Complex(0.);
+        Complex ySum = Complex.ZERO;
 
         for (FeederResult feederResult : busFeedersResult) {
             if (feederResult.getFeeder().getFeederType() == Feeder.FeederType.BRANCH) {
                 continue; // Skip branch feeders as their contributions have already been computed
             }
-            zSum = zSum.add(feederResult.getFeeder().getZ());
+            ySum = ySum.add(feederResult.getFeeder().getAdmittance());
         }
 
-        if (zSum.abs() > EPSILON) {
+        if (ySum.abs() > IMPEDANCE_EPSILON_PU) {
             for (FeederResult feederResult : busFeedersResult) {
                 if (feederResult.getFeeder().getFeederType() == Feeder.FeederType.BRANCH) {
                     continue; // Skip branch feeders as their contributions have already been computed
                 }
-                Complex zk = feederResult.getFeeder().getZ();
-                // ik = zk / zsum * iFeederSum
-                Complex ik = zk.multiply(iFeedersSum).divide(zSum);
+                Complex yk = feederResult.getFeeder().getAdmittance();
+                // ik = yk / ysum * iFeederSum
+                Complex ik = yk.multiply(iFeedersSum).divide(ySum);
                 feederResult.updateIcontribution(ik);
                 feederResult.printContributions(feedersAtBus.getFeedersBus());
             }

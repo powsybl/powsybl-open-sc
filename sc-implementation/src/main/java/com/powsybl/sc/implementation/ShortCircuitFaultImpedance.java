@@ -18,6 +18,6 @@ import org.apache.commons.math3.complex.Complex;
 public record ShortCircuitFaultImpedance(Complex zg, Complex zb, Complex zc) {
 
     public ShortCircuitFaultImpedance(Complex zg) {
-        this(zg, new Complex(0.), new Complex(0.));
+        this(zg, Complex.ZERO, Complex.ZERO);
     }
 }

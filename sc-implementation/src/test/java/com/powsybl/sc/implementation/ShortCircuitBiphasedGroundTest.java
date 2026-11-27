@@ -38,10 +38,10 @@ class ShortCircuitBiphasedGroundTest {
     void shortCircuit6NodesIec9094() {
         Network network = ReferenceNetwork.create6NodesIec9094();
 
-        ShortCircuitFaultImpedance scZ1 = new ShortCircuitFaultImpedance(new Complex(0.));
+        ShortCircuitFaultImpedance scZ1 = new ShortCircuitFaultImpedance(Complex.ZERO);
         ShortCircuitFault sc1 = createBiphasedGroundFault("sc1", "B3", scZ1);
 
-        ShortCircuitFaultImpedance scZ2 = new ShortCircuitFaultImpedance(new Complex(0.), new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
+        ShortCircuitFaultImpedance scZ2 = new ShortCircuitFaultImpedance(Complex.ZERO, new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));
         ShortCircuitFault sc2 = createBiphasedGroundFault("sc2", "B3", scZ2);
 
         ShortCircuitFaultImpedance scZ3 = new ShortCircuitFaultImpedance(new Complex(0.000007, 0.00005), new Complex(0.0001, 0.0002), new Complex(0.0003, 0.0004));

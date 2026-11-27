@@ -42,14 +42,12 @@ public class ShortCircuitResult {
 
     private final ShortCircuitNorm norm;
 
-    private final Complex zd; // equivalent direct impedance
-    private final Complex zi; // equivalent inverse impedance
-    private final Complex zh; // equivalent homopolar impedance
     private final Complex zd20hz;
     private final Complex zh20hz;
 
     private final Complex eth;
 
+    private final FortescueValue zFortescue;
     private final FortescueValue iFortescue; //fortescue vector of currents
     private final FortescueValue vFortescue; //fortescue vector of voltages
 
@@ -78,11 +76,9 @@ public class ShortCircuitResult {
         this.shortCircuitFault = shortCircuitFault;
         this.norm = norm;
 
-        this.zd = zth;
-        this.zi = new Complex(0., 0.);
-        this.zh = new Complex(0., 0.);
+        this.zFortescue = new FortescueValue(zth.abs(), zth.getArgument());
         this.zd20hz = zth20hz;
-        this.zh20hz = new Complex(0., 0.);
+        this.zh20hz = Complex.ZERO;
 
         this.eth = eth;
 
@@ -106,9 +102,7 @@ public class ShortCircuitResult {
         this.shortCircuitFault = shortCircuitFault;
         this.norm = norm;
 
-        this.zd = zd;
-        this.zi = zi;
-        this.zh = zo;
+        this.zFortescue = new FortescueValue(zd.abs(), zd.getArgument(), zi.abs(), zi.getArgument(), zo.abs(), zo.getArgument());
         this.zd20hz = zth20hz;
         this.zh20hz = zoth20hz;
 
@@ -143,7 +137,7 @@ public class ShortCircuitResult {
     }
 
     public Complex getZd() {
-        return zd;
+        return ComplexUtils.polar2Complex(zFortescue.getPositiveMagnitude(), zFortescue.getPositiveAngle());
     }
 
     public Complex getEth() {
@@ -151,7 +145,7 @@ public class ShortCircuitResult {
     }
 
     public Complex getZh() {
-        return zh;
+        return ComplexUtils.polar2Complex(zFortescue.getZeroMagnitude(), zFortescue.getZeroAngle());
     }
 
     public Complex getZd20hz() {
@@ -414,8 +408,8 @@ public class ShortCircuitResult {
     }
 
     public double getPeakCoefb() {
-        double r = zd.getReal();
-        double x = zd.getImaginary();
+        double r = getZd().getReal();
+        double x = getZd().getImaginary();
         if (x == 0.) {
             throw new IllegalArgumentException("Peak current could not be computed because Xth is zero = ");
         }

@@ -26,6 +26,10 @@ import static com.powsybl.sc.util.ShortCircuitHelper.fillInitialVoltages;
  */
 public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
+    private FeedersAtNetwork directFeeders;
+
+    private FeedersAtNetwork homopolarFeeders;
+
     public ShortCircuitUnbalancedEngine(Network network, ShortCircuitParameters shortCircuitParameters,
                                         List<ShortCircuitFault> shortCircuitFaults, ShortCircuitNorm shortCircuitNorm) {
         super(network, shortCircuitParameters, shortCircuitFaults, shortCircuitNorm);
@@ -64,6 +68,9 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         directResolution.run();
         homopolarResolution.run();
 
+        directFeeders = createInjectionFeeders(AdmittanceType.ADM_THEVENIN);
+        homopolarFeeders = createInjectionFeeders(AdmittanceType.ADM_THEVENIN_HOMOPOLAR);
+
         //Build the ShortCircuit results using the linear resolution computation results
         resultsPerFault.clear();
         processAdmittanceLinearResolutionResults(lfNetwork, directResolution, homopolarResolution, ShortCircuitFault.ShortCircuitType.MONOPHASED);
@@ -75,13 +82,13 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
     public void processAdmittanceLinearResolutionResults(LfNetwork lfNetwork, ImpedanceLinearResolution directResolution,
                                                          ImpedanceLinearResolution homopolarResolution, ShortCircuitFault.ShortCircuitType shortCircuitType) {
 
-        for (Map.Entry<LfBus, ImpedanceLinearResolution.ImpedanceLinearResolutionResult> entry
+        for (Map.Entry<LfBus, ImpedanceLinearResolutionResult> entry
                 : directResolution.results.entrySet()) {
 
             LfBus lfBus = entry.getKey();
-            ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult = entry.getValue();
+            ImpedanceLinearResolutionResult directResult = entry.getValue();
 
-            ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult =
+            ImpedanceLinearResolutionResult homopolarResult =
                     homopolarResolution.results.get(lfBus);
             LfBus lfBus1 = directResult.getBus();
 
@@ -199,8 +206,8 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
     }
 
     public ShortCircuitResult buildUnbalancedResult(Complex id, Complex io, Complex ii, Complex zdf, Complex zof,
-                                                    ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult,
-                                                    ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult,
+                                                    ImpedanceLinearResolutionResult directResult,
+                                                    ImpedanceLinearResolutionResult homopolarResult,
                                                     ShortCircuitFault scf, LfBus lfBus1, Complex v1dInit,
                                                     LfNetwork lfNetwork) {
         //get the voltage vectors
@@ -213,14 +220,11 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
         Complex vi = zdf.multiply(ii).multiply(-1.);
 
         //record the results
-        FeedersAtNetwork equationSystemFeedersDirect = directResult.getEqSysFeeders();
-        FeedersAtNetwork equationSystemFeedersHomopolar = homopolarResult.getEqSysFeeders();
-
         ShortCircuitResult res = new ShortCircuitResult(scf, lfBus1,
                 id, io, ii,
                 zdf, zof, zdf,
                 v1dInit, vd, vo, vi,
-                equationSystemFeedersDirect, equationSystemFeedersHomopolar, shortCircuitNorm,
+                directFeeders, homopolarFeeders, shortCircuitNorm,
                 directResult.getZthEq20Hz(), homopolarResult.getZthEq20Hz());
 
         if (shortCircuitParameters.isWithVoltageResult()) {
@@ -261,23 +265,20 @@ public class ShortCircuitUnbalancedEngine extends AbstractShortCircuitEngine {
 
     public ShortCircuitResult buildUnbalancedCommunSuppportResult(Complex id, Complex io, Complex ii, Complex i2d, Complex i2o, Complex i2i,
                                                                   Complex dvd, Complex dvo, Complex dvi, Complex dv2d, Complex dv2o, Complex dv2i, Complex zdf, Complex zof,
-                                                                  ImpedanceLinearResolution.ImpedanceLinearResolutionResult directResult,
-                                                                  ImpedanceLinearResolution.ImpedanceLinearResolutionResult homopolarResult, ShortCircuitFault scf,
+                                                                  ImpedanceLinearResolutionResult directResult,
+                                                                  ImpedanceLinearResolutionResult homopolarResult, ShortCircuitFault scf,
                                                                   LfBus lfBus1, Complex v1dInit, LfNetwork lfNetwork,
                                                                   LfBus lfBus2, Complex v2dInit,
                                                                   TwoBusImpedanceLinearResolutionResult biphasedDirectResult,
                                                                   TwoBusImpedanceLinearResolutionResult biphasedHomopolarResult) {
 
         //record the results
-        FeedersAtNetwork equationSystemFeedersDirect = directResult.getEqSysFeeders();
-        FeedersAtNetwork equationSystemFeedersHomopolar = homopolarResult.getEqSysFeeders();
-
         ShortCircuitResult res = new ShortCircuitResult(scf, lfBus1,
                 id, io, ii,
                 zdf, zof, zdf,
                 v1dInit,
                 dvd, dvo, dvi,
-                equationSystemFeedersDirect, equationSystemFeedersHomopolar, shortCircuitNorm,
+                directFeeders, homopolarFeeders, shortCircuitNorm,
                 i2d, i2o, i2i,
                 v2dInit,
                 dv2d, dv2o, dv2i,

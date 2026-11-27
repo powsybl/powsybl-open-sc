@@ -17,7 +17,10 @@ import com.powsybl.openloadflow.network.LfBus;
 import com.powsybl.openloadflow.network.LfNetwork;
 import com.powsybl.openloadflow.network.impl.LfNetworkLoaderImpl;
 import com.powsybl.sc.extensions.OpenShortCircuitParameters;
+import com.powsybl.sc.util.AdmittanceType;
 import com.powsybl.sc.util.CalculationLocation;
+import com.powsybl.sc.util.FeedersAtNetwork;
+import com.powsybl.sc.util.FeedersCreator;
 import com.powsybl.sc.util.extensions.ShortCircuitExtensions;
 import com.powsybl.shortcircuit.ShortCircuitParameters;
 import org.apache.commons.math3.complex.Complex;
@@ -76,7 +79,7 @@ public abstract class AbstractShortCircuitEngine {
      * (generators whose |P| is not above the zone power threshold are ignored in ABOVE_POWER_THRESHOLD mode).
      */
     private void checkAtLeastOneContributingGenerator(LfNetwork lfNetwork) {
-        Predicate<LfBus> innerZone = createInnerZonePredicate(network, openShortCircuitParameters.getInnerZoneBusIds());
+        Predicate<LfBus> innerZone = createInnerLfZonePredicate(network, openShortCircuitParameters.getInnerZoneBusIds());
         boolean found = lfNetwork.getBuses().stream()
                 .flatMap(bus -> bus.getGenerators().stream())
                 .filter(lfGenerator -> network.getGenerator(lfGenerator.getOriginalId()) != null)
@@ -92,7 +95,7 @@ public abstract class AbstractShortCircuitEngine {
         shortCircuitParameters.setWithVoltageResult(false);
         for (Bus bus : network.getBusBreakerView().getBuses()) {
             ShortCircuitFault sc = new ShortCircuitFault(bus.getId(), bus.getId(), bus.getId(),
-                    new ShortCircuitFaultImpedance(new Complex(0.)), type); //TODO : check validity of voltage levels if no connexity
+                    new ShortCircuitFaultImpedance(Complex.ZERO), type); //TODO : check validity of voltage levels if no connexity
             scfSystematic.add(sc);
         }
         shortCircuitFaults = scfSystematic;
@@ -208,6 +211,11 @@ public abstract class AbstractShortCircuitEngine {
 
     public ShortCircuitParameters getShortCircuitParameters() {
         return shortCircuitParameters;
+    }
+
+    protected FeedersAtNetwork createInjectionFeeders(AdmittanceType admittanceType) {
+        return new FeedersCreator(network, lfNetwork, initialVoltages, admittanceType,
+                shortCircuitParameters, openShortCircuitParameters, shortCircuitNorm.getNormExtensions()).create();
     }
 
     public abstract void run();

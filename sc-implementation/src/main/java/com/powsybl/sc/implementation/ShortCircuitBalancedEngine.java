@@ -27,6 +27,8 @@ import static com.powsybl.sc.util.ShortCircuitHelper.fillInitialVoltages;
  */
 public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
 
+    private FeedersAtNetwork directFeeders;
+
     public ShortCircuitBalancedEngine(Network network, ShortCircuitParameters parameters, List<ShortCircuitFault> shortCircuitFaults, ShortCircuitNorm shortCircuitNorm) {
         super(network, parameters, shortCircuitFaults, shortCircuitNorm);
     }
@@ -52,6 +54,8 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                 shortCircuitParameters);
 
         directResolution.run();
+
+        directFeeders = createInjectionFeeders(AdmittanceType.ADM_THEVENIN);
 
         //Build the ShortCircuit results using the Thevenin computation results
         resultsPerFault.clear();
@@ -101,7 +105,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
             throw new IllegalStateException("Bus not found: " + busId);
         }
 
-        ImpedanceLinearResolution.ImpedanceLinearResolutionResult linearResolutionResult = directResolution.results.get(lfBus);
+        ImpedanceLinearResolutionResult linearResolutionResult = directResolution.results.get(lfBus);
         if (linearResolutionResult == null) {
             throw new IllegalStateException("No impedance resolution result found for bus: " + busId);
         }
@@ -124,7 +128,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
         Complex zth20hz = linearResolutionResult.getZthEq20Hz();
 
         ShortCircuitResult res = new ShortCircuitResult(shortCircuitFault, lfBus, id, zth, vInit, dv,
-                linearResolutionResult.getEqSysFeeders(), shortCircuitNorm, zth20hz);
+                directFeeders, shortCircuitNorm, zth20hz);
 
         updateVoltageProfileIfNeeded(res, lfNetwork, id, linearResolutionResult.getBusToZknf());
 
@@ -142,7 +146,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
             throw new IllegalStateException("Bus not found: " + bus1Id);
         }
 
-        ImpedanceLinearResolution.ImpedanceLinearResolutionResult linearResolutionResult1 = directResolution.results.get(lfBus1);
+        ImpedanceLinearResolutionResult linearResolutionResult1 = directResolution.results.get(lfBus1);
         if (linearResolutionResult1 == null) {
             throw new IllegalStateException("No impedance resolution result found for bus: " + bus1Id);
         }
@@ -199,7 +203,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
                 .add(zLine20hz.multiply(r * s));
 
         ShortCircuitResult res = new ShortCircuitResult(shortCircuitFault, lfBus1, id, zth, vInit, dv,
-                linearResolutionResult1.getEqSysFeeders(), shortCircuitNorm, zth20hz);
+                directFeeders, shortCircuitNorm, zth20hz);
 
         Map<Integer, Complex> combinedBusToZknf = null;
         if (shortCircuitParameters.isWithVoltageResult()) {
@@ -218,7 +222,7 @@ public class ShortCircuitBalancedEngine extends AbstractShortCircuitEngine {
     }
 
     private static TwoBusImpedanceLinearResolutionResult findTwoBusResult(
-            ImpedanceLinearResolution.ImpedanceLinearResolutionResult resultAtBus1, LfBus lfBus2, String bus1Id, String bus2Id) {
+            ImpedanceLinearResolutionResult resultAtBus1, LfBus lfBus2, String bus1Id, String bus2Id) {
         List<TwoBusImpedanceLinearResolutionResult> twoBusResults =
                 resultAtBus1.getTwoBusResults();
         if (twoBusResults == null) {
