@@ -129,6 +129,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
 
             double iccMagnitude = scResult.getIk().abs() * 1000.; // kA to A conversion
             double voltage = scResult.getVd().abs() * scResult.getLfBus().getNominalV();
+            Duration timeConstant = scResult.getTimeConstant();
 
             List<FeederResult> feederResults = new ArrayList<>();
             if (withFeederResults) {
@@ -143,7 +144,7 @@ public class OpenShortCircuitProvider implements ShortCircuitAnalysisProvider {
                         shortCircuitParameters.getMinVoltageDropProportionalThreshold(), innerZone);
             }
             MagnitudeFaultResult magnitudeFaultResult = new MagnitudeFaultResult(fault, 0., feederResults,
-                    limitViolations, iccMagnitude, voltage, busResults, Duration.ZERO, FaultResult.Status.SUCCESS);
+                    limitViolations, iccMagnitude, voltage, busResults, timeConstant, FaultResult.Status.SUCCESS);
             faultResults.add(magnitudeFaultResult);
         }
     }

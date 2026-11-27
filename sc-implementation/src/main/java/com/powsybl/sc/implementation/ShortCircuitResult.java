@@ -19,11 +19,13 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.FastMath;
 
+import java.time.Duration;
 import java.util.*;
 
 import static com.powsybl.sc.extensions.ShortCircuitConstants.CURRENT_EPSILON_PU;
 import static com.powsybl.sc.extensions.ShortCircuitConstants.IMPEDANCE_EPSILON_PU;
 import static com.powsybl.sc.implementation.ShortCircuitFault.ShortCircuitType.*;
+import static java.lang.Math.PI;
 
 /**
  * @author Jean-Baptiste Heyberger <jbheyberger at gmail.com>
@@ -67,6 +69,8 @@ public class ShortCircuitResult {
     private Map<LfBus, FeedersAtBusResult> feedersResultsHomopolar;
     private Map<LfBus, FeedersAtBusResult> feedersResultsInverse;
 
+    private final Duration timeConstant;
+
     private final ShortCircuitFault shortCircuitFault;
 
     public ShortCircuitResult(ShortCircuitFault shortCircuitFault, LfBus lfBus,
@@ -90,7 +94,7 @@ public class ShortCircuitResult {
 
         Complex vd = eth.add(dv);
         this.vFortescue = new FortescueValue(vd.abs(), vd.getArgument());
-
+        timeConstant = computeTimeConstant();
         isVoltageProfileUpdated = false;
     }
 
@@ -122,6 +126,7 @@ public class ShortCircuitResult {
 
         this.vFortescue = new FortescueValue(vd.abs(), vh.abs(), vi.abs(), vd.getArgument(), vh.getArgument(), vi.getArgument());
 
+        timeConstant = computeTimeConstant();
         isVoltageProfileUpdated = false;
 
     }
@@ -578,5 +583,35 @@ public class ShortCircuitResult {
 
     public void setLfNetwork(LfNetwork lfNetwork) {
         this.lfNetwork = lfNetwork;
+    }
+
+    public Duration getTimeConstant() {
+        return timeConstant;
+    }
+
+    private Duration computeTimeConstant() {
+        Complex zEquivalent = computeEquivalentImpedance();
+        if (zEquivalent == null) {
+            return null;
+        }
+        double resistance = zEquivalent.getReal();
+        double reactance = zEquivalent.getImaginary();
+        if (!(resistance >= IMPEDANCE_EPSILON_PU && reactance > 0)) {
+            return null;
+        }
+        double omega = 2 * PI * FrequencyType.FREQ_50_HZ.getFrequency();
+        double tauInSeconds = reactance / (omega * resistance);
+        return Duration.ofSeconds(Math.round(tauInSeconds));
+    }
+
+    private Complex computeEquivalentImpedance() {
+        return switch (shortCircuitFault.getType()) {
+            case TRIPHASED_GROUND -> zd;
+            case BIPHASED -> zd.add(zi);
+            case MONOPHASED -> zd.add(zi).add(zh);
+            case BIPHASED_GROUND -> zd.add(zi.multiply(zh).divide(zi.add(zh)));
+            // fixme: how to calculate equivalent impedance for biphased_common_support?
+            case BIPHASED_COMMON_SUPPORT -> null;
+        };
     }
 }

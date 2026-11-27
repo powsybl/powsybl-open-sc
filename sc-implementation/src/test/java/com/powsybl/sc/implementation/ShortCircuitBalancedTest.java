@@ -39,6 +39,7 @@ public class ShortCircuitBalancedTest {
     private static final double DELTA_V = 1e-5;
     private static final double DELTA_Z = 1e-5;
     private static final double DELTA_K = 1e-5;
+    private static final double DELTA_MILISECOND = 1e-5;
 
     private LoadFlowParameters loadFlowParameters;
 
@@ -650,6 +651,13 @@ public class ShortCircuitBalancedTest {
             MagnitudeShortCircuitBusResults magnitudeResult = (MagnitudeShortCircuitBusResults) faultResults.get(i).getShortCircuitBusResults().get(busNum);
             double result = magnitudeResult.getVoltage();
             assertEquals(expected[i], result, ShortCircuitBalancedTest.DELTA_V);
+        }
+    }
+
+    private static void assertTimeConstants(List<FaultResult> faultResults, double[] expectedTimeInMilis) {
+        for (int i = 0; i < expectedTimeInMilis.length; i++) {
+            double result = faultResults.get(i).getTimeConstant().toMillis();
+            assertEquals(expectedTimeInMilis[i], result, ShortCircuitBalancedTest.DELTA_V);
         }
     }
 }
